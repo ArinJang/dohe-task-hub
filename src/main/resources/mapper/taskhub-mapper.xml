@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Taskhub">
+    <insert id="save" parameterType="taskhubdto"> <!-- mybatis-config.xml 에서 설정한 Alias-->
+        insert into task(task_content, task_order, writer_id)
+        values(#{task_content}, 1, 'arar12')
+        <!--        #{task_order}, #{writer_id})-->
+    </insert>
+
+    <select id="findAll" resultType="taskhubdto">
+        SELECT TASK_ID, TASK_CONTENT, WRITER_ID,
+        CONCAT('(', 'work_name',')') AS WORK_NAME,
+        DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+        CONCAT('- ', DATE_FORMAT(DUE_DATE, '%m/%d')) AS DUE_DATE,
+        DO_DATES,
+        TASK_STATUS
+        FROM TASK
+        WHERE DO_DATES IS NULL
+        ORDER BY TASK_ID DESC;
+    </select>
+
+    <select id="findByDays" parameterType="map" resultType="taskhubdto">
+        SELECT TASK_ID, TASK_CONTENT, WRITER_ID,
+        DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+        DATE_FORMAT(DUE_DATE, '%m-%d') AS DUE_DATE,
+        DO_DATES,
+        UPPER(DATE_FORMAT(DUE_DATE, '%a')) AS day_of_week,
+        TASK_STATUS
+        FROM
+        TASK
+        WHERE
+        DUE_DATE BETWEEN #{mon} AND #{sun}
+    </select>
+
+    <select id="findByDoDates" parameterType="map" resultType="taskhubdto">
+        WITH RECURSIVE numbers AS (
+        SELECT 1 AS num
+        UNION ALL
+        SELECT num + 1
+        FROM numbers
+        WHERE num <![CDATA[<]]> 100  -- Adjust based on your max expected number of dates
+        ),
+        split_dates AS (
+        SELECT
+        TASK_ID,
+        TASK_CONTENT,
+        CONCAT('- ', DATE_FORMAT(DUE_DATE, '%m/%d')) AS DUE_DATE,
+        TASK_STATUS,
+        CONCAT('(', 'work_name',')') AS WORK_NAME,
+        SUBSTRING_INDEX(
+        SUBSTRING_INDEX(DO_DATES, ',', numbers.num),
+        ',',
+        -1
+        ) AS split_date
+        FROM
+        TASK
+        JOIN
+        numbers
+        ON
+        CHAR_LENGTH(DO_DATES) - CHAR_LENGTH(REPLACE(DO_DATES, ',', '')) >= numbers.num - 1
+        WHERE
+        TRIM(
+        SUBSTRING_INDEX(
+        SUBSTRING_INDEX(DO_DATES, ',', numbers.num),
+        ',',
+        -1
+        )
+        ) != ''
+        ),
+        filtered_dates AS (
+        SELECT
+        TASK_ID,
+        TASK_CONTENT,
+        DUE_DATE,
+        TASK_STATUS,
+        WORK_NAME,
+        split_date AS DO_DATE
+        FROM
+        split_dates
+        WHERE
+        split_date BETWEEN #{mon} AND #{sun}
+        )
+        SELECT
+        TASK_ID,
+        TASK_CONTENT,
+        DUE_DATE,
+        TASK_STATUS,
+        WORK_NAME,
+        UPPER(DATE_FORMAT(DO_DATE, '%a')) AS day_of_week
+        FROM
+        filtered_dates
+        ORDER BY
+        TASK_ID DESC,
+        DO_DATE;
+    </select>
+
+    <select id="findById" parameterType="String" resultType="taskhubdto">
+        SELECT TASK_ID, TASK_CONTENT, TASK_STATUS, TASK_ORDER, TASK_MEMO, ASSIGNEE_ID, CATEGORY_ID AS CATEGORY_NAME, WORK_ID AS WORK_NAME, WRITER_ID,
+        DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+        DATE_FORMAT(DUE_DATE, '%Y-%m-%d') AS DUE_DATE,
+        DO_DATES,
+        UPPER(DATE_FORMAT(DUE_DATE, '%a')) AS day_of_week
+        FROM TASK WHERE TASK_ID = #{taskId}
+    </select>
+
+    <select id="findNewId" resultType="int">
+        SELECT MAX(TASK_ID) FROM TASK
+        WHERE DUE_DATE IS NULL
+    </select>
+
+    <update id="updateTask" parameterType="taskhubdto">
+        UPDATE TASK
+        SET
+        TASK_CONTENT = #{task_content},
+        DUE_DATE = CASE
+        WHEN #{due_date} IS NULL OR #{due_date} = '' THEN NULL
+        ELSE #{due_date}
+        END,
+        DO_DATES = CASE
+        WHEN #{do_dates} IS NULL OR #{do_dates} = '' THEN NULL
+        ELSE #{do_dates}
+        END,
+        TASK_STATUS = #{task_status},
+        TASK_MEMO = #{task_memo}
+        WHERE TASK_ID = #{task_id}
+    </update>
+
+    <delete id="deleteTask" parameterType="String">
+        DELETE FROM TASK WHERE TASK_ID = #{task_id}
+    </delete>
+
+    <select id="getCategories" resultType="taskhubdto">
+        SELECT CATEGORY_ID, CATEGORY_NAME, CATEGORY_ORDER, USER_ID
+        FROM CATEGORY
+        ORDER BY CATEGORY_ORDER;
+    </select>
+
+</mapper>
+
