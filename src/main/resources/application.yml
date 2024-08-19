@@ -6,9 +6,9 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/taskmanagementdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: root
-    password: root
+    url: jdbc:mysql://dohe-task-hub.cv2g6cygedq9.eu-west-2.rds.amazonaws.com:3306/dohe_task_hub?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: admin
+    password: adminadmin
 
 # mybatis
 mybatis:

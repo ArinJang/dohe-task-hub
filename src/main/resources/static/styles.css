@@ -335,6 +335,19 @@ ul, ol {
     border-radius: 5px; /* Rounded corners */
 }
 
+#warningCloseButton {
+    background-color: #ccc; /* Gray background */
+    color: black; /* Black text */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
+}
+
 #saveCloseButton:hover {
     background-color: #aaa; /* Darker gray on hover */
 }

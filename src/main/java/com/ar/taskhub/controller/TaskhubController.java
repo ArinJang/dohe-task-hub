@@ -38,8 +38,9 @@ public class TaskhubController {
 
     @PostMapping("/save")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> save(@RequestParam(value = "task_content", required = false) String taskContent,
+    public ResponseEntity<Map<String, Object>> save(@RequestParam(value = "task_content", required = true) String taskContent,
                                                     @RequestParam(value = "work_name", required = false) String workName,
+                                                    @RequestParam(value = "do_dates", required = false) String do_dates,
                                                     @RequestParam("action") String action) {
         System.out.println(">>> TaskhubController.save 2 Action: "+ action);
 
@@ -47,6 +48,7 @@ public class TaskhubController {
 
         if ("TASK+".equals(action)) {
             taskhubDTO.setTask_content(taskContent);
+            taskhubDTO.setDo_dates(do_dates);
         } else if ("WORK+".equals(action)) {
             taskhubDTO.setWork_name(workName);
         } else {

@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const navigationBar = document.getElementById('navigation-bar');
     const listDetail = document.getElementById('list-detail');
     const taskInput = document.getElementById('taskInput');
+//    const workInput = document.getElementById('workInput');
     const workInput = document.querySelector('.work-input');
     const addTaskButton = document.getElementById('addTaskButton');
     const taskList = document.getElementById('taskList');
@@ -37,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //    var baseDate = sessionStorage.getItem('baseDate');
     var selectedNav = null;
     var selectedDay = null;
+    const validationModal = document.getElementById('validationModal');
 //    sessionStorage.setItem('nav','');
     console.log("TOP++ sessionStorage.getItem('nav')?! ",sessionStorage.getItem('nav'));
 
@@ -302,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setCategory(selectedSide);
         }
         fetchTasksByDateRange(); // Call this first
-        renderDaysList(); // Ensure days list is rendered first
+        renderDayTitlesList(); // Ensure days list is rendered first
     });
 
     document.getElementById('prev-week').addEventListener('click', function() {
@@ -321,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 //        sessionStorage.setItem('baseDate', baseDate);
         fetchTasksByDateRange(); // Call this first
-        renderDaysList(); // Ensure days list is rendered first
+        renderDayTitlesList(); // Ensure days list is rendered first
     });
 
     document.getElementById('next-week').addEventListener('click', function() {
@@ -341,12 +343,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 //        sessionStorage.setItem('baseDate', baseDate);
         fetchTasksByDateRange(); // Call this first
-        renderDaysList(); // Ensure days list is rendered first
+        renderDayTitlesList(); // Ensure days list is rendered first
     });
 
     function initialize() {
         fetchTasksByDateRange(); // Call this first
-//        renderDaysList(); // Ensure days list is rendered first
+//        renderDayTitlesList(); // Ensure days list is rendered first
         const today = new Date();
         currentMonth = today.getMonth();
         currentYear = today.getFullYear();
@@ -419,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            if (taskIndex > -1) {
 //                tasks[taskIndex] = { ...tasks[taskIndex], task_content: taskName, due_date: dueDate, task_status: status };
 //                renderTaskList();
-//                daysOfWeek.forEach(day => renderTasksForDay(day));
+//                daysOfWeek.forEach(day => renderDayTasksList(day));
 //                showTaskDetail(sessionStorage.getItem('detailID')); // Refresh detail view
 //            }
 //        }
@@ -428,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleTaskCompletion(index) {
         tasks[index].completed = !tasks[index].completed;
         renderTaskList();
-        daysOfWeek.forEach(day => renderTasksForDay(day));
+        daysOfWeek.forEach(day => renderDayTasksList(day));
     }
 
     // Add a click event listener to each task item
@@ -437,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (listItem) {
             const taskId = listItem.getAttribute('data-task-id');
             sessionStorage.setItem('detailID', taskId);
-            fetchTaskDetails(taskId);
+            fetchTaskDetails();
         }
     });
 
@@ -576,9 +578,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     acc[day].push(task);
                     return acc;
                 }, {});
-                renderDaysList(); // Render days list
+//                fetchTasksByDay();
+                renderDayTitlesList(); // Render days list
+//                renderDayTasksList();
                 // Now render tasks
-                Object.keys(tasksByDay).forEach(day => renderTasksForDay(day));
+                Object.keys(tasksByDay).forEach(day => renderDayTasksList(day));
             })
             .catch(error => console.error('Error fetching tasks:', error));
     }
@@ -600,8 +604,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Only render the tasks for the specified day
                 if (tasksByDay[day]) {
-                    renderDaysList(day); // Render only the specified day
-                    renderTasksForDay(day); // Render tasks for the specified day
+                    renderDayTitlesList(day); // 요일 제목 만듦
+                    renderDayTasksList(day); // 요일별 리스트 만듦
                 } else {
                     console.error(`No tasks found for the day: ${day}`);
                 }
@@ -609,7 +613,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching tasks:', error));
     }
 
-    function renderDaysList(aDay) {
+    // 요일 제목 만듦
+    function renderDayTitlesList(aDay) {
         daysList.innerHTML = '';
         const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -617,7 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Render all days
             daysOfWeek.forEach(day => {
                 const ul = document.createElement('ul');
-                ul.id = `${day}Tasks`; // Ensure the ID matches what is used in renderTasksForDay
+                ul.id = `${day}Tasks`; // Ensure the ID matches what is used in renderDayTasksList
 
                 const li = document.createElement('li');
                 li.innerHTML = `<strong>[[ ${day} ]]</strong>`;
@@ -636,8 +641,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
-    function renderTasksForDay(day) {
+    // 요일별 리스트 만듦
+    function renderDayTasksList(day) {
         const taskListForDay = document.getElementById(`${day}Tasks`);
         if (!taskListForDay) {
             console.error(`No element found with ID: ${day}Tasks`);
@@ -689,8 +694,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 li.appendChild(taskContainer);
 
                 li.addEventListener('click', () => {
+//                    dayListClickFunc(task.task_id);
                     sessionStorage.setItem('detailID', task.task_id);
-//                    console.log('::::::::::',sessionStorage.getItem('detailID'));
+                    console.log('::::::::::',sessionStorage.getItem('detailID'));
                     fetchTaskDetails();
                 }); // Pass task_id to function
                 taskListForDay.appendChild(li);
@@ -699,36 +705,68 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`No tasks available for ${day}`);
         }
     }
+//    function dayListClickFunc(id) {
+//        sessionStorage.setItem('detailID', task.task_id);
+//    }
+//    // Add a click event listener to each task item
+//    taskList.addEventListener('click', function(event) {
+//        const listItem = event.target.closest('li.task-item');
+//        if (listItem) {
+//            const taskId = listItem.getAttribute('data-task-id');
+//            sessionStorage.setItem('detailID', taskId);
+//            fetchTaskDetails();
+//        }
+//    });
 
     form.addEventListener('submit', function(event) {
-        event.preventDefault();
+            event.preventDefault();
 
-        const formData = new FormData(form);
-        const action = event.submitter.value;
+            const formData = new FormData(form);
+            const action = event.submitter.value;
 
-        // selectedDate가 null이 아닐 때 do_dates에 추가
-        if (selectedDate !== null) {
-            formData.append('do_dates', selectedDate);
-        }
+            console.log('event.submitter.value;'+ event.submitter.value);
+            // Check if any input fields are empty
+            if(action == 'TASK+' && taskInput.value.trim() === '') {
+                openModal();
+                return; // Prevent form submission
+            }
+            if(action == 'WORK+' && workInput.value.trim() === '') {
+                openModal();
+                return; // Prevent form submission
+            }
 
-        formData.append('action', action);
-        console.log("태스크 저장~");
+            // selectedDate가 null이 아닐 때 do_dates에 추가
+            if (selectedDate !== null) {
+                formData.append('do_dates', selectedDate);
+            }
 
-        fetch('/api/save', {
-            method: 'POST',
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-            const taskInput = document.getElementById('taskInput');
-            taskInput.value = '';
-            fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-            refresh = true;
-            fetchTasksAdded(refresh);
-        })
-        .catch((error) => {
+            formData.append('action', action);
+            console.log("태스크 저장~");
+
+            fetch('/api/save', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                taskInput.value = '';
+                workInput.value = '';
+                if(sessionStorage.getItem('nav') == null || sessionStorage.getItem('nav') == ''){
+                console.log('nav null~~~~~');
+                    fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+                }else{
+                console.log('nav null아님~~~~~'+sessionStorage.getItem('nav'));
+                    fetchTasksByDay();
+                }
+                refresh = true;
+                fetchTasksAdded(refresh);
+                fetchTaskDetails();
+
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         });
-    });
 
     function fetchTasksAdded(refresh) {
         fetchNewId();
@@ -740,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (refresh) {
 //                    sessionStorage.setItem('nav', selectedDay);
                     //location.reload();
-                    fetchTasksByDateRange();
+//                    fetchTasksByDateRange();
         fetchNotAssignedTasks();
         fetchTaskDetails();
                     refresh = false;
@@ -819,9 +857,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 sessionStorage.setItem('detailID', '');
 //                sessionStorage.setItem('nav', selectedDay);
 //                /location.reload();
-                    fetchTasksByDateRange();
-        fetchNotAssignedTasks();
-        fetchTaskDetails();
+                if(sessionStorage.getItem('nav') == null || sessionStorage.getItem('nav') == ''){
+                    console.log('nav null~~~~~');
+                    fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+                }else{
+                    console.log('nav null아님~~~~~'+sessionStorage.getItem('nav'));
+                    fetchTasksByDay();
+                }
+        //                    fetchTasksByDateRange();
+                fetchNotAssignedTasks();
+                fetchTaskDetails();
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -840,7 +885,14 @@ document.addEventListener('DOMContentLoaded', function() {
 //        sessionStorage.setItem('detailID', currentIdLocal);
 //        sessionStorage.setItem('nav', selectedDay);
 //        location.reload();
-                    fetchTasksByDateRange();
+        if(sessionStorage.getItem('nav') == null || sessionStorage.getItem('nav') == ''){
+            console.log('nav null~~~~~');
+            fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+        }else{
+            console.log('nav null아님~~~~~'+sessionStorage.getItem('nav'));
+            fetchTasksByDay();
+        }
+//                    fetchTasksByDateRange();
         fetchNotAssignedTasks();
         fetchTaskDetails();
     });
@@ -852,7 +904,15 @@ document.addEventListener('DOMContentLoaded', function() {
 //            sessionStorage.setItem('detailID', currentIdLocal);
 //            sessionStorage.setItem('nav', selectedDay);
 //            location.reload();
-                    fetchTasksByDateRange();
+
+        if(sessionStorage.getItem('nav') == null || sessionStorage.getItem('nav') == ''){
+            console.log('nav null~~~~~');
+            fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+        }else{
+            console.log('nav null아님~~~~~'+sessionStorage.getItem('nav'));
+            fetchTasksByDay();
+        }
+//                    fetchTasksByDateRange();
             fetchNotAssignedTasks();
         fetchTaskDetails();
         }
@@ -1068,6 +1128,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
+
+
+    function openModal() {
+        validationModal.style.display = 'block';
+    }
+
+    function closeWarningModal() {
+        validationModal.style.display = 'none';
+    }
+
+    // Close the modal when the user clicks on <span> (x)
+    window.closeWarningModal = closeWarningModal;
+
     // Function to programmatically click a specific nav-item
 //    function triggerNavItemClick(dayName) {
 //        const navItem = [...document.querySelectorAll('.nav-item')].find(item => item.dataset.day === dayName);

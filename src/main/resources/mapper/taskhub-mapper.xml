@@ -4,8 +4,8 @@
 
 <mapper namespace="Taskhub">
     <insert id="save" parameterType="taskhubdto"> <!-- mybatis-config.xml 에서 설정한 Alias-->
-        insert into task(task_content, task_order, writer_id)
-        values(#{task_content}, 1, 'arar12')
+        insert into TASK(task_content, do_dates, task_order, writer_id)
+        values(#{task_content}, #{do_dates}, 1, 'arar12')
         <!--        #{task_order}, #{writer_id})-->
     </insert>
 
