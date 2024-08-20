@@ -18,7 +18,6 @@ Poppins: 둥글고 현대적인 느낌의 서체입니다.*/
     width: 250px;
     background-color: #f4f4f4;
     padding: 10px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     box-sizing: border-box;
 }
 
@@ -179,6 +178,10 @@ ul, ol {
     list-style-type: none;
 }
 
+ul {
+    padding-inline-start: 0px;
+}
+
 .days-list {
     margin-top: 20px;
 }
@@ -190,6 +193,7 @@ ul, ol {
 
 #daysList li {
     margin-bottom: 10px;
+    cursor: pointer;
 }
 
 .task-detail {
@@ -221,12 +225,12 @@ ul, ol {
     font-size: 16px;
 }
 
-.task-detail-content button {
+/*.task-detail-content button {
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
-    margin-right: 10px; /* Space between buttons */
-}
+    margin-right: 10px; *//* Space between buttons *//*
+}*/
 /* Ensure the buttons are next to each other */
 .button-container {
     display: flex;
@@ -373,35 +377,13 @@ ul, ol {
 /* Container for label and input pairs */
 .input-group {
     display: flex;
-    align-items: center; /* Align items vertically centered */
-    margin-bottom: 10px; /* Space between each group */
+    align-items: flex-start; /* Align items vertically centered */
+    margin-top: 8px; /* Space between each group */
 }
 
 /* Style labels for horizontal alignment */
 .input-group label {
-    margin-right: 10px; /* Space between label and input */
-    flex-shrink: 0; /* Prevent labels from shrinking */
-    min-width: 120px; /* Minimum width for labels (adjust as needed) */
-}
-
-/* Style inputs and selects */
-.input-group input,
-.input-group select {
-    flex: 1; /* Allow inputs/selects to take up remaining space */
-    padding: 8px; /* Padding inside inputs */
-    font-size: 16px; /* Font size */
-    border: 1px solid #ccc; /* Border for inputs/selects */
-    border-radius: 4px; /* Rounded corners */
-}
-/* Container for label and input pairs */
-.input-group {
-    display: flex;
-    align-items: center; /* Align items vertically centered */
-    margin-bottom: 10px; /* Space between each group */
-}
-
-/* Style labels for horizontal alignment */
-.input-group label {
+    padding-top: 6px;
     margin-right: 10px; /* Space between label and input */
     flex-shrink: 0; /* Prevent labels from shrinking */
     min-width: 120px; /* Minimum width for labels (adjust as needed) */
@@ -435,13 +417,32 @@ ul, ol {
 .date-group {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 3px;
 }
 
 .date-group input[type="date"] {
     flex: 1; /* Takes available space */
     margin-right: 5px; /* Space between input and button */
-    padding: 5px;
+    padding: 8px; /* Padding inside inputs */
+    padding-left: 12px;
+    font-size: 16px; /* Font size */
+}
+
+#doDatesContainer input[type="date"] {
+    flex: 1; /* Takes available space */
+    margin-right: 5px; /* Space between input and button */
+    padding: 8px; /* Padding inside inputs */
+    padding-left: 12px;
+    font-size: 16px; /* Font size */
+    margin-bottom: 3px;
+}
+
+#dueDate {
+    flex: 1; /* Takes available space */
+    margin-right: 5px; /* Space between input and button */
+    padding: 8px; /* Padding inside inputs */
+    padding-left: 12px;
+    font-size: 16px; /* Font size */
 }
 
 .date-group .date-button {
@@ -460,8 +461,20 @@ ul, ol {
 }
 
 .date-group .date-button.remove {
-    background: #e57373; /* Red for remove */
-    color: white;
+    background: #FFFFFF; /* A vibrant green color */
+    color: #404040;
+    border: none;
+    border-radius: 50%; /* Ensures the button is circular */
+    width: 20px; /* Smaller width */
+    height: 20px; /* Smaller height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px; /* Adjust font size to fit the smaller button */
+    margin-left: 10px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0.2, 0.2); /* Subtle shadow for depth */
+    transition: background 0.3s, transform 0.2s; /* Smooth transition effects */
 }
 
 .date-group .date-button.add {
@@ -474,7 +487,7 @@ ul, ol {
 }
 
 .date-group .date-button.remove:hover {
-    background: #cf6679; /* Darker red on hover */
+    background: #fa6c61; /* Darker red on hover */
 }
 
 .date-button.add:hover {
@@ -482,23 +495,34 @@ ul, ol {
 }
 
 #doDatesContainer {
-    margin-top: 10px;
+    /*margin-top: 10px;*/
 }
 
 #addDateButton {
-    background: #81c784; /* Green for add */
-    color: white;
+    background: #FFFFFF; /* A vibrant green color */
+    color: #404040;
     border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    border-radius: 50%; /* Ensures the button is circular */
+    width: 20px; /* Smaller width */
+    height: 20px; /* Smaller height */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 18px;
-    margin-top: 10px;
+    font-size: 14px; /* Adjust font size to fit the smaller button */
+    margin-left: 10px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0.2, 0.2); /* Subtle shadow for depth */
+    transition: background 0.3s, transform 0.2s; /* Smooth transition effects */
 }
+
+#addDateButton:hover {
+    background: #6bc76f; /* Lighter green on hover */
+}
+
+#addDateButton:active {
+    transform: scale(0.9); /* Slightly scale down on click */
+}
+
 
 /* Style for the list item */
 .task-item {

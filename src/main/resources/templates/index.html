@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Management</title>
+    <title>TASK HUB</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 
@@ -38,7 +38,6 @@
                     </div>
                 </form>
 
-
                 <ul id="taskList">
                     <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">
                         <input type="checkbox">
@@ -48,20 +47,11 @@
                         <!--                            <span th:text="${taskhub.task_status}" class="task_status"></span>-->
                     </li>
                 </ul>
-                <!--                    <hr class="separator">-->
                 <div class="days-list" id="daysList">
-                    <!--                        <ul id="MONTasks"></ul>-->
-                    <!--                        <ul id="TUETasks"></ul>-->
-                    <!--                        <ul id="WEDTasks"></ul>-->
-                    <!--                        <ul id="THUTasks"></ul>-->
-                    <!--                        <ul id="FRITasks"></ul>-->
-                    <!--                        <ul id="SATTasks"></ul>-->
-                    <!--                        <ul id="SUNTasks"></ul>-->
                 </div>
 
             </div>
             <div class="right-panel">
-
                 <div class="task-detail" id="taskDetail">
                     <h3>Task Details</h3>
                     <div class="task-detail-content" id="taskDetailContent">

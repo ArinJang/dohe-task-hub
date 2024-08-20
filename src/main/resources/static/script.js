@@ -542,6 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchTasksByDateRange() {
         // sessionStorage에서 'baseDate'를 가져옴
         const storedBaseDate = sessionStorage.getItem('baseDate');
+        console.log('storedBaseDate?? '+storedBaseDate);
 
         let isoDate = '';
 
@@ -694,9 +695,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 li.appendChild(taskContainer);
 
                 li.addEventListener('click', () => {
-//                    dayListClickFunc(task.task_id);
                     sessionStorage.setItem('detailID', task.task_id);
-                    console.log('::::::::::',sessionStorage.getItem('detailID'));
+//                    console.log('::::::::::',sessionStorage.getItem('detailID'));
                     fetchTaskDetails();
                 }); // Pass task_id to function
                 taskListForDay.appendChild(li);
@@ -705,18 +705,16 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log(`No tasks available for ${day}`);
         }
     }
-//    function dayListClickFunc(id) {
-//        sessionStorage.setItem('detailID', task.task_id);
-//    }
-//    // Add a click event listener to each task item
-//    taskList.addEventListener('click', function(event) {
-//        const listItem = event.target.closest('li.task-item');
-//        if (listItem) {
-//            const taskId = listItem.getAttribute('data-task-id');
-//            sessionStorage.setItem('detailID', taskId);
-//            fetchTaskDetails();
-//        }
-//    });
+
+    // Add a click event listener to each task item
+    taskList.addEventListener('click', function(event) {
+        const listItem = event.target.closest('li.task-item');
+        if (listItem) {
+            const taskId = listItem.getAttribute('data-task-id');
+            sessionStorage.setItem('detailID', taskId);
+            fetchTaskDetails();
+        }
+    });
 
     form.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -751,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 taskInput.value = '';
                 workInput.value = '';
-                if(sessionStorage.getItem('nav') == null || sessionStorage.getItem('nav') == ''){
+                if(sessionStorage.getItem('nav') == null){
                 console.log('nav null~~~~~');
                     fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
                 }else{
@@ -857,7 +855,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 sessionStorage.setItem('detailID', '');
 //                sessionStorage.setItem('nav', selectedDay);
 //                /location.reload();
-                if(sessionStorage.getItem('nav') == null || sessionStorage.getItem('nav') == ''){
+                if(sessionStorage.getItem('nav') == null){
                     console.log('nav null~~~~~');
                     fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
                 }else{
@@ -885,7 +883,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        sessionStorage.setItem('detailID', currentIdLocal);
 //        sessionStorage.setItem('nav', selectedDay);
 //        location.reload();
-        if(sessionStorage.getItem('nav') == null || sessionStorage.getItem('nav') == ''){
+        if(sessionStorage.getItem('nav') == null){
             console.log('nav null~~~~~');
             fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
         }else{
@@ -905,7 +903,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            sessionStorage.setItem('nav', selectedDay);
 //            location.reload();
 
-        if(sessionStorage.getItem('nav') == null || sessionStorage.getItem('nav') == ''){
+        if(sessionStorage.getItem('nav') == null){
             console.log('nav null~~~~~');
             fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
         }else{
@@ -980,27 +978,35 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const addDateInputGroup = () => {
+        // Get the current number of date input groups
         const index = document.querySelectorAll('#doDatesContainer .date-group').length;
+
+        // Create a new div element for the date group
         const newDateInputGroup = document.createElement('div');
         newDateInputGroup.className = 'date-group';
 
+        // Create a new date input element
         const newDateInput = document.createElement('input');
         newDateInput.type = 'date';
-        newDateInput.id = `doDates_${index}`; // Unique ID
+        newDateInput.id = `doDates_${index}`; // Set a unique ID for the new date input
 
+        // Create a new remove button element
         const newRemoveButton = document.createElement('button');
         newRemoveButton.type = 'button';
         newRemoveButton.className = 'date-button remove';
         newRemoveButton.textContent = '-';
         newRemoveButton.addEventListener('click', () => {
-            newDateInputGroup.remove();
+            newDateInputGroup.remove(); // Remove the date group when the remove button is clicked
         });
 
+        // Append the date input and remove button to the date group
         newDateInputGroup.appendChild(newDateInput);
         newDateInputGroup.appendChild(newRemoveButton);
 
-        doDatesContainer.appendChild(newDateInputGroup);
+        // Append the new date group to the container
+        document.getElementById('doDatesContainer').appendChild(newDateInputGroup);
     };
+
 
     // Add event listener to the add date button
     addDateButton.addEventListener('click', addDateInputGroup);
