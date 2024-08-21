@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         endDate.setDate(startDate.getDate() + 6); // One week later
         const startMonthDay = `${startDate.getMonth() + 1}/${startDate.getDate()}`;
         const endMonthDay = `${endDate.getMonth() + 1}/${endDate.getDate()}`;
-        return `${startMonthDay} ~ ${endMonthDay}`;
+        return `${startMonthDay}~${endMonthDay}`;
     }
 
     function updateWeekDisplay() {
@@ -472,6 +472,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     taskContent.textContent = taskhub.task_content;
                     li.appendChild(taskContent);
 
+                    // Apply CSS class if task_status is 4
+                    if (task.task_status == 4) {
+                        taskContent.classList.add('task-status-completed'); // Add custom class
+                    }
+
                     // work_name 요소 생성
                     const workName = document.createElement('span');
                     workName.classList.add('work_name');
@@ -626,7 +631,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 ul.id = `${day}Tasks`; // Ensure the ID matches what is used in renderDayTasksList
 
                 const li = document.createElement('li');
-                li.innerHTML = `<strong>[[ ${day} ]]</strong>`;
+                li.innerHTML = `<strong>[[ </string><strong class="custom-day-font">${day}</strong><strong> ]]</string>`;
+                //li.innerHTML = `<strong>[[ ${day} ]]</strong>`;
                 li.appendChild(ul);
                 daysList.appendChild(li);
             });
@@ -636,7 +642,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ul.id = `${aDay}Tasks`; // Use the provided day for the ID
 
             const li = document.createElement('li');
-            li.innerHTML = `<strong>[[ ${aDay} ]]</strong>`;
+            li.innerHTML = `<strong>[[ </string><strong class="custom-day-font">${aDay}</strong><strong> ]]</string>`;
+            //li.innerHTML = `<strong>[[ ${day} ]]</strong>`;
+//            li.innerHTML = `<strong>[[ ${aDay} ]]</strong>`;
             li.appendChild(ul);
             daysList.appendChild(li);
         }
@@ -662,14 +670,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 checkbox.className = 'task-checkbox'; // Add class to the checkbox
                 checkbox.addEventListener('change', () => toggleTaskCompletion(index));
 
-//                const text = document.createElement('span');
-//                text.textContent = task.task_content;
-////                text.textContent = `*${task.task_content}* - ${task.due_date}`; // Add * to the text content
-//                text.className = 'task_content'; // Add class to the task content
-//
-//                li.appendChild(checkbox);
-//                li.appendChild(text);
-
                 // Create a container for task content, work name and due date
                 const taskContainer = document.createElement('div');
                 taskContainer.className = 'task-container'; // Optional class for styling
@@ -677,6 +677,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const taskContentSpan = document.createElement('span');
                 taskContentSpan.textContent = task.task_content;
                 taskContentSpan.className = 'task_content'; // Add class to the task content
+
+                // Apply CSS class if task_status is 4
+                if (task.task_status == 4) {
+                    taskContentSpan.classList.add('task-status-completed'); // Add custom class
+                }
 
                 const workNameSpan = document.createElement('span');
                 workNameSpan.textContent = task.work_name; // Assuming task.work_name exists
@@ -750,10 +755,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 taskInput.value = '';
                 workInput.value = '';
                 if(sessionStorage.getItem('nav') == null){
-                console.log('nav null~~~~~');
                     fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
                 }else{
-                console.log('nav null아님~~~~~'+sessionStorage.getItem('nav'));
                     fetchTasksByDay();
                 }
                 refresh = true;
@@ -856,10 +859,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //                sessionStorage.setItem('nav', selectedDay);
 //                /location.reload();
                 if(sessionStorage.getItem('nav') == null){
-                    console.log('nav null~~~~~');
                     fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
                 }else{
-                    console.log('nav null아님~~~~~'+sessionStorage.getItem('nav'));
                     fetchTasksByDay();
                 }
         //                    fetchTasksByDateRange();
@@ -868,7 +869,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch((error) => {
                 console.error('Error:', error);
-                // Handle error (e.g., show an error message)
             });
         }
     });
@@ -884,10 +884,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //        sessionStorage.setItem('nav', selectedDay);
 //        location.reload();
         if(sessionStorage.getItem('nav') == null){
-            console.log('nav null~~~~~');
             fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
         }else{
-            console.log('nav null아님~~~~~'+sessionStorage.getItem('nav'));
             fetchTasksByDay();
         }
 //                    fetchTasksByDateRange();
@@ -904,10 +902,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //            location.reload();
 
         if(sessionStorage.getItem('nav') == null){
-            console.log('nav null~~~~~');
             fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
         }else{
-            console.log('nav null아님~~~~~'+sessionStorage.getItem('nav'));
             fetchTasksByDay();
         }
 //                    fetchTasksByDateRange();
@@ -1106,6 +1102,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     const taskContentSpan = document.createElement('a');
                     taskContentSpan.textContent = task.task_content;
                     taskContentSpan.className = 'task_content';
+
+                    // Apply CSS class if task_status is 4
+                    if (task.task_status === 4) {
+                        taskContentSpan.classList.add('task-status-completed'); // Add custom class
+                    }
 
                     const workNameSpan = document.createElement('span');
                     workNameSpan.textContent = task.work_name;
