@@ -42,8 +42,10 @@ document.addEventListener('DOMContentLoaded', function() {
 //    sessionStorage.setItem('nav','');
     console.log("TOP++ sessionStorage.getItem('nav')?! ",sessionStorage.getItem('nav'));
 
-    var taskDetailContent = document.getElementById('taskDetailContent');
-    var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
+//    if (sessionStorage.getItem('detailID')) {
+//        fetchTaskDetails(sessionStorage.getItem('detailID'));
+//        sessionStorage.setItem('detailID', '');
+//    }
 
     // Define your initial tasks array (this should be replaced with your actual data fetching logic)
     let tasks = [
@@ -104,10 +106,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateWeekDisplay() {
         const startDate = getStartDateOfWeek(currentYear, currentMonth, currentWeek);
-//        console.log('updateWeekDisplay baseDate::: '+startDate);
+        console.log('updateWeekDisplay baseDate::: '+baseDate);
 //        baseDate = startDate;
         sessionStorage.setItem('baseDate', startDate);
-        selectedDate = null;
         weekDisplay.textContent = getFormattedWeekRange(startDate);
     }
 
@@ -298,7 +299,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     categoryList.addEventListener('click', function(event) {
         selectedSide = event.target.getAttribute('data-category');
-        selectedDate = null;
         console.log('selectedSide?? ',selectedSide);
         if (event.target.classList.contains('category-item')) {
             setCategory(selectedSide);
@@ -396,6 +396,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 radio.checked = (radio.nextSibling.textContent.trim() === statusText);
             });
 
+            // Add event listener to save button
+//            const saveButton = document.getElementById('saveChangesButton');
+//            saveButton.removeEventListener('click', handleSaveChanges); // Prevent multiple bindings
+//            saveButton.addEventListener('click', () => handleSaveChanges(task.task_id));
         } else {
             console.error('Invalid task object:', task);
         }
@@ -440,37 +444,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     checkbox.type = 'checkbox';
                     li.appendChild(checkbox);
 
-                    // taskContainer 요소 생성
-                    const taskContainer = document.createElement('a'); // Use <a> to wrap all content
-                    taskContainer.classList.add('task_content');
-
                     // task_content 요소 생성
-                    const taskContent = document.createElement('span');
-                    taskContent.textContent = taskhub.task_content;
+                    const taskContent = document.createElement('a');
                     taskContent.classList.add('task_content');
+                    taskContent.textContent = taskhub.task_content;
+                    li.appendChild(taskContent);
 
                     // Apply CSS class if task_status is 4
-                    if (taskhub.task_status == 4) {
-                        taskContainer.classList.add('task-status-completed'); // Add custom class
+                    if (task.task_status == 4) {
+                        taskContent.classList.add('task-status-completed'); // Add custom class
                     }
 
                     // work_name 요소 생성
                     const workName = document.createElement('span');
                     workName.classList.add('work_name');
                     workName.textContent = taskhub.work_name;
+                    li.appendChild(workName);
 
                     // due_date 요소 생성
                     const dueDate = document.createElement('span');
                     dueDate.classList.add('due_date');
                     dueDate.textContent = taskhub.due_date;
-
-                    // Append taskContent, workName, and dueDate to taskContainer
-                    taskContainer.appendChild(taskContent);
-                    taskContainer.appendChild(workName);
-                    taskContainer.appendChild(dueDate);
-
-                    // Append taskContainer to <li>
-                    li.appendChild(taskContainer);
+                    li.appendChild(dueDate);
 
                     // li를 ul에 추가
                     taskList.appendChild(li);
@@ -478,7 +473,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Error fetching taskhubList:', error));
     }
-
 
 
     function fetchTaskDetails() {
@@ -531,6 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchTasksByDateRange() {
         // sessionStorage에서 'baseDate'를 가져옴
         const storedBaseDate = sessionStorage.getItem('baseDate');
+        console.log('storedBaseDate?? '+storedBaseDate);
 
         let isoDate = '';
 
@@ -577,36 +572,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchTasksByDay() {
-        // Retrieve baseDate from sessionStorage
-        const storedBaseDate = sessionStorage.getItem('baseDate');
-        const day = sessionStorage.getItem('nav'); // Get the specified day
-
-        let isoDate = '';
-
-        if (storedBaseDate) {
-            const pBaseDate = new Date(storedBaseDate);
-            // Check if the date object is valid
-            if (!isNaN(pBaseDate.getTime())) {
-                isoDate = pBaseDate.getFullYear() + '-' +
-                          String(pBaseDate.getMonth() + 1).padStart(2, '0') + '-' +
-                          String(pBaseDate.getDate()).padStart(2, '0');
-            } else {
-                console.error("Invalid date in sessionStorage");
-            }
-        }
-
-        // Fetch tasks with baseDate parameter if it exists
-        fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+        const day = sessionStorage.getItem('nav');
+        fetch(`/api/tasks`)
+            .then(response => response.json())
             .then(data => {
-                if (!Array.isArray(data)) {
-                    throw new Error('Fetched data is not an array');
-                }
                 tasks = data;
                 tasksByDay = tasks.reduce((acc, task) => {
                     const taskDay = task.day_of_week;
@@ -619,15 +588,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Only render the tasks for the specified day
                 if (tasksByDay[day]) {
-                    renderDayTitlesList(day); // Render the day titles
-                    renderDayTasksList(day); // Render the tasks for the specific day
+                    renderDayTitlesList(day); // 요일 제목 만듦
+                    renderDayTasksList(day); // 요일별 리스트 만듦
                 } else {
                     console.error(`No tasks found for the day: ${day}`);
                 }
             })
             .catch(error => console.error('Error fetching tasks:', error));
     }
-
 
     // 요일 제목 만듦
     function renderDayTitlesList(aDay) {
@@ -660,6 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 요일별 리스트 만듦
     function renderDayTasksList(day) {
         const taskListForDay = document.getElementById(`${day}Tasks`);
         if (!taskListForDay) {
@@ -675,13 +644,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
-                checkbox.checked = task.status === 'Completed'; // Change this based on your task status logic
+                checkbox.checked = task.status === 'Completed'; //???????? 5로바꿔야할듯
                 checkbox.className = 'task-checkbox'; // Add class to the checkbox
                 checkbox.addEventListener('change', () => toggleTaskCompletion(index));
 
-                // Create a container for task content, work name, and due date
-                const taskContainer = document.createElement('a'); // Use <a> to wrap all content
-                taskContainer.className = 'task_content';
+                // Create a container for task content, work name and due date
+                const taskContainer = document.createElement('div');
+                taskContainer.className = 'task-container'; // Optional class for styling
 
                 const taskContentSpan = document.createElement('span');
                 taskContentSpan.textContent = task.task_content;
@@ -689,18 +658,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Apply CSS class if task_status is 4
                 if (task.task_status == 4) {
-                    taskContainer.classList.add('task-status-completed'); // Add custom class
+                    taskContentSpan.classList.add('task-status-completed'); // Add custom class
                 }
 
                 const workNameSpan = document.createElement('span');
-                workNameSpan.textContent = task.work_name;
-                workNameSpan.className = 'work_name';
+                workNameSpan.textContent = task.work_name; // Assuming task.work_name exists
+                workNameSpan.className = 'work_name'; // Add class to the work name
 
                 const dueDateSpan = document.createElement('span');
                 dueDateSpan.textContent = task.due_date;
                 dueDateSpan.className = 'due_date';
 
-                // Append taskContentSpan, workNameSpan, and dueDateSpan to taskContainer
+                // Append both spans to the task container
                 taskContainer.appendChild(taskContentSpan);
                 taskContainer.appendChild(workNameSpan);
                 taskContainer.appendChild(dueDateSpan);
@@ -710,16 +679,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 li.addEventListener('click', () => {
                     sessionStorage.setItem('detailID', task.task_id);
-                    fetchTaskDetails(); // Pass task_id to function
-                });
-
+//                    console.log('::::::::::',sessionStorage.getItem('detailID'));
+                    fetchTaskDetails();
+                }); // Pass task_id to function
                 taskListForDay.appendChild(li);
             });
         } else {
-            console.log(`No tasks available for ${day}`);
+//            console.log(`No tasks available for ${day}`);
         }
     }
-
 
     // Add a click event listener to each task item
     taskList.addEventListener('click', function(event) {
@@ -740,25 +708,21 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('event.submitter.value;'+ event.submitter.value);
             // Check if any input fields are empty
             if(action == 'TASK+' && taskInput.value.trim() === '') {
-                showNotification('Enter a task', 'error');
+                openModal();
                 return; // Prevent form submission
             }
             if(action == 'WORK+' && workInput.value.trim() === '') {
-                showNotification('Enter a work', 'error');
+                openModal();
                 return; // Prevent form submission
             }
 
             // selectedDate가 null이 아닐 때 do_dates에 추가
-//            if (sessionStorage.getItem('baseDate') !== null && sessionStorage.getItem('baseDate') !== '') {
-            if (selectedDate !== null && selectedDate !== '') {
-//                formData.append('do_dates', sessionStorage.getItem('baseDate'));
+            if (selectedDate !== null) {
                 formData.append('do_dates', selectedDate);
             }
 
             formData.append('action', action);
-//            console.log("태스크 저장~ sessionStorage.getItem('baseDate')?? "+sessionStorage.getItem('baseDate'));
-            console.log("태스크 저장~ selectedDate?? "+selectedDate);
-
+            console.log("태스크 저장~");
 
             fetch('/api/save', {
                 method: 'POST',
@@ -768,7 +732,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 taskInput.value = '';
                 workInput.value = '';
-                if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+                if(sessionStorage.getItem('nav') == null){
                     fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
                 }else{
                     fetchTasksByDay();
@@ -838,15 +802,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             console.log('Success:', data);
-            //successModal.style.display = 'block';
-            showNotification('Successfully updated!', 'success');
-            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-            }else{
-                fetchTasksByDay();
-            }
-            fetchNotAssignedTasks();
-            fetchTaskDetails();
+            // Show the success modal
+            successModal.style.display = 'block';
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -860,7 +817,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     confirmDeleteButton.addEventListener('click', () => {
-//    deleteConfirmationButton.addEventListener('click', (event) => {
 //        console.log('selectedDay? delete: ',selectedDay);
         const curId = sessionStorage.getItem('detailID');
         if (curId) {
@@ -876,14 +832,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Deleted:', data);
                 // Handle success (e.g., show a message, remove the task from the list, etc.)
                 deleteConfirmationModal.style.display = 'none';
-                showNotification('Task deleted.', 'delete');
 
                 sessionStorage.setItem('detailID', '');
-                if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+//                sessionStorage.setItem('nav', selectedDay);
+//                /location.reload();
+                if(sessionStorage.getItem('nav') == null){
                     fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
                 }else{
                     fetchTasksByDay();
                 }
+        //                    fetchTasksByDateRange();
                 fetchNotAssignedTasks();
                 fetchTaskDetails();
             })
@@ -898,20 +856,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Close the modal when the user clicks on "Close"
-//    closeModal.addEventListener('click', () => {
-//        successModal.style.display = 'none';
-////        sessionStorage.setItem('detailID', currentIdLocal);
-////        sessionStorage.setItem('nav', selectedDay);
-////        location.reload();
-//        if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//            fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//        }else{
-//            fetchTasksByDay();
-//        }
-////                    fetchTasksByDateRange();
-//        fetchNotAssignedTasks();
-//        fetchTaskDetails();
-//    });
+    closeModal.addEventListener('click', () => {
+        successModal.style.display = 'none';
+//        sessionStorage.setItem('detailID', currentIdLocal);
+//        sessionStorage.setItem('nav', selectedDay);
+//        location.reload();
+        if(sessionStorage.getItem('nav') == null){
+            fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+        }else{
+            fetchTasksByDay();
+        }
+//                    fetchTasksByDateRange();
+        fetchNotAssignedTasks();
+        fetchTaskDetails();
+    });
 
     // Close the modal when the user clicks anywhere outside of the modal
     window.addEventListener('click', (event) => {
@@ -920,14 +878,15 @@ document.addEventListener('DOMContentLoaded', function() {
 //            sessionStorage.setItem('detailID', currentIdLocal);
 //            sessionStorage.setItem('nav', selectedDay);
 //            location.reload();
-//
-//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//            }else{
-//                fetchTasksByDay();
-//            }
-//            fetchNotAssignedTasks();
-//            fetchTaskDetails();
+
+        if(sessionStorage.getItem('nav') == null){
+            fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+        }else{
+            fetchTasksByDay();
+        }
+//                    fetchTasksByDateRange();
+            fetchNotAssignedTasks();
+        fetchTaskDetails();
         }
     });
 
@@ -964,8 +923,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching categories:', error));
     }
 
+    // Function to populate do dates dynamically
     const populateDoDates = (dates) => {
-        const doDatesContainer = document.getElementById('doDatesContainer');
         doDatesContainer.innerHTML = ''; // Clear existing dates
 
         dates.forEach((date, index) => {
@@ -977,25 +936,12 @@ document.addEventListener('DOMContentLoaded', function() {
             dateInput.value = date; // Assuming the date is in YYYY-MM-DD format
             dateInput.id = `doDates_${index}`; // Unique ID
 
-            // Track the original value of the date input
-            let originalValue = dateInput.value;
-
             const removeButton = document.createElement('button');
             removeButton.type = 'button';
             removeButton.className = 'date-button remove';
             removeButton.textContent = '-';
             removeButton.addEventListener('click', () => {
-//                console.log('remove click??populate');
                 dateInputGroup.remove();
-                saveTaskData(); // Save changes when removing a date
-            });
-
-//            sessionStorage.setItem('baseDate', );
-            // Add blur event listener to check if value has changed
-            dateInput.addEventListener('blur', (event) => {
-                if (event.target.value !== originalValue) {
-                    saveTaskData(); // Call your function if the value has changed
-                }
             });
 
             dateInputGroup.appendChild(dateInput);
@@ -1004,7 +950,6 @@ document.addEventListener('DOMContentLoaded', function() {
             doDatesContainer.appendChild(dateInputGroup);
         });
     };
-
 
     const addDateInputGroup = () => {
         // Get the current number of date input groups
@@ -1019,25 +964,13 @@ document.addEventListener('DOMContentLoaded', function() {
         newDateInput.type = 'date';
         newDateInput.id = `doDates_${index}`; // Set a unique ID for the new date input
 
-        let originalValue = newDateInput.value;
-
         // Create a new remove button element
         const newRemoveButton = document.createElement('button');
         newRemoveButton.type = 'button';
         newRemoveButton.className = 'date-button remove';
         newRemoveButton.textContent = '-';
         newRemoveButton.addEventListener('click', () => {
-//            console.log('remove click??addDate');
             newDateInputGroup.remove(); // Remove the date group when the remove button is clicked
-            saveTaskData(); // Save changes when removing a date
-        });
-
-        // Add blur event listener to check if value has changed
-        newDateInput.addEventListener('blur', (event) => {
-        console.log('add button blur:: event.target.value: ',originalValue, '// event.target.value:',event.target.value);
-            if (event.target.value !== originalValue) {
-                saveTaskData(); // Call your function if the value has changed
-            }
         });
 
         // Append the date input and remove button to the date group
@@ -1045,8 +978,7 @@ document.addEventListener('DOMContentLoaded', function() {
         newDateInputGroup.appendChild(newRemoveButton);
 
         // Append the new date group to the container
-        const doDatesContainer = document.getElementById('doDatesContainer');
-        doDatesContainer.appendChild(newDateInputGroup);
+        document.getElementById('doDatesContainer').appendChild(newDateInputGroup);
     };
 
 
@@ -1079,18 +1011,27 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('handleNavItemClick date?!',date);
         sessionStorage.setItem('baseDate', date);
 
+//        if(sessionStorage.getItem('nav') && sessionStorage.getItem('nav').trim() !== '') {
+//            target.classList.add('active'); // 배경색 변경
+//            fetchTasksByDay(sessionStorage.getItem('nav'));
+//            selectedDay = sessionStorage.getItem('nav');
+////            sessionStorage.getItem('nav') = null;
+//            return;
+//        }
+
         if (selectedSide === 'week') {
             if (sessionStorage.getItem('nav') === clickedDay) { // 날짜 선택 해제
+//                selectedDay = null;
                 sessionStorage.setItem('nav', '');
                 selectedDate = null;
-
-                sessionStorage.setItem('baseDate', '');
+//                reloadNav = null;
                 target.classList.remove('active'); // 배경색 원래대로
                 fetchTasksByDateRange();
             } else { // 날짜 새로 선택
+//                selectedDay = clickedDay;
                 sessionStorage.setItem('nav', clickedDay);
                 selectedDate = date;
-                sessionStorage.setItem('baseDate', date);
+//                reloadNav = clickedDay;
                 // 모든 nav-item에서 active 클래스 제거
                 document.querySelectorAll('.nav-item').forEach(item => {
                     item.classList.remove('active');
@@ -1099,7 +1040,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchTasksByDay();
             }
         }
-        console.log('after handleNavItemClick day?!',sessionStorage.getItem('nav'));
     }
 
     function triggerNavItemClick(dayName) {
@@ -1140,12 +1080,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     checkbox.checked = task.status === 'Completed';
                     checkbox.className = 'task-checkbox';
 
-                    const taskContainer = document.createElement('a'); // Use <a> to wrap all content
-                    taskContainer.className = 'task_content';
-
-                    const taskContentSpan = document.createElement('span');
+                    const taskContentSpan = document.createElement('a');
                     taskContentSpan.textContent = task.task_content;
                     taskContentSpan.className = 'task_content';
+
+                    // Apply CSS class if task_status is 4
+                    if (task.task_status === 4) {
+                        taskContentSpan.classList.add('task-status-completed'); // Add custom class
+                    }
 
                     const workNameSpan = document.createElement('span');
                     workNameSpan.textContent = task.work_name;
@@ -1155,26 +1097,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     dueDateSpan.textContent = task.due_date;
                     dueDateSpan.className = 'due_date';
 
-                    // Append spans to the taskContainer
-                    taskContainer.appendChild(taskContentSpan);
-                    taskContainer.appendChild(workNameSpan);
-                    taskContainer.appendChild(dueDateSpan);
-
-                    // Apply CSS class if task_status is 4
-                    if (task.task_status === 4) {
-                        taskContainer.classList.add('task-status-completed'); // Add custom class
-                    }
-
-                    // Append checkbox and taskContainer to <li>
                     li.appendChild(checkbox);
-                    li.appendChild(taskContainer);
+                    li.appendChild(taskContentSpan);
+                    li.appendChild(workNameSpan);
+                    li.appendChild(dueDateSpan);
 
-                    // Append <li> to taskList
                     taskList.appendChild(li);
                 });
             })
             .catch(error => console.error('Error fetching tasks:', error));
     }
+
 
     // Utility function to format a date as YYYY-MM-DD
     function formatDate(date) {
@@ -1184,6 +1117,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${year}-${month}-${day}`;
     }
 
+
+    function openModal() {
+        validationModal.style.display = 'block';
+    }
+
     function closeWarningModal() {
         validationModal.style.display = 'none';
     }
@@ -1191,47 +1129,644 @@ document.addEventListener('DOMContentLoaded', function() {
     // Close the modal when the user clicks on <span> (x)
     window.closeWarningModal = closeWarningModal;
 
-    function showNotification(message, type = 'success') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
+    // Function to programmatically click a specific nav-item
+//    function triggerNavItemClick(dayName) {
+//        const navItem = [...document.querySelectorAll('.nav-item')].find(item => item.dataset.day === dayName);
+//        if (navItem) {
+//            const clickEvent = new Event('click', { bubbles: true });
+//            navItem.dispatchEvent(clickEvent);
+//        } else {
+//            console.error(`No nav-item found for day: ${dayName}`);
+//        }
+//    }
 
-        // Add notification to container
-        const container = document.getElementById('notificationContainer');
-        container.appendChild(notification);
-
-        // Remove notification after 3 seconds
-        setTimeout(() => {
-            notification.classList.add('hide');
-            setTimeout(() => notification.remove(), 200); // Remove element after fade-out
-        }, 1500);
-    }
-    function saveTaskData() {
-        // Programmatically trigger the click event on saveChangesButton
-        saveChangesButton.click();
-    }
-
-//    // Attach event listener to the taskDetail container
-//    taskDetail.addEventListener('mouseleave', saveTaskData);
+//    function triggerNavItemClick(dayName) {
+//        // Log to check if `dayName` matches the data-day values in the nav items
+//        console.log('Triggering click for:', dayName);
+//
+//        // Find the nav item by `data-day`
+//        const navItem = [...document.querySelectorAll('.nav-item')].find(item => item.dataset.day === dayName);
+//
+//        if (navItem) {
+////            console.log('Found nav-item:', navItem);
+//            const clickEvent = new Event('click', { bubbles: true });
+//            navItem.dispatchEvent(clickEvent);
+//        } else {
+//            console.error(`No nav-item found for day: ${dayName}`);
+//        }
+//    }
 
 
-    // Add blur event listener to each input, select, and textarea
-    detailElements.forEach(input => {
-        input.addEventListener('blur', saveTaskData);
+    // Example usage: Trigger click on the 'SUN' nav-item
+    //triggerNavItemClick('SUN');
+
+
     });
 
 
-//    taskDetailContent.addEventListener('focusout', () => {
-//        console.log('Div has lost focus');
-//        saveChangesButton.click();
-//    });
-    // Detect clicks outside the div
-//    document.addEventListener('click', (event) => {
-//        if (!taskDetailContent.contains(event.target)) {
-//            console.log('Clicked outside the div');
-//        saveChangesButton.click();
-//        }
-//    });
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+}
+/*Google Fonts에서 제공하는 무료 폰트들:
+Roboto: 매우 깨끗하고 읽기 쉬운 서체입니다.
+Lato: 현대적이고 다목적으로 사용할 수 있는 폰트입니다.
+Open Sans: 널리 사용되는 깔끔한 서체입니다.
+Montserrat: 현대적이고 강렬한 느낌의 서체입니다.
+Poppins: 둥글고 현대적인 느낌의 서체입니다.*/
 
-});
+ul[id$='Tasks'] {
+    font-family: "PT Mono", monospace;
+    font-size: 14px; /* Change font size */
+    color: #333; /* Change text color */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    list-style-type: none; /* Remove default list styling */
+}
+
+.container {
+    display: flex;
+    align-items: stretch; /* Ensure sidebar and main-content have the same height */
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #f4f4f4;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.category {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    padding-top: 30px;
+    padding-bottom: 40px;
+}
+
+.category-item {
+    padding: 10px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.category-item.active {
+    background-color: #87CEEB; /* Sky blue */
+    color: white;
+}
+
+#week-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#prev-week, #next-week {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#week-info {
+    font-weight: bold;
+    margin: 0 20px;
+}
+
+#category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+#navigation-bar {
+    display: flex;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.nav-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.nav-item.active {
+    background-color: #87CEEB; /* Sky blue */
+    color: white;
+}
+
+.nav-item .edit-btn,
+.nav-item .delete-btn {
+    display: none; /* Initially hidden */
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ffffff;
+    border: 0px;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 18px;
+}
+
+.nav-item .edit-btn {
+    right: 50px; /* Adjusted for better spacing */
+    color: #007bff;
+}
+
+.nav-item .delete-btn {
+    right: 10px; /* Adjusted for better spacing */
+    color: #dc3545;
+}
+
+.nav-item:hover .edit-btn,
+.nav-item:hover .delete-btn {
+    display: inline;
+}
+
+#list-detail {
+    display: flex;
+    flex-direction: row; /* Side by side layout for left and right panels */
+    width: 100%;
+    height: 100%;
+}
+
+.left-panel,
+.right-panel {
+    width: 50%;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.task-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.work-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#taskInput,
+#workInput {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+}
+
+#addTaskButton,
+#addWorkButton {
+    width: 80px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#taskList {
+    list-style: none;
+    padding: 0;
+}
+
+#taskList li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+#taskList input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+ul, ol {
+    list-style-type: none;
+}
+
+ul {
+    padding-inline-start: 0px;
+}
+
+.days-list {
+    margin-top: 20px;
+}
+
+#daysList {
+    list-style: none;
+    padding: 0;
+}
+
+#daysList li {
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.task-detail {
+    border: 1px solid #ccc;
+    padding: 20px;
+    background-color: #f9f9f9;
+}
+
+.task-detail h2 {
+    margin: 0 0 20px 0;
+}
+
+.task-detail-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-detail-content label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.task-detail-content input,
+.task-detail-content textarea,
+.task-detail-content select {
+    margin-left: 10px; /* Adjust to space out label and input */
+    padding: 10px;
+    font-size: 16px;
+}
+
+/*.task-detail-content button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 10px; *//* Space between buttons *//*
+}*/
+/* Ensure the buttons are next to each other */
+.button-container {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right (or center as needed) */
+    gap: 10px; /* Space between buttons */
+    margin-top: 20px; /* Add space above the buttons */
+}
+
+/* Save button styling */
+#saveChangesButton {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
+}
+
+#saveChangesButton:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* Center the modal */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px; /* Width of the modal */
+    text-align: center;
+    border-radius: 10px; /* Rounded corners */
+    font-size: 16px;
+}
+
+.modal-content h2 {
+    font-size: 20px;
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    margin-bottom: 20px;
+}
+
+#confirmDeleteButton {
+    background-color: #f44336; /* Red background */
+    color: white; /* White text */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
+    margin-right: 10px; /* Space between buttons */
+}
+
+#confirmDeleteButton:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+#cancelDeleteButton {
+    background-color: #ccc; /* Gray background */
+    color: black; /* Black text */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
+}
+
+#cancelDeleteButton:hover {
+    background-color: #aaa; /* Darker gray on hover */
+}
+
+
+#saveCloseButton {
+    background-color: #ccc; /* Gray background */
+    color: black; /* Black text */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
+}
+
+#warningCloseButton {
+    background-color: #ccc; /* Gray background */
+    color: black; /* Black text */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
+}
+
+#saveCloseButton:hover {
+    background-color: #aaa; /* Darker gray on hover */
+}
+
+/* Delete button styling */
+#deleteConfirmationButton {
+    background-color: #f44336; /* Red background */
+    color: white; /* White text */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
+}
+
+#deleteConfirmationButton:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+/* Container for label and input pairs */
+.input-group {
+    display: flex;
+    align-items: flex-start; /* Align items vertically centered */
+    margin-top: 8px; /* Space between each group */
+}
+
+/* Style labels for horizontal alignment */
+.input-group label {
+    padding-top: 6px;
+    margin-right: 10px; /* Space between label and input */
+    flex-shrink: 0; /* Prevent labels from shrinking */
+    min-width: 120px; /* Minimum width for labels (adjust as needed) */
+}
+
+/* Style inputs and selects */
+.input-group input,
+.input-group select {
+    flex: 1; /* Allow inputs/selects to take up remaining space */
+    padding: 8px; /* Padding inside inputs */
+    font-size: 16px; /* Font size */
+    border: 1px solid #ccc; /* Border for inputs/selects */
+    border-radius: 4px; /* Rounded corners */
+}
+
+/* Container for status radio buttons */
+.status-radio-group {
+    display: flex;
+    flex-wrap: wrap; /* Wrap to next line if needed */
+    gap: 10px; /* Space between radio buttons */
+    margin-top: 10px; /* Space above the status group */
+}
+
+/* Style for individual radio button labels */
+.status-radio-group label {
+    display: flex;
+    align-items: center; /* Align radio button and text vertically */
+    font-size: 16px; /* Font size */
+}
+/* CSS for the date input and buttons */
+.date-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.date-group input[type="date"] {
+    flex: 1; /* Takes available space */
+    margin-right: 5px; /* Space between input and button */
+    padding: 8px; /* Padding inside inputs */
+    padding-left: 12px;
+    font-size: 16px; /* Font size */
+}
+
+#doDatesContainer input[type="date"] {
+    flex: 1; /* Takes available space */
+    margin-right: 5px; /* Space between input and button */
+    padding: 8px; /* Padding inside inputs */
+    padding-left: 12px;
+    font-size: 16px; /* Font size */
+    margin-bottom: 3px;
+}
+
+#dueDate {
+    flex: 1; /* Takes available space */
+    margin-right: 5px; /* Space between input and button */
+    padding: 8px; /* Padding inside inputs */
+    padding-left: 12px;
+    font-size: 16px; /* Font size */
+}
+
+.date-group .date-button {
+    background: #f1f1f1;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+    color: #333;
+}
+
+.date-group .date-button.remove {
+    background: #FFFFFF; /* A vibrant green color */
+    color: #404040;
+    border: none;
+    border-radius: 50%; /* Ensures the button is circular */
+    width: 20px; /* Smaller width */
+    height: 20px; /* Smaller height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px; /* Adjust font size to fit the smaller button */
+    margin-left: 10px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0.2, 0.2); /* Subtle shadow for depth */
+    transition: background 0.3s, transform 0.2s; /* Smooth transition effects */
+}
+
+.date-group .date-button.add {
+    background: #81c784; /* Green for add */
+    color: white;
+}
+
+.date-group .date-button:hover {
+    background: #ddd;
+}
+
+.date-group .date-button.remove:hover {
+    background: #fa6c61; /* Darker red on hover */
+}
+
+.date-button.add:hover {
+    background: #66bb6a; /* Darker green on hover */
+}
+
+#doDatesContainer {
+    /*margin-top: 10px;*/
+}
+
+#addDateButton {
+    background: #FFFFFF; /* A vibrant green color */
+    color: #404040;
+    border: none;
+    border-radius: 50%; /* Ensures the button is circular */
+    width: 20px; /* Smaller width */
+    height: 20px; /* Smaller height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px; /* Adjust font size to fit the smaller button */
+    margin-left: 10px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0.2, 0.2); /* Subtle shadow for depth */
+    transition: background 0.3s, transform 0.2s; /* Smooth transition effects */
+}
+
+#addDateButton:hover {
+    background: #6bc76f; /* Lighter green on hover */
+}
+
+#addDateButton:active {
+    transform: scale(0.9); /* Slightly scale down on click */
+}
+
+
+/* Style for the list item */
+.task-item {
+    display: flex;
+    align-items: center; /* Align items vertically */
+    padding: 5px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+}
+/* Style for the list item */
+.day-item {
+    display: flex;
+    align-items: center; /* Align items vertically */
+    padding: 5px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Style for the checkbox */
+.task-checkbox {
+    margin-right: 10px;
+}
+/* Style for the checkbox */
+.task-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+/* Style for the task container */
+.task-container {
+    display: flex;
+    align-items: center; /* Align items vertically */
+}
+
+/* Style for the task content */
+.task_content {
+    font-size: 16px;
+    margin-right: 5px;
+}
+
+/* Style for the work name */
+.work_name {
+    font-size: 14px;
+    color: lightblue; /* Light sky blue color */
+    margin-right: 5px;
+}
+
+/*.work_name::before {
+    content: "(";
+    color: lightblue; *//* Light sky blue color *//*
+    *//*margin-right: 5px;*//*
+}
+
+.work_name::after {
+    content: ")";
+    color: lightblue; *//* Light sky blue color *//*
+    *//*margin-left: 5px;*//*
+}*/
+
+/* Style for the due date */
+.due_date {
+    font-size: 14px;
+    /*color: lightblue;*/ /* Light sky blue color */
+}
+
+/*
+.due_date::before {
+    content: "-";
+    color: lightblue; */
+/* Light sky blue color *//*
+
+    margin-right: 5px;
+}*/

@@ -71,8 +71,8 @@ public class TaskhubController {
 
         if (baseDate != null && !baseDate.isEmpty()) {
             today = LocalDate.parse(baseDate); // 문자열을 LocalDate로 변환
-//            System.out.println("baseDate passed::: "+baseDate);
-//            System.out.println("baseDate parsed::: "+today);
+            System.out.println("baseDate passed::: "+baseDate);
+            System.out.println("baseDate parsed::: "+today);
         } else {
             today = LocalDate.now(); // baseDate가 없으면 현재 날짜를 사용
             System.out.println("baseDate is null");

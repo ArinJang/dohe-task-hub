@@ -25,6 +25,7 @@
             <button id="next-week">&#9654;</button>
         </div>
         <ul id="category-list">
+            <li class="category-item" data-category="today">TODAY(준비중)</li>
             <li class="category-item active" data-category="week">WEEK</li>
             <li class="category-item" data-category="work">WORK</li>
             <li class="category-item" data-category="delegation">DELEGATION</li>
@@ -46,15 +47,27 @@
                     </div>
                 </form>
 
+                <!--                <ul id="taskList">-->
+                <!--                    <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">-->
+                <!--                        <input type="checkbox">-->
+                <!--                        <a th:text="${taskhub.task_content}" class="task_content"></a>-->
+                <!--                        <span th:text="${taskhub.work_name}" class="work_name"></span>-->
+                <!--                        <span th:text="${taskhub.due_date}" class="due_date"></span>-->
+                <!--                        &lt;!&ndash;                            <span th:text="${taskhub.task_status}" class="task_status"></span>&ndash;&gt;-->
+                <!--                    </li>-->
+                <!--                </ul>-->
+
                 <ul id="taskList">
                     <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">
                         <input type="checkbox">
-                        <a th:text="${taskhub.task_content}" class="task_content"></a>
-                        <span th:text="${taskhub.work_name}" class="work_name"></span>
-                        <span th:text="${taskhub.due_date}" class="due_date"></span>
-                        <!--                            <span th:text="${taskhub.task_status}" class="task_status"></span>-->
+                        <a class="task_content_set">
+                            <span class="task_content" th:text="${taskhub.task_content}"></span>
+                            <span class="work_name" th:text="${taskhub.work_name}"></span>
+                            <span class="due_date" th:text="${taskhub.due_date}"></span>
+                        </a>
                     </li>
                 </ul>
+
                 <div class="days-list" id="daysList">
                 </div>
 
@@ -62,7 +75,7 @@
             <div class="right-panel">
                 <div class="task-detail" id="taskDetail">
                     <h3>Task Details</h3>
-                    <div class="task-detail-content" id="taskDetailContent">
+                    <div class="task-detail-content" id="taskDetailContent" tabindex="0">
                         <div class="input-group">
                             <label for="taskName">Task:</label>
                             <input type="text" id="taskName" placeholder="Select a task to view its details.">
@@ -103,18 +116,18 @@
                         <div class="input-group">
                             <label>Status:</label>
                         </div>
-                            <div class="status-radio-group">
-                                <label><input type="radio" name="status" value="0"> Not Started</label>
-                                <label><input type="radio" name="status" value="1"> In Progress</label>
-                                <label><input type="radio" name="status" value="2"> On Hold</label>
-                                <label><input type="radio" name="status" value="3"> Canceled</label>
-                                <label><input type="radio" name="status" value="4"> Completed</label>
-                            </div>
+                        <div class="status-radio-group">
+                            <label><input type="radio" name="status" value="0"> Not Started</label>
+                            <label><input type="radio" name="status" value="1"> In Progress</label>
+                            <label><input type="radio" name="status" value="2"> On Hold</label>
+                            <label><input type="radio" name="status" value="3"> Canceled</label>
+                            <label><input type="radio" name="status" value="4"> Completed</label>
+                        </div>
 
                         <div class="input-group">
                             <label for="taskMemo">Memo:</label>
                         </div>
-                            <textarea id="taskMemo" rows="4" cols="50"></textarea>
+                        <textarea id="taskMemo" rows="4" cols="50"></textarea>
                         <div class="button-container">
                             <button id="saveChangesButton">Save</button>
                             <button id="deleteConfirmationButton">Delete</button>
@@ -125,14 +138,7 @@
         </div>
     </div>
 </div>
-<!-- Modal Structure -->
-<div id="successModal" class="modal">
-    <div class="modal-content">
-        <h2>Success</h2>
-        <p>Successfully updated!</p>
-        <button class="close" id="saveCloseButton">Close</button>
-    </div>
-</div>
+<div id="notificationContainer"></div>
 <!-- Modal Structure for Delete Confirmation -->
 <div id="deleteConfirmationModal" class="modal">
     <div class="modal-content">
@@ -142,15 +148,6 @@
         <button id="cancelDeleteButton">Cancel</button>
     </div>
 </div>
-<!-- Modal Structure -->
-<div id="validationModal" class="modal">
-    <div class="modal-content">
-        <p>Please enter a task/work.</p>
-        <button class="close-button" id="warningCloseButton" onclick="closeWarningModal()">Close</button>
-        <!--        <span class="close-button" onclick="closeWarningModal()">&times;</span>-->
-    </div>
-</div>
-
 <script src="script.js"></script>
 </body>
 </html>

@@ -18,7 +18,7 @@
         TASK_STATUS
         FROM TASK
         WHERE DO_DATES IS NULL
-        ORDER BY TASK_ID DESC;
+        ORDER BY TASK_ORDER DESC, TASK_ID DESC;
     </select>
 
     <select id="findByDays" parameterType="map" resultType="taskhubdto">
