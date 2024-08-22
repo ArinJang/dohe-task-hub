@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const dayList = document.getElementById('dayList');
     const daysList = document.querySelector('.days-list');
     const taskDetail = document.getElementById('taskDetail');
-    const form = document.getElementById('taskForm');
+    const taskForm = document.getElementById('taskForm');
     var refresh = false;
     var detailID;
     var idToShowDetail;
@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //    let selectedNav = null;
     let selectedDate = null;
     let selectedSide = 'week';
+        const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 //    var currentIdLocal = sessionStorage.getItem('detailID');
 //    var currentSide = sessionStorage.getItem('side');
 //    var reloadNav = sessionStorage.getItem('nav');
@@ -65,9 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMonth = new Date().getMonth(); // 0-based index (0 = January)
     let currentYear = new Date().getFullYear();
     let currentWeek = getWeekOfMonth(new Date());
-//    let baseDate = new Date();
-
-
 
     const categories = {
         week: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
@@ -103,17 +101,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateWeekDisplay() {
+        if(sessionStorage.getItem('today') === 'true') {
+            currentMonth = new Date().getMonth(); // 0-based index (0 = January)
+            currentYear = new Date().getFullYear();
+            currentWeek = getWeekOfMonth(new Date());
+        }
         const startDate = getStartDateOfWeek(currentYear, currentMonth, currentWeek);
-//        console.log('updateWeekDisplay baseDate::: '+startDate);
-//        baseDate = startDate;
         sessionStorage.setItem('baseDate', startDate);
+        sessionStorage.setItem('nav', '');
         selectedDate = null;
         weekDisplay.textContent = getFormattedWeekRange(startDate);
     }
 
     // NavigationBar 업데이트 함수
     function updateWeekDates() {
+    console.log('sessionStorage.getItem(today)',sessionStorage.getItem('today'));
         navigationBar.innerHTML = '';
+        if(sessionStorage.getItem('today') === 'true'   ) {
+            currentMonth = new Date().getMonth(); // 0-based index (0 = January)
+            currentYear = new Date().getFullYear();
+            currentWeek = getWeekOfMonth(new Date());
+        }
         const startDate = getStartDateOfWeek(currentYear, currentMonth, currentWeek);
 
         const dates = Array.from({ length: 7 }, (_, i) => {
@@ -139,31 +147,10 @@ document.addEventListener('DOMContentLoaded', function() {
             dayDateContainer.appendChild(dayElement);
             dayDateContainer.appendChild(dateElement);
 
-
             dayDateContainer.addEventListener('click', function() {
-//                if (selectedNav && selectedNav !== this) {
-//                    // 기존에 활성화된 항목이 있으면 비활성화
-//                    selectedNav.classList.remove('active');
-//                }
-
-//                if (selectedNav === this) {
-//                    // 클릭한 항목이 이미 활성화된 항목이라면 비활성화
-//                    selectedNav = null;
-////                    this.classList.remove('active');
-////                    //daysList.style.display = 'block'; // Show daysList
-////                    fetchTasks(null); // 모든 작업을 가져오기
-//                } else {
-//                    // 클릭한 항목을 활성화
-//                    selectedNav = this;
-////                    this.classList.add('active');
-////                    //daysList.style.display = 'none'; // Hide daysList
-////                    fetchTasks(this.dataset.day); // 선택된 요일에 맞는 작업을 가져오기
-//                }
             });
             navigationBar.appendChild(dayDateContainer);
         });
-
-//        addNavigationBarEventListeners(); // Ensure event listeners are attached after updating
     }
 
     function createNavItem(catName, categoryOrDelegation) {
@@ -220,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (category === 'week') {
             updateWeekDates();
-        } else if (category === 'work' || category === 'delegation') {
+        } else if (category === 'work') {
             const allButton = document.createElement('div');
             allButton.textContent = 'All';
             allButton.className = 'nav-item';
@@ -292,8 +279,27 @@ document.addEventListener('DOMContentLoaded', function() {
         activeItem.classList.add('active');
     }
 
-    function updateContent(day, date) {
-        //listDetail.innerHTML = `<h3>${day} - ${date}</h3><p>Content for ${day}, ${date}</p>`;
+    function clickCategory(selectedSide) {
+        switch (selectedSide) {
+            case 'week':
+            console.log('clickCategory week~');
+                fetchNotAssignedTasks();
+                fetchTasksByDateRange(); // Call this first
+                renderDayTitlesList(); // Ensure days list is rendered first
+                showForm(); // 폼을 보이게 함
+                break;
+            case 'delegation':
+                hideForm(); // 폼을 숨김
+                fetchStatus(5); // Fetch status 5
+                break;
+            case 'onhold':
+                hideForm(); // 폼을 숨김
+                fetchStatus(4); // Fetch status 4
+                break;
+            default:
+                showForm(); // 기본적으로 폼을 보이게 함
+                break;
+        }
     }
 
     categoryList.addEventListener('click', function(event) {
@@ -303,9 +309,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target.classList.contains('category-item')) {
             setCategory(selectedSide);
         }
-        fetchTasksByDateRange(); // Call this first
-        renderDayTitlesList(); // Ensure days list is rendered first
+        clickCategory(selectedSide);
     });
+    // 폼을 보이게 하는 함수
+    function showForm() {
+        taskForm.style.display = 'block';
+        daysList.style.display = 'block';
+    }
+
+    // 폼을 숨기는 함수
+    function hideForm() {
+        taskForm.style.display = 'none';
+        daysList.style.display = 'none';
+    }
 
     document.getElementById('prev-week').addEventListener('click', function() {
         currentWeek--;
@@ -355,9 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentWeek = getWeekOfMonth(today);
         setCategory('week'); // Default category
         populateCategories(); // Call the function to populate categories on page load
-
-        // 이벤트 리스너 등록
-        navigationBar.addEventListener('click', handleNavItemClick);
+        navigationBar.addEventListener('click', handleNavItemClick); // 이벤트 리스너 등록
 
         if(sessionStorage.getItem('nav') && sessionStorage.getItem('nav').trim() !== '') triggerNavItemClick(sessionStorage.getItem('nav'));
 
@@ -365,41 +379,130 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initialize(); // Call initialize to set up the UI
 
-    function showTaskDetail(task) {
-        if (task && typeof task === 'object') {
-            // Update the values of the form fields with the task details
-            document.getElementById('taskName').value = task.task_content || '';
-            document.getElementById('categoryName').value = task.category_name || ''; // Adjust if you have a category field
-            document.getElementById('workName').value = task.work_name || ''; // Adjust if you have a work field
-            document.getElementById('dueDate').value = task.due_date || '';
+// Variables to store the original values of the inputs
+let originalValues = {
+    taskName: '',
+    categoryName: '',
+    workName: '',
+    dueDate: '',
+    taskMemo: '',
+    taskStatus: ''
+};
 
-            // Convert do_dates string to an array
-            let doDatesArray = task.do_dates ? task.do_dates.split(',') : [];
-            populateDoDates(doDatesArray);
-//            document.getElementById('doDates').value = task.do_dates || ''; // Adjust if you have a do_dates field
-            document.getElementById('taskMemo').value = task.task_memo || '';
+function showTaskDetail(task) {
+    if (task && typeof task === 'object') {
+        // Update the values of the form fields with the task details
+        const taskNameInput = document.getElementById('taskName');
+        const categoryNameInput = document.getElementById('categoryName');
+        const workNameInput = document.getElementById('workName');
+        const dueDateInput = document.getElementById('dueDate');
+        const taskMemoInput = document.getElementById('taskMemo');
+        const taskStatusSelect = document.getElementById('taskStatus');
 
-            // Map numeric status to corresponding text
-            const statusMap = {
-                0: "Not Started",
-                1: "In Progress",
-                2: "On Hold",
-                3: "Canceled",
-                4: "Completed"
-            };
-            // Get the status text from the map
-            const statusText = statusMap[task.task_status] || "";
+        taskNameInput.value = task.task_content || '';
+        originalValues.taskName = taskNameInput.value; // Store the original value
 
-            // Update radio button status
-            const statusRadios = document.querySelectorAll('input[name="status"]');
-            statusRadios.forEach(radio => {
-                radio.checked = (radio.nextSibling.textContent.trim() === statusText);
-            });
+        categoryNameInput.value = task.category_name || '';
+        originalValues.categoryName = categoryNameInput.value; // Store the original value
 
-        } else {
-            console.error('Invalid task object:', task);
-        }
+        workNameInput.value = task.work_name || '';
+        originalValues.workName = workNameInput.value; // Store the original value
+
+        dueDateInput.value = task.due_date || '';
+        originalValues.dueDate = dueDateInput.value; // Store the original value
+
+        taskMemoInput.value = task.task_memo || '';
+        originalValues.taskMemo = taskMemoInput.value; // Store the original value
+
+        // Convert do_dates string to an array
+        let doDatesArray = task.do_dates ? task.do_dates.split(',') : [];
+        populateDoDates(doDatesArray);
+
+        taskStatusSelect.value = task.task_status || '';
+        originalValues.taskStatus = taskStatusSelect.value; // Store the original value
+        console.log('taskStatusSelect.value',taskStatusSelect.value);
+
+//        // Map numeric status to corresponding text
+//        const statusMap = {
+//            0: "Not Started",
+//            1: "In Progress",
+//            2: "Completed",
+//            3: "Canceled",
+//            4: "On Hold",
+//            5: "Delegation"
+//        };
+//        const statusText = statusMap[task.task_status] || "";
+//
+//        statusRadios.forEach(radio => {
+//            radio.checked = (radio.nextSibling.textContent.trim() === statusText);
+//        });
+//        originalValues.taskStatus = statusText; // Store the original value
+
+        // Add blur event listeners
+        taskNameInput.addEventListener('blur', handleBlur);
+        categoryNameInput.addEventListener('blur', handleBlur);
+        workNameInput.addEventListener('blur', handleBlur);
+        dueDateInput.addEventListener('blur', handleBlur);
+        taskMemoInput.addEventListener('blur', handleBlur);
+        taskStatusSelect.addEventListener('blur', handleBlur);
+//        statusRadios.forEach(radio => {
+//            radio.addEventListener('change', handleRadioChange);
+//        });
+    } else {
+        console.error('Invalid task object:', task);
     }
+}
+
+function handleBlur(event) {
+    const id = event.target.id;
+    let currentValue;
+
+    switch (id) {
+        case 'taskName':
+            currentValue = event.target.value;
+            if (currentValue !== originalValues.taskName) {
+                saveTaskData();
+            }
+            break;
+        case 'categoryName':
+            currentValue = event.target.value;
+            if (currentValue !== originalValues.categoryName) {
+                saveTaskData();
+            }
+            break;
+        case 'workName':
+            currentValue = event.target.value;
+            if (currentValue !== originalValues.workName) {
+                saveTaskData();
+            }
+            break;
+        case 'dueDate':
+            currentValue = event.target.value;
+            if (currentValue !== originalValues.dueDate) {
+                saveTaskData();
+            }
+            break;
+        case 'taskMemo':
+            currentValue = event.target.value;
+            if (currentValue !== originalValues.taskMemo) {
+                saveTaskData();
+            }
+            break;
+        case 'taskStatus':
+            currentValue = event.target.value;
+            if (currentValue !== originalValues.taskStatus) {
+                saveTaskData();
+            }
+            break;
+    }
+}
+
+//function handleRadioChange(event) {
+//    const selectedValue = event.target.nextSibling.textContent.trim();
+//    if (selectedValue !== originalValues.taskStatus) {
+//        saveTaskData();
+//    }
+//}
 
     function toggleTaskCompletion(index) {
         tasks[index].completed = !tasks[index].completed;
@@ -449,8 +552,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     taskContent.textContent = taskhub.task_content;
                     taskContent.classList.add('task_content');
 
-                    // Apply CSS class if task_status is 4
-                    if (taskhub.task_status == 4) {
+                    // Apply CSS class if task_status is 2
+                    if (taskhub.task_status == 2) {
                         taskContainer.classList.add('task-status-completed'); // Add custom class
                     }
 
@@ -479,8 +582,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching taskhubList:', error));
     }
 
-
-
     function fetchTaskDetails() {
         const taskId = sessionStorage.getItem('detailID');
 
@@ -505,6 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Error fetching task details:', error));
     }
+
     function clearTaskDetailContent() {
         // taskDetailContent 요소를 선택
         const taskDetailContent = document.getElementById('taskDetailContent');
@@ -529,11 +631,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchTasksByDateRange() {
-        // sessionStorage에서 'baseDate'를 가져옴
         const storedBaseDate = sessionStorage.getItem('baseDate');
-
         let isoDate = '';
-
         if (storedBaseDate) {
             const pBaseDate = new Date(storedBaseDate);
             // 유효한 Date 객체인지 확인
@@ -567,10 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     acc[day].push(task);
                     return acc;
                 }, {});
-//                fetchTasksByDay();
-                renderDayTitlesList(); // Render days list
-//                renderDayTasksList();
-                // Now render tasks
+                renderDayTitlesList();
                 Object.keys(tasksByDay).forEach(day => renderDayTasksList(day));
             })
             .catch(error => console.error('Error fetching tasks:', error));
@@ -580,9 +676,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Retrieve baseDate from sessionStorage
         const storedBaseDate = sessionStorage.getItem('baseDate');
         const day = sessionStorage.getItem('nav'); // Get the specified day
-
         let isoDate = '';
-
+console.log('fetchTasksByDay',storedBaseDate, day);
         if (storedBaseDate) {
             const pBaseDate = new Date(storedBaseDate);
             // Check if the date object is valid
@@ -628,11 +723,62 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching tasks:', error));
     }
 
+    function fetchStatus(pstat) {
+        const taskStatus = pstat;
+        fetch(`/api/findByStatus/${taskStatus}`)
+            .then(response => response.json())
+            .then(data => {
+                taskList.innerHTML = ''; // Clear current list
+
+                data.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = 'task-item';
+                    li.setAttribute('data-task-id', task.task_id);
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = task.status === 'Completed';
+                    checkbox.className = 'task-checkbox';
+
+                    const taskContainer = document.createElement('a'); // Use <a> to wrap all content
+                    taskContainer.className = 'task_content';
+
+                    const taskContentSpan = document.createElement('span');
+                    taskContentSpan.textContent = task.task_content;
+                    taskContentSpan.className = 'task_content';
+
+                    const workNameSpan = document.createElement('span');
+                    workNameSpan.textContent = task.work_name;
+                    workNameSpan.className = 'work_name';
+
+                    const dueDateSpan = document.createElement('span');
+                    dueDateSpan.textContent = task.due_date;
+                    dueDateSpan.className = 'due_date';
+
+                    // Append spans to the taskContainer
+                    taskContainer.appendChild(taskContentSpan);
+                    taskContainer.appendChild(workNameSpan);
+                    taskContainer.appendChild(dueDateSpan);
+
+                    // Apply CSS class if task_status is 2
+                    if (task.task_status === 2) {
+                        taskContainer.classList.add('task-status-completed'); // Add custom class
+                    }
+
+                    // Append checkbox and taskContainer to <li>
+                    li.appendChild(checkbox);
+                    li.appendChild(taskContainer);
+
+                    // Append <li> to taskList
+                    taskList.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Error fetching tasks:', error));
+    }
 
     // 요일 제목 만듦
     function renderDayTitlesList(aDay) {
         daysList.innerHTML = '';
-        const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
         if (aDay == null) {
             // Render all days
@@ -668,6 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         taskListForDay.innerHTML = '';
 
+//    console.log('taskListForDay: ', taskListForDay,' / day: ', day);
         if (tasksByDay[day]) {
             tasksByDay[day].forEach((task, index) => {
                 const li = document.createElement('li');
@@ -675,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
-                checkbox.checked = task.status === 'Completed'; // Change this based on your task status logic
+                checkbox.checked = task.status === '2'; // Change this based on your task status logic
                 checkbox.className = 'task-checkbox'; // Add class to the checkbox
                 checkbox.addEventListener('change', () => toggleTaskCompletion(index));
 
@@ -687,8 +834,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 taskContentSpan.textContent = task.task_content;
                 taskContentSpan.className = 'task_content'; // Add class to the task content
 
-                // Apply CSS class if task_status is 4
-                if (task.task_status == 4) {
+                // Apply CSS class if task_status is 2
+                if (task.task_status == 2) {
                     taskContainer.classList.add('task-status-completed'); // Add custom class
                 }
 
@@ -731,10 +878,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    form.addEventListener('submit', function(event) {
+    taskForm.addEventListener('submit', function(event) {
             event.preventDefault();
 
-            const formData = new FormData(form);
+            const formData = new FormData(taskForm);
             const action = event.submitter.value;
 
             console.log('event.submitter.value;'+ event.submitter.value);
@@ -794,8 +941,8 @@ document.addEventListener('DOMContentLoaded', function() {
 //                    sessionStorage.setItem('nav', selectedDay);
                     //location.reload();
 //                    fetchTasksByDateRange();
-        fetchNotAssignedTasks();
-        fetchTaskDetails();
+                fetchNotAssignedTasks();
+                fetchTaskDetails();
                     refresh = false;
                 }
             })
@@ -821,7 +968,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // workName: document.getElementById('workName').value,
             due_date: document.getElementById('dueDate').value,
             do_dates: datesString,
-            task_status: document.querySelector('input[name="status"]:checked').value,
+//            task_status: document.querySelector('input[name="status"]:checked').value,
+            task_status: document.getElementById('taskStatus').value,
             task_memo: document.getElementById('taskMemo').value
         };
 
@@ -895,40 +1043,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     cancelDeleteButton.addEventListener('click', () => {
         deleteConfirmationModal.style.display = 'none';
-    });
-
-    // Close the modal when the user clicks on "Close"
-//    closeModal.addEventListener('click', () => {
-//        successModal.style.display = 'none';
-////        sessionStorage.setItem('detailID', currentIdLocal);
-////        sessionStorage.setItem('nav', selectedDay);
-////        location.reload();
-//        if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//            fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//        }else{
-//            fetchTasksByDay();
-//        }
-////                    fetchTasksByDateRange();
-//        fetchNotAssignedTasks();
-//        fetchTaskDetails();
-//    });
-
-    // Close the modal when the user clicks anywhere outside of the modal
-    window.addEventListener('click', (event) => {
-        if (event.target === successModal) {
-            successModal.style.display = 'none';
-//            sessionStorage.setItem('detailID', currentIdLocal);
-//            sessionStorage.setItem('nav', selectedDay);
-//            location.reload();
-//
-//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//            }else{
-//                fetchTasksByDay();
-//            }
-//            fetchNotAssignedTasks();
-//            fetchTaskDetails();
-        }
     });
 
     // Close the delete confirmation modal when the user clicks anywhere outside of the modal
@@ -1073,25 +1187,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const target = event.target.closest('.nav-item');
         if (!target) return; // 클릭된 요소가 .nav-item이 아닐 경우
 
+console.log('handleNavItemClick~');
         const clickedDay = target.dataset.day || '';
         const date = target.dataset.date || '';
-
-        console.log('handleNavItemClick date?!',date);
         sessionStorage.setItem('baseDate', date);
 
         if (selectedSide === 'week') {
+console.log('22~');
             if (sessionStorage.getItem('nav') === clickedDay) { // 날짜 선택 해제
+console.log('33~');
                 sessionStorage.setItem('nav', '');
                 selectedDate = null;
-
                 sessionStorage.setItem('baseDate', '');
                 target.classList.remove('active'); // 배경색 원래대로
                 fetchTasksByDateRange();
             } else { // 날짜 새로 선택
+console.log('44~',date,clickedDay);
                 sessionStorage.setItem('nav', clickedDay);
                 selectedDate = date;
                 sessionStorage.setItem('baseDate', date);
-                // 모든 nav-item에서 active 클래스 제거
                 document.querySelectorAll('.nav-item').forEach(item => {
                     item.classList.remove('active');
                 });
@@ -1099,7 +1213,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchTasksByDay();
             }
         }
-        console.log('after handleNavItemClick day?!',sessionStorage.getItem('nav'));
+    }
+
+    // TODAY 버튼 클릭 이벤트 핸들러
+    document.getElementById('today-button').addEventListener('click', function(event) {
+        event.stopPropagation(); // 상위 요소로 이벤트 전파를 막음
+
+        sessionStorage.setItem('today', 'true');
+        const today = new Date();
+        const date = formatDate(today);
+        const weekday = daysOfWeek[(today.getDay() + 6) % 7]; // 'MON', 'TUE' 형식의 요일
+
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`.category-item[data-category="week"]`).classList.add('active');
+        updateNavigationBar('week');
+        updateWeekDisplay();
+        updateWeekDates();
+        sessionStorage.setItem('today', 'false');
+        selectedSide = 'week';
+
+        // 실제 .nav-item 요소를 찾기
+        const target = findNavItemByDate(date);
+
+        if (target) {
+            // 가상의 이벤트 객체를 생성하지 않고 실제 클릭 이벤트를 시뮬레이션
+            handleNavItemClick({ target });
+//        clickCategory('week');
+            showForm(); // 폼을 보이게 함
+            fetchNotAssignedTasks();
+            fetchTaskDetails();
+        } else {
+            console.error('No matching .nav-item found for the date:', date);
+        }
+    });
+
+
+    // 클릭된 .nav-item을 찾는 함수
+    function findNavItemByDate(date) {
+        return document.querySelector(`.nav-item[data-date="${date}"]`);
     }
 
     function triggerNavItemClick(dayName) {
@@ -1137,7 +1290,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    checkbox.checked = task.status === 'Completed';
+                    checkbox.checked = task.status === '2';
                     checkbox.className = 'task-checkbox';
 
                     const taskContainer = document.createElement('a'); // Use <a> to wrap all content
@@ -1160,8 +1313,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     taskContainer.appendChild(workNameSpan);
                     taskContainer.appendChild(dueDateSpan);
 
-                    // Apply CSS class if task_status is 4
-                    if (task.task_status === 4) {
+                    // Apply CSS class if task_status is 2
+                    if (task.task_status === 2) {
                         taskContainer.classList.add('task-status-completed'); // Add custom class
                     }
 
@@ -1211,27 +1364,4 @@ document.addEventListener('DOMContentLoaded', function() {
         // Programmatically trigger the click event on saveChangesButton
         saveChangesButton.click();
     }
-
-//    // Attach event listener to the taskDetail container
-//    taskDetail.addEventListener('mouseleave', saveTaskData);
-
-
-    // Add blur event listener to each input, select, and textarea
-    detailElements.forEach(input => {
-        input.addEventListener('blur', saveTaskData);
-    });
-
-
-//    taskDetailContent.addEventListener('focusout', () => {
-//        console.log('Div has lost focus');
-//        saveChangesButton.click();
-//    });
-    // Detect clicks outside the div
-//    document.addEventListener('click', (event) => {
-//        if (!taskDetailContent.contains(event.target)) {
-//            console.log('Clicked outside the div');
-//        saveChangesButton.click();
-//        }
-//    });
-
 });

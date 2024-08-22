@@ -52,4 +52,8 @@ public class TaskhubService {
     public List<TaskhubDTO> getCategories() {
         return taskhubRepository.getCategories();
     }
+
+    public List<TaskhubDTO> findByStatus(String taskStatus) {
+        return taskhubRepository.findByStatus(taskStatus);
+    }
 }

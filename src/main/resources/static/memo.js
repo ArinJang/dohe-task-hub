@@ -1770,3 +1770,41 @@ ul {
 
     margin-right: 5px;
 }*/
+
+
+    function showTaskDetail(task) {
+        if (task && typeof task === 'object') {
+            // Update the values of the form fields with the task details
+            document.getElementById('taskName').value = task.task_content || '';
+            document.getElementById('categoryName').value = task.category_name || ''; // Adjust if you have a category field
+            document.getElementById('workName').value = task.work_name || ''; // Adjust if you have a work field
+            document.getElementById('dueDate').value = task.due_date || '';
+
+            // Convert do_dates string to an array
+            let doDatesArray = task.do_dates ? task.do_dates.split(',') : [];
+            populateDoDates(doDatesArray);
+//            document.getElementById('doDates').value = task.do_dates || ''; // Adjust if you have a do_dates field
+            document.getElementById('taskMemo').value = task.task_memo || '';
+
+            // Map numeric status to corresponding text
+            const statusMap = {
+                0: "Not Started",
+                1: "In Progress",
+                2: "On Hold",
+                3: "Canceled",
+                4: "Completed"
+            };
+            // Get the status text from the map
+            const statusText = statusMap[task.task_status] || "";
+
+            // Update radio button status
+            const statusRadios = document.querySelectorAll('input[name="status"]');
+            statusRadios.forEach(radio => {
+                radio.checked = (radio.nextSibling.textContent.trim() === statusText);
+            });
+
+        } else {
+            console.error('Invalid task object:', task);
+        }
+    }
+

@@ -110,6 +110,18 @@
         WHERE DUE_DATE IS NULL
     </select>
 
+    <select id="findByStatus" parameterType="String" resultType="taskhubdto">
+        SELECT TASK_ID, TASK_CONTENT, WRITER_ID,
+        CONCAT('(', 'work_name',')') AS WORK_NAME,
+        DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+        CONCAT('- ', DATE_FORMAT(DUE_DATE, '%m/%d')) AS DUE_DATE,
+        DO_DATES,
+        TASK_STATUS
+        FROM TASK
+        WHERE TASK_STATUS = #{taskStatus}
+        ORDER BY TASK_ORDER DESC, TASK_ID DESC;
+    </select>
+
     <update id="updateTask" parameterType="taskhubdto">
         UPDATE TASK
         SET

@@ -71,11 +71,11 @@ public class TaskhubController {
 
         if (baseDate != null && !baseDate.isEmpty()) {
             today = LocalDate.parse(baseDate); // 문자열을 LocalDate로 변환
-            System.out.println("baseDate passed::: "+baseDate);
-            System.out.println("baseDate parsed::: "+today);
+//            System.out.println("baseDate passed::: "+baseDate);
+//            System.out.println("baseDate parsed::: "+today);
         } else {
             today = LocalDate.now(); // baseDate가 없으면 현재 날짜를 사용
-            System.out.println("baseDate is null");
+//            System.out.println("baseDate is null");
         }
 
         LocalDate monday = getMonday(today);
@@ -86,7 +86,10 @@ public class TaskhubController {
         return taskhubService.findByDoDates(mon, sun);
     }
 
-
+    @GetMapping("/findByStatus/{taskStatus}")
+    public List<TaskhubDTO> getTasksByStatus(@PathVariable("taskStatus") String taskStatus) {
+        return taskhubService.findByStatus(taskStatus);
+    }
 
     @GetMapping("/tasksAdded")
     public List<TaskhubDTO> getTasks() {
@@ -100,7 +103,6 @@ public class TaskhubController {
 
     @GetMapping("/findById/{task_id}")
     public TaskhubDTO findById(@PathVariable("task_id") String taskId) {
-        System.out.println("Fetching task details for ID: " + taskId);
         return taskhubService.findById(taskId);
     }
 

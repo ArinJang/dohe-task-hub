@@ -57,4 +57,8 @@ public class TaskhubRepository {
     public List<TaskhubDTO> getCategories() {
         return sql.selectList("Taskhub.getCategories");
     }
+
+    public List<TaskhubDTO> findByStatus(String taskStatus) {
+        return sql.selectList("Taskhub.findByStatus", taskStatus);
+    }
 }
