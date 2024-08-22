@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const categoryList = document.getElementById('category-list');
+    const sideList = document.getElementById('side-list');
     const weekDisplay = document.getElementById('week-display');
     const navigationBar = document.getElementById('navigation-bar');
     const listDetail = document.getElementById('list-detail');
@@ -12,9 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const daysList = document.querySelector('.days-list');
     const taskDetail = document.getElementById('taskDetail');
     const taskForm = document.getElementById('taskForm');
-    var refresh = false;
-    var detailID;
-    var idToShowDetail;
     var currentId;
     const successModal = document.getElementById('successModal');
     const closeModal = document.querySelector('#successModal .close');
@@ -32,11 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //    let selectedNav = null;
     let selectedDate = null;
     let selectedSide = 'week';
-        const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-//    var currentIdLocal = sessionStorage.getItem('detailID');
-//    var currentSide = sessionStorage.getItem('side');
-//    var reloadNav = sessionStorage.getItem('nav');
-//    var baseDate = sessionStorage.getItem('baseDate');
+    const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     var selectedNav = null;
     var selectedDay = null;
     const validationModal = document.getElementById('validationModal');
@@ -261,11 +254,11 @@ document.addEventListener('DOMContentLoaded', function() {
         //listDetail.innerHTML = `<p>Content for ${category.toUpperCase()} category</p>`;
     }
 
-    function setCategory(category) {
-        document.querySelectorAll('.category-item').forEach(item => {
+    function setSide(category) {
+        document.querySelectorAll('.side-item').forEach(item => {
             item.classList.remove('active');
         });
-        document.querySelector(`.category-item[data-category="${category}"]`).classList.add('active');
+        document.querySelector(`.side-item[data-side="${category}"]`).classList.add('active');
         updateNavigationBar(category);
         if (category === 'week') {
             updateWeekDisplay();
@@ -279,22 +272,21 @@ document.addEventListener('DOMContentLoaded', function() {
         activeItem.classList.add('active');
     }
 
-    function clickCategory(selectedSide) {
+    function clickSideBar(selectedSide) {
+        fetchMainTaskList();
+        sessionStorage.setItem('detailID', '');
+        fetchTaskDetails();
         switch (selectedSide) {
             case 'week':
-            console.log('clickCategory week~');
-                fetchNotAssignedTasks();
                 fetchTasksByDateRange(); // Call this first
                 renderDayTitlesList(); // Ensure days list is rendered first
                 showForm(); // 폼을 보이게 함
                 break;
             case 'delegation':
                 hideForm(); // 폼을 숨김
-                fetchStatus(5); // Fetch status 5
                 break;
             case 'onhold':
                 hideForm(); // 폼을 숨김
-                fetchStatus(4); // Fetch status 4
                 break;
             default:
                 showForm(); // 기본적으로 폼을 보이게 함
@@ -302,14 +294,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    categoryList.addEventListener('click', function(event) {
-        selectedSide = event.target.getAttribute('data-category');
+    sideList.addEventListener('click', function(event) {
+        selectedSide = event.target.getAttribute('data-side');
         selectedDate = null;
-        console.log('selectedSide?? ',selectedSide);
-        if (event.target.classList.contains('category-item')) {
-            setCategory(selectedSide);
+//        console.log('selectedSide?? ',selectedSide);
+        if (event.target.classList.contains('side-item')) {
+            setSide(selectedSide);
         }
-        clickCategory(selectedSide);
+        clickSideBar(selectedSide);
     });
     // 폼을 보이게 하는 함수
     function showForm() {
@@ -334,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentWeek = getWeekOfMonth(new Date(currentYear, currentMonth + 1, 0));
         }
         updateWeekDisplay();
-        if (document.querySelector('.category-item.active').getAttribute('data-category') === 'week') {
+        if (document.querySelector('.side-item.active').getAttribute('data-side') === 'week') {
             updateWeekDates();
         }
 //        sessionStorage.setItem('baseDate', baseDate);
@@ -354,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         updateWeekDisplay();
-        if (document.querySelector('.category-item.active').getAttribute('data-category') === 'week') {
+        if (document.querySelector('.side-item.active').getAttribute('data-side') === 'week') {
             updateWeekDates();
         }
 //        sessionStorage.setItem('baseDate', baseDate);
@@ -369,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentMonth = today.getMonth();
         currentYear = today.getFullYear();
         currentWeek = getWeekOfMonth(today);
-        setCategory('week'); // Default category
+        setSide('week'); // Default category
         populateCategories(); // Call the function to populate categories on page load
         navigationBar.addEventListener('click', handleNavItemClick); // 이벤트 리스너 등록
 
@@ -520,69 +512,83 @@ function handleBlur(event) {
         }
     });
 
-    function fetchNotAssignedTasks() {
+    function fetchMainTaskList() {
         // taskList 요소를 가져옴
         const taskList = document.getElementById('taskList');
 
         // 기존 목록을 초기화
         taskList.innerHTML = '';
 
-        // 서버에서 JSON 데이터를 받아옴
-        fetch('/api/tasksNotAssigned')
-            .then(response => response.json())
-            .then(data => {
-                // 받아온 데이터를 기반으로 리스트를 생성
-                data.forEach(taskhub => {
-                    // li 요소 생성
-                    const li = document.createElement('li');
-                    li.classList.add('task-item');
-                    li.dataset.taskId = taskhub.task_id; // data-task-id 속성 추가
+        switch (selectedSide) {
+            case 'week':
+            fetch('/api/tasksNotAssigned')
+                .then(response => response.json())
+                .then(data => {
+                    // 받아온 데이터를 기반으로 리스트를 생성
+                    data.forEach(taskhub => {
+                        // li 요소 생성
+                        const li = document.createElement('li');
+                        li.classList.add('task-item');
+                        li.dataset.taskId = taskhub.task_id; // data-task-id 속성 추가
 
-                    // 체크박스 요소 생성
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    li.appendChild(checkbox);
+                        // 체크박스 요소 생성
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        li.appendChild(checkbox);
 
-                    // taskContainer 요소 생성
-                    const taskContainer = document.createElement('a'); // Use <a> to wrap all content
-                    taskContainer.classList.add('task_content');
+                        // taskContainer 요소 생성
+                        const taskContainer = document.createElement('a'); // Use <a> to wrap all content
+                        taskContainer.classList.add('task_content');
 
-                    // task_content 요소 생성
-                    const taskContent = document.createElement('span');
-                    taskContent.textContent = taskhub.task_content;
-                    taskContent.classList.add('task_content');
+                        // task_content 요소 생성
+                        const taskContent = document.createElement('span');
+                        taskContent.textContent = taskhub.task_content;
+                        taskContent.classList.add('task_content');
 
-                    // Apply CSS class if task_status is 2
-                    if (taskhub.task_status == 2) {
-                        taskContainer.classList.add('task-status-completed'); // Add custom class
-                    }
+                        // Apply CSS class if task_status is 2
+                        if (taskhub.task_status == 2) {
+                            taskContainer.classList.add('task-status-completed'); // Add custom class
+                        }
 
-                    // work_name 요소 생성
-                    const workName = document.createElement('span');
-                    workName.classList.add('work_name');
-                    workName.textContent = taskhub.work_name;
+                        // work_name 요소 생성
+                        const workName = document.createElement('span');
+                        workName.classList.add('work_name');
+                        workName.textContent = taskhub.work_name;
 
-                    // due_date 요소 생성
-                    const dueDate = document.createElement('span');
-                    dueDate.classList.add('due_date');
-                    dueDate.textContent = taskhub.due_date;
+                        // due_date 요소 생성
+                        const dueDate = document.createElement('span');
+                        dueDate.classList.add('due_date');
+                        dueDate.textContent = taskhub.due_date;
 
-                    // Append taskContent, workName, and dueDate to taskContainer
-                    taskContainer.appendChild(taskContent);
-                    taskContainer.appendChild(workName);
-                    taskContainer.appendChild(dueDate);
+                        // Append taskContent, workName, and dueDate to taskContainer
+                        taskContainer.appendChild(taskContent);
+                        taskContainer.appendChild(workName);
+                        taskContainer.appendChild(dueDate);
 
-                    // Append taskContainer to <li>
-                    li.appendChild(taskContainer);
+                        // Append taskContainer to <li>
+                        li.appendChild(taskContainer);
 
-                    // li를 ul에 추가
-                    taskList.appendChild(li);
-                });
-            })
-            .catch(error => console.error('Error fetching taskhubList:', error));
+                        // li를 ul에 추가
+                        taskList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error fetching taskhubList:', error));
+
+                break;
+            case 'delegation':
+                fetchStatus(5); // Fetch status 5
+                break;
+            case 'onhold':
+                fetchStatus(4); // Fetch status 4
+                break;
+            default:
+                break;
+        }
+
     }
 
     function fetchTaskDetails() {
+//    console.log('fetchTaskDetails id?',sessionStorage.getItem('detailID'));
         const taskId = sessionStorage.getItem('detailID');
 
         if (!taskId) {
@@ -920,31 +926,23 @@ console.log('fetchTasksByDay',storedBaseDate, day);
                 }else{
                     fetchTasksByDay();
                 }
-                refresh = true;
-                fetchTasksAdded(refresh);
-                fetchTaskDetails();
-
+                fetchTasksAdded();
+//                fetchTaskDetails();
             })
             .catch((error) => {
                 console.error('Error:', error);
             });
         });
 
-    function fetchTasksAdded(refresh) {
+    function fetchTasksAdded() {
         fetchNewId();
+//    console.log('fetchTasksAdded id?',sessionStorage.getItem('detailID'));
         fetch(`/api/tasksAdded`)
             .then(response => response.json())
             .then(data => {
                 tasks = data;
-//                fetchTaskDetails(idToShowDetail);
-                if (refresh) {
-//                    sessionStorage.setItem('nav', selectedDay);
-                    //location.reload();
-//                    fetchTasksByDateRange();
-                fetchNotAssignedTasks();
+                fetchMainTaskList();
                 fetchTaskDetails();
-                    refresh = false;
-                }
             })
             .catch(error => console.error('Error fetching tasks:', error));
     }
@@ -993,7 +991,7 @@ console.log('fetchTasksByDay',storedBaseDate, day);
             }else{
                 fetchTasksByDay();
             }
-            fetchNotAssignedTasks();
+            fetchMainTaskList();
             fetchTaskDetails();
         })
         .catch((error) => {
@@ -1032,7 +1030,7 @@ console.log('fetchTasksByDay',storedBaseDate, day);
                 }else{
                     fetchTasksByDay();
                 }
-                fetchNotAssignedTasks();
+                fetchMainTaskList();
                 fetchTaskDetails();
             })
             .catch((error) => {
@@ -1224,10 +1222,10 @@ console.log('44~',date,clickedDay);
         const date = formatDate(today);
         const weekday = daysOfWeek[(today.getDay() + 6) % 7]; // 'MON', 'TUE' 형식의 요일
 
-        document.querySelectorAll('.category-item').forEach(item => {
+        document.querySelectorAll('.side-item').forEach(item => {
             item.classList.remove('active');
         });
-        document.querySelector(`.category-item[data-category="week"]`).classList.add('active');
+        document.querySelector(`.side-item[data-side="week"]`).classList.add('active');
         updateNavigationBar('week');
         updateWeekDisplay();
         updateWeekDates();
@@ -1240,9 +1238,9 @@ console.log('44~',date,clickedDay);
         if (target) {
             // 가상의 이벤트 객체를 생성하지 않고 실제 클릭 이벤트를 시뮬레이션
             handleNavItemClick({ target });
-//        clickCategory('week');
+//        clickSideBar('week');
             showForm(); // 폼을 보이게 함
-            fetchNotAssignedTasks();
+            fetchMainTaskList();
             fetchTaskDetails();
         } else {
             console.error('No matching .nav-item found for the date:', date);

@@ -43,7 +43,7 @@ Poppins: 둥글고 현대적인 느낌의 서체입니다.*/
     padding-bottom: 40px;
 }
 
-.category-item {
+.side-item {
     padding: 10px;
     cursor: pointer;
     text-align: left;
@@ -51,7 +51,7 @@ Poppins: 둥글고 현대적인 느낌의 서체입니다.*/
     padding-right: 10px; /* 버튼과 텍스트 간의 여백 확보 */
 }
 
-.category-item.active {
+.side-item.active {
     background-color: #87CEEB; /* Sky blue */
     color: white;
 }
@@ -74,7 +74,7 @@ Poppins: 둥글고 현대적인 느낌의 서체입니다.*/
     margin: 0 20px;
 }
 
-#category-list {
+#side-list {
     list-style: none;
     padding: 0;
     margin: 0;
@@ -87,7 +87,7 @@ Poppins: 둥글고 현대적인 느낌의 서체입니다.*/
 
 #navigation-bar {
     display: flex;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
     flex-wrap: wrap;
 }
 
@@ -145,20 +145,20 @@ Poppins: 둥글고 현대적인 느낌의 서체입니다.*/
 .left-panel,
 .right-panel {
     width: 50%;
-    padding: 15px;
+    padding: 12px 20px 20px 20px;
     box-sizing: border-box;
 }
 
 .task-input {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .work-input {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 #taskInput,
