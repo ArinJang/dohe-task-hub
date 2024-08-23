@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const navigationBar = document.getElementById('navigation-bar');
     const listDetail = document.getElementById('list-detail');
     const taskInput = document.getElementById('taskInput');
-//    const workInput = document.getElementById('workInput');
     const workInput = document.querySelector('.work-input');
     const addTaskButton = document.getElementById('addTaskButton');
     const taskList = document.getElementById('taskList');
@@ -12,30 +11,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const daysList = document.querySelector('.days-list');
     const taskDetail = document.getElementById('taskDetail');
     const taskForm = document.getElementById('taskForm');
-    var currentId;
     const successModal = document.getElementById('successModal');
     const closeModal = document.querySelector('#successModal .close');
-    let categoriesList = []; // 전역 변수 선언
-
+    let categoriesList = [];
+    let dayDateMap = new Map(); // 선택된 주의 요일과 날짜 저장
     const addDateButton = document.getElementById('addDateButton');
     const doDatesContainer = document.getElementById('doDatesContainer');
-    // Delete Confirmation Modal Elements
     const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
     const confirmDeleteButton = document.getElementById('confirmDeleteButton');
     const cancelDeleteButton = document.getElementById('cancelDeleteButton');
     const saveChangesButton = document.getElementById('saveChangesButton');
     const deleteConfirmationButton = document.getElementById('deleteConfirmationButton');
-    let daysListVisible = true; // Initial state of daysList
-//    let selectedNav = null;
+    let daysListVisible = true;
     let selectedDate = null;
     let selectedSide = 'week';
     const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     var selectedNav = null;
     var selectedDay = null;
     const validationModal = document.getElementById('validationModal');
-//    sessionStorage.setItem('nav','');
     console.log("TOP++ sessionStorage.getItem('nav')?! ",sessionStorage.getItem('nav'));
-
     var taskDetailContent = document.getElementById('taskDetailContent');
     var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
 
@@ -108,7 +102,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // NavigationBar 업데이트 함수
     function updateWeekDates() {
-    console.log('sessionStorage.getItem(today)',sessionStorage.getItem('today'));
+        console.log('sessionStorage.getItem(today)',sessionStorage.getItem('today'));
+
+        dayDateMap.clear();
         navigationBar.innerHTML = '';
         if(sessionStorage.getItem('today') === 'true'   ) {
             currentMonth = new Date().getMonth(); // 0-based index (0 = January)
@@ -130,6 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
             dayDateContainer.className = 'nav-item'; // Use same class for styling
             dayDateContainer.dataset.date = formatDate(date);
             dayDateContainer.dataset.day = dayName;
+
+            dayDateMap.set(dayName, formatDate(date));
 
             const dayElement = document.createElement('div');
             dayElement.textContent = dayName;
@@ -191,8 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateNavigationBar(category) {
         navigationBar.innerHTML = '';
-        //listDetail.innerHTML = '';
-
         if (category === 'work') {
             workInput.style.display = 'flex';
         } else {
@@ -251,7 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 navigationBar.appendChild(navItem);
             });
         }
-        //listDetail.innerHTML = `<p>Content for ${category.toUpperCase()} category</p>`;
     }
 
     function setSide(category) {
@@ -280,16 +275,22 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'week':
                 fetchTasksByDateRange(); // Call this first
                 renderDayTitlesList(); // Ensure days list is rendered first
-                showForm(); // 폼을 보이게 함
+                showForm();
                 break;
             case 'delegation':
-                hideForm(); // 폼을 숨김
+                hideForm();
                 break;
             case 'onhold':
-                hideForm(); // 폼을 숨김
+                hideForm();
+                break;
+            case 'work':
+                showForm();
+                break;
+            case 'completed':
+                hideForm();
                 break;
             default:
-                showForm(); // 기본적으로 폼을 보이게 함
+                showForm();
                 break;
         }
     }
@@ -303,13 +304,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         clickSideBar(selectedSide);
     });
-    // 폼을 보이게 하는 함수
+
     function showForm() {
         taskForm.style.display = 'block';
         daysList.style.display = 'block';
     }
 
-    // 폼을 숨기는 함수
     function hideForm() {
         taskForm.style.display = 'none';
         daysList.style.display = 'none';
@@ -581,6 +581,11 @@ function handleBlur(event) {
             case 'onhold':
                 fetchStatus(4); // Fetch status 4
                 break;
+            case 'work':
+                break;
+            case 'completed':
+                fetchStatus(2); // Fetch status 2
+                break;
             default:
                 break;
         }
@@ -767,7 +772,7 @@ console.log('fetchTasksByDay',storedBaseDate, day);
                     taskContainer.appendChild(dueDateSpan);
 
                     // Apply CSS class if task_status is 2
-                    if (task.task_status === 2) {
+                    if (task.task_status == 2) {
                         taskContainer.classList.add('task-status-completed'); // Add custom class
                     }
 
@@ -786,27 +791,24 @@ console.log('fetchTasksByDay',storedBaseDate, day);
     function renderDayTitlesList(aDay) {
         daysList.innerHTML = '';
 
-        if (aDay == null) {
-            // Render all days
+        if (aDay == null) { // Render all days
             daysOfWeek.forEach(day => {
                 const ul = document.createElement('ul');
                 ul.id = `${day}Tasks`; // Ensure the ID matches what is used in renderDayTasksList
 
                 const li = document.createElement('li');
+//                console.log('!'+ dayDateMap.get(day));
+                li.dataset.date = dayDateMap.get(day); //drag!!!!!!!!!!
                 li.innerHTML = `<strong>[[ </string><strong class="custom-day-font">${day}</strong><strong> ]]</string>`;
-                //li.innerHTML = `<strong>[[ ${day} ]]</strong>`;
                 li.appendChild(ul);
                 daysList.appendChild(li);
             });
-        } else {
-            // Render only the selected day
+        } else { // Render only the selected day
             const ul = document.createElement('ul');
             ul.id = `${aDay}Tasks`; // Use the provided day for the ID
 
             const li = document.createElement('li');
             li.innerHTML = `<strong>[[ </string><strong class="custom-day-font">${aDay}</strong><strong> ]]</string>`;
-            //li.innerHTML = `<strong>[[ ${day} ]]</strong>`;
-//            li.innerHTML = `<strong>[[ ${aDay} ]]</strong>`;
             li.appendChild(ul);
             daysList.appendChild(li);
         }
@@ -972,8 +974,7 @@ console.log('fetchTasksByDay',storedBaseDate, day);
         };
 
         const idForDetail = sessionStorage.getItem('detailID');
-//        sessionStorage.setItem('detailID', currentIdLocal);
-        // Send data to the server
+
         fetch(`/api/updateTask/${idForDetail}`, {
             method: 'POST',
             headers: {
@@ -1185,22 +1186,22 @@ console.log('fetchTasksByDay',storedBaseDate, day);
         const target = event.target.closest('.nav-item');
         if (!target) return; // 클릭된 요소가 .nav-item이 아닐 경우
 
-console.log('handleNavItemClick~');
+//console.log('handleNavItemClick~');
         const clickedDay = target.dataset.day || '';
         const date = target.dataset.date || '';
         sessionStorage.setItem('baseDate', date);
 
         if (selectedSide === 'week') {
-console.log('22~');
+//console.log('22~');
             if (sessionStorage.getItem('nav') === clickedDay) { // 날짜 선택 해제
-console.log('33~');
+//console.log('33~');
                 sessionStorage.setItem('nav', '');
                 selectedDate = null;
                 sessionStorage.setItem('baseDate', '');
                 target.classList.remove('active'); // 배경색 원래대로
                 fetchTasksByDateRange();
             } else { // 날짜 새로 선택
-console.log('44~',date,clickedDay);
+//console.log('44~',date,clickedDay);
                 sessionStorage.setItem('nav', clickedDay);
                 selectedDate = date;
                 sessionStorage.setItem('baseDate', date);
@@ -1312,7 +1313,7 @@ console.log('44~',date,clickedDay);
                     taskContainer.appendChild(dueDateSpan);
 
                     // Apply CSS class if task_status is 2
-                    if (task.task_status === 2) {
+                    if (task.task_status == 2) {
                         taskContainer.classList.add('task-status-completed'); // Add custom class
                     }
 
