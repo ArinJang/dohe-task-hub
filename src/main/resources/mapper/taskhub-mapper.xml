@@ -92,6 +92,7 @@
         FROM
         filtered_dates
         ORDER BY
+        TASK_STATUS,
         TASK_ID DESC,
         DO_DATE;
     </select>

@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("TOP++ sessionStorage.getItem('nav')?! ",sessionStorage.getItem('nav'));
     var taskDetailContent = document.getElementById('taskDetailContent');
     var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
+    const taskMemoContent = document.getElementById('taskMemo');
 
     // Define your initial tasks array (this should be replaced with your actual data fetching logic)
     let tasks = [
@@ -405,6 +406,10 @@ function showTaskDetail(task) {
 
         taskMemoInput.value = task.task_memo || '';
         originalValues.taskMemo = taskMemoInput.value; // Store the original value
+//        taskMemoInput.style.height = calcHeight(taskMemoInput.value) + "px";
+//        calcHeight(taskMemoContent);
+        taskMemoInput.style.height = "auto"; // Reset height to auto to recalculate
+        taskMemoInput.style.height = taskMemoContent.scrollHeight + "px"; // Set height based on the scrollHeight
 
         // Convert do_dates string to an array
         let doDatesArray = task.do_dates ? task.do_dates.split(',') : [];
@@ -1363,4 +1368,33 @@ console.log('fetchTasksByDay',storedBaseDate, day);
         // Programmatically trigger the click event on saveChangesButton
         saveChangesButton.click();
     }
+
+//    taskMemoContent.addEventListener("keyup", () => {
+//      taskMemoContent.style.height = calcHeight(taskMemoContent.value) + "px";
+//    });
+//
+//    // Dealing with Textarea Height
+//    function calcHeight(value) {
+//      let numberOfLineBreaks = (value.match(/\n/g) || []).length;
+//      // min-height + lines x line-height + padding + border
+//      let newHeight = 20 + numberOfLineBreaks * 20 + 12 + 2;
+//      return newHeight;
+//    }
+
+
+//taskMemoContent.addEventListener("input", () => {
+//    taskMemoContent.style.height = "auto"; // Reset the height to auto
+//    taskMemoContent.style.height = taskMemoContent.scrollHeight + "px"; // Set height to the scrollHeight
+//});
+
+// Alternatively, if you need more control, use this:
+function calcHeight(textarea) {
+    textarea.style.height = "auto"; // Reset height to auto to recalculate
+    textarea.style.height = textarea.scrollHeight + "px"; // Set height based on the scrollHeight
+}
+
+taskMemoContent.addEventListener("input", () => {
+    calcHeight(taskMemoContent);
+});
+
 });
