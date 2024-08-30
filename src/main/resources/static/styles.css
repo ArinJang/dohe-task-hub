@@ -5,14 +5,14 @@ body {
       font-weight: 500;
       font-style: normal;*/
     font-family: "Noto Sans KR", sans-serif;
-    font-optical-sizing: auto;
+    /*font-optical-sizing: auto;*/
     font-size: 15px;
     /*font-weight: <weight>;*/
     font-style: normal;
 }
 #taskMemo, input, select {
     font-family: "Noto Sans KR", sans-serif;
-    font-optical-sizing: auto;
+    /*font-optical-sizing: auto;*/
     font-size: 15px;
     font-style: normal;
     /*font-weight: <weight>;*/
@@ -24,7 +24,7 @@ body {
     /*font-family: "PT Mono", sans-serif;*/ /* Use your preferred font family */
     font-size: 18px;
     font-family: "Inconsolata", monospace;
-    font-optical-sizing: auto;
+    /*font-optical-sizing: auto;*/
 }
 .sidebar,
 #navigation-bar {
@@ -39,7 +39,7 @@ body {
 .sidebar {
     position: sticky;
     top: 0;
-    left: 0;
+    /*left: 0;*/
     width: 250px;
     background-color: #f4f4f4;
     padding: 10px;
@@ -195,7 +195,7 @@ body {
 #taskList li {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 7px;
     cursor: pointer;
 }
 
@@ -221,7 +221,7 @@ ul {
 }
 
 #daysList li {
-    margin-bottom: 8px;
+    margin-bottom: 7px;
     cursor: pointer;
 }
 
@@ -669,4 +669,11 @@ ul {
 
 #saveChangesButton {
     display: none;
+}
+.empty-placeholder {
+    color: grey;
+    font-size: 0.8em; /* 작은 글씨 */
+    text-align: center; /* 텍스트 중앙 정렬 */
+    pointer-events: none; /* 상호작용 비활성화 */
+    cursor: default !important; /* 기본 커서 모양 강제 적용 */
 }

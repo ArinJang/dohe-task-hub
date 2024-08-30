@@ -9,6 +9,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -23,6 +25,7 @@ import java.util.Map;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class TaskhubController {
+    private static final Logger logger = LoggerFactory.getLogger(TaskhubController.class);
     private final TaskhubService taskhubService;
 
     @GetMapping("/save")
@@ -43,7 +46,6 @@ public class TaskhubController {
                                                     @RequestParam(value = "do_dates", required = false) String do_dates,
                                                     @RequestParam("action") String action) {
         System.out.println(">>> TaskhubController.save 2 Action: "+ action);
-
         TaskhubDTO taskhubDTO = new TaskhubDTO();
 
         if ("TASK+".equals(action)) {
@@ -108,8 +110,9 @@ public class TaskhubController {
 
     @PostMapping("/updateTask/{taskId}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateTask(@PathVariable("taskId") String taskId,
-                                                          @RequestBody TaskhubDTO taskhubDTO) {
+    public ResponseEntity<Map<String, Object>> updateTask(
+            @PathVariable("taskId") String taskId,
+            @RequestBody TaskhubDTO taskhubDTO) {
         System.out.println(">>> TaskhubController.updateTask taskid: "+taskId);
         System.out.println("TaskhubDTO: " + taskhubDTO);
 
@@ -125,12 +128,98 @@ public class TaskhubController {
         return ResponseEntity.ok(response);
     }
 
+
+    @PostMapping("/updateDetailDoDate/{taskId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateDetailDoDate(
+            @PathVariable("taskId") String taskId,
+            @RequestBody Map<String, String> requestData) {
+        System.out.println(">>> TaskhubController.updateDetailDoDate taskid: "+taskId);
+        String doDates = requestData.get("do_dates");
+        taskhubService.updateDetailDoDate(taskId, doDates);
+        return ResponseEntity.ok(Map.of("status", "success", "message", "Do dates successfully updated."));
+    }
+
+    @PostMapping("/updateOrderAndDoDate")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateOrderAndDoDate(@RequestBody Map<String, Object> updateData) {
+        try {
+            //updateOrderAndDoDate(fromDay, toDay,   oldIndex, newIndex, movedTaskId) {
+            //updateOrderAndDoDate(null, '9999-01-04', null, null, sessionStorage.getItem('DetailID'));
+            String taskId = (String) updateData.get("task_id");
+            String oldDoDate = "NOTASSIGNED".equals(updateData.get("old_do_date")) ? "9999-12-31" : (String) updateData.get("old_do_date");
+            String newDoDate = "NOTASSIGNED".equals(updateData.get("new_do_date")) ? "9999-12-31" : (String) updateData.get("new_do_date");
+            String oldIdx = String.valueOf(updateData.get("old_idx"));
+            String newIdx = String.valueOf(updateData.get("new_idx"));
+//            if (taskId == null || newDoDate == null || oldIdx == null || newIdx == null) {
+//                return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Invalid input data"));
+//            }
+
+//            System.out.println("updateOrderAndDoDate 111 do_date: " + oldDoDate+"->"+newDoDate);
+//            System.out.println("updateOrderAndDoDate 111 idx: " + oldIdx+"->"+newIdx);
+            if (oldDoDate == null || oldIdx == null || newIdx == null) {
+                Map<String, Object> oldValues = taskhubService.getOldDoDateAndOrder(taskId);
+                newIdx = taskhubService.getMaxIdxOfNewDate(newDoDate);
+
+                // Convert DO_DATE to String if it is a java.sql.Date
+                Object oldDoDateObj = oldValues.get("old_do_date");
+                if (oldDoDateObj instanceof java.sql.Date) {
+                    java.sql.Date sqlDate = (java.sql.Date) oldDoDateObj;
+                    oldDoDate = sqlDate.toString(); // Convert to String in YYYY-MM-DD format
+                } else if (oldDoDateObj instanceof String) {
+                    oldDoDate = (String) oldDoDateObj;
+                }
+
+                // Convert TASK_ORDER to String if it is an Integer
+                Object oldOrderIdxObj = oldValues.get("old_order_idx");
+                if (oldOrderIdxObj instanceof Integer) {
+                    oldIdx = String.valueOf(oldOrderIdxObj); // Convert Integer to String
+                } else if (oldOrderIdxObj instanceof String) {
+                    oldIdx = (String) oldOrderIdxObj;
+                }
+            }
+//            if (newIdx == null) {
+//                System.out.println("newIdx == null ");
+//                newIdx = taskhubService.getMaxIdxOfNewDate(newDoDate);
+//                System.out.println("updateOrderAndDoDate 111 idx: " + oldIdx+"->"+newIdx);
+//            }
+
+            TaskhubDTO taskhubDTO = new TaskhubDTO();
+            taskhubDTO.setTask_id(taskId);
+            taskhubDTO.setOld_do_date(oldDoDate);
+            taskhubDTO.setNew_do_date(newDoDate);
+            taskhubDTO.setOld_order_idx(oldIdx);
+            taskhubDTO.setNew_order_idx(newIdx);
+            System.out.println("updateOrderAndDoDate task_id: " + taskhubDTO.getTask_id());
+            System.out.println("updateOrderAndDoDate do_date: " + taskhubDTO.getOld_do_date()+"->"+taskhubDTO.getNew_do_date());
+            System.out.println("updateOrderAndDoDate idx: " + taskhubDTO.getOld_order_idx()+"->"+taskhubDTO.getNew_order_idx());
+
+//            logger.info("updateOrderAndDoDate DTO task_id: {}", taskhubDTO.getTask_id());
+//            logger.info("updateOrderAndDoDate DTO Old_do_date: {}", taskhubDTO.getOld_do_date());
+//            logger.info("updateOrderAndDoDate DTO New_do_date: {}", taskhubDTO.getNew_do_date());
+//            logger.info("updateOrderAndDoDate DTO Old_order_idx: {}", taskhubDTO.getOld_order_idx());
+//            logger.info("updateOrderAndDoDate DTO New_order_idx: {}", taskhubDTO.getNew_order_idx());
+
+            taskhubService.updateOrderAndDoDate(taskhubDTO);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Task order and due date updated successfully.");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("status", "error", "message", "Failed to update task"));
+        }
+    }
+
+
+
     @DeleteMapping("/deleteTask/{taskId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable("taskId") String taskId) {
-        System.out.println(">>> TaskhubController.deleteTask");
-        System.out.println("Task ID: " + taskId);
-
+        System.out.println(">>> TaskhubController.deleteTask Task ID: " + taskId);
         try {
             // Call the service layer to delete the task
             taskhubService.deleteTask(taskId);

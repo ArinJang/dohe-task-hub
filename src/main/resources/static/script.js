@@ -34,6 +34,24 @@ document.addEventListener('DOMContentLoaded', function() {
     var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
     const taskMemoContent = document.getElementById('taskMemo');
 
+//        const statusMap = {
+//            0: "Not Started",
+//            1: "In Progress",
+//            2: "Completed",
+//            3: "Canceled",
+//            4: "On Hold",
+//            5: "Delegation"
+//        };
+    const statusMap = { // "side의 data-side" : "status"
+//        'notstarted': 0,
+//        'inprogress': 1,
+        'completed': 2,
+//        'canceled': 3,
+        'onhold': 4,
+        'delegation': 5,
+        'plan': 6
+    };
+
     // Define your initial tasks array (this should be replaced with your actual data fetching logic)
     let tasks = [
         { task_id: 1, task_content: 'Task 1', due_date: '2024-08-12', day_of_week: 'Monday', status: 'In Progress' },
@@ -41,14 +59,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // ... more tasks
     ];
 
-    // Organize tasks by day_of_week
     var tasksByDay = tasks.reduce((acc, task) => {
-        const day = task.day_of_week;
-        if (!acc[day]) {
-            acc[day] = [];
+        const day = task.day_of_week; // 각 task의 day_of_week 속성 값 추출
+        if (!acc[day]) { // 해당 요일에 대한 배열이 아직 존재하지 않으면
+            acc[day] = []; // 새로운 배열을 생성
         }
-        acc[day].push(task);
-        return acc;
+        acc[day].push(task); // 해당 요일의 배열에 task를 추가
+        return acc; // 누적기(acc)를 반환하여 다음 반복에서 계속 사용
     }, {});
 
     let currentMonth = new Date().getMonth(); // 0-based index (0 = January)
@@ -278,10 +295,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderDayTitlesList(); // Ensure days list is rendered first
                 showForm();
                 break;
-            case 'delegation':
-                hideForm();
-                break;
             case 'onhold':
+            case 'delegation':
+            case 'plan':
                 hideForm();
                 break;
             case 'work':
@@ -306,12 +322,26 @@ document.addEventListener('DOMContentLoaded', function() {
         clickSideBar(selectedSide);
     });
 
+//    function showForm() {
+//        document.querySelector('.do-dates-group').style.visibility = 'visible';
+//        taskForm.style.visibility = 'visible';
+//        daysList.style.visibility = 'visible';
+//    }
+//
+//    function hideForm() {
+//        document.querySelector('.do-dates-group').style.visibility = 'hidden';
+//        taskForm.style.visibility = 'hidden';
+//        daysList.style.visibility = 'hidden';
+//    }
+
     function showForm() {
+        document.querySelector('.do-dates-group').style.display = 'flex';
         taskForm.style.display = 'block';
         daysList.style.display = 'block';
     }
 
     function hideForm() {
+        document.querySelector('.do-dates-group').style.display = 'none';
         taskForm.style.display = 'none';
         daysList.style.display = 'none';
     }
@@ -356,6 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function initialize() {
+        fetchMainTaskList();
         fetchTasksByDateRange(); // Call this first
 //        renderDayTitlesList(); // Ensure days list is rendered first
         const today = new Date();
@@ -417,7 +448,7 @@ function showTaskDetail(task) {
 
         taskStatusSelect.value = task.task_status || '';
         originalValues.taskStatus = taskStatusSelect.value; // Store the original value
-        console.log('taskStatusSelect.value',taskStatusSelect.value);
+//        console.log('taskStatusSelect.value',taskStatusSelect.value);
 
 //        // Map numeric status to corresponding text
 //        const statusMap = {
@@ -488,18 +519,23 @@ function handleBlur(event) {
         case 'taskStatus':
             currentValue = event.target.value;
             if (currentValue !== originalValues.taskStatus) {
+                if((originalValues.taskStatus == 4 || originalValues.taskStatus == 5 || originalValues.taskStatus == 6)
+                && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3)) {
+//                console.log('456 > 0123');
+                    updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'));
+                }
+                if(currentValue == 4) {
+                    updateOrderAndDoDate(null, '9999-01-04', null, null, sessionStorage.getItem('detailID'));
+                } else if(currentValue == 5) {
+                    updateOrderAndDoDate(null, '9999-01-05', null, null, sessionStorage.getItem('detailID'));
+                } else if(currentValue == 6) {
+                    updateOrderAndDoDate(null, '9999-01-06', null, null, sessionStorage.getItem('detailID'));
+                }
                 saveTaskData();
             }
             break;
     }
 }
-
-//function handleRadioChange(event) {
-//    const selectedValue = event.target.nextSibling.textContent.trim();
-//    if (selectedValue !== originalValues.taskStatus) {
-//        saveTaskData();
-//    }
-//}
 
     function toggleTaskCompletion(index) {
         tasks[index].completed = !tasks[index].completed;
@@ -507,94 +543,195 @@ function handleBlur(event) {
         daysOfWeek.forEach(day => renderDayTasksList(day));
     }
 
-    // Add a click event listener to each task item
     taskList.addEventListener('click', function(event) {
         const listItem = event.target.closest('li.task-item');
         if (listItem) {
             const taskId = listItem.getAttribute('data-task-id');
             sessionStorage.setItem('detailID', taskId);
+            console.log('taskList detailID: '+sessionStorage.getItem('detailID'));
             fetchTaskDetails();
         }
     });
 
-    function fetchMainTaskList() {
-        // taskList 요소를 가져옴
-        const taskList = document.getElementById('taskList');
+    daysList.addEventListener('click', function(event) {
+        const listItem = event.target.closest('li.task-item');
+        if (listItem) {
+            const taskId = listItem.getAttribute('data-task-id');
+            sessionStorage.setItem('detailID', taskId);
+            console.log('daysList detailID: '+sessionStorage.getItem('detailID'));
+            fetchTaskDetails();
+        }
+    });
 
-        // 기존 목록을 초기화
-        taskList.innerHTML = '';
+    function updateDetailDoDate() {
+        //updateOrderAndDoDate(null, '9999-01-04', null, null, sessionStorage.getItem('detailID'));
+        const datesString = getDatesString();
+        const doDatesData = {
+            do_dates: datesString
+        };
+        const idForDetail = sessionStorage.getItem('detailID');
+
+        fetch(`/api/updateDetailDoDate/${idForDetail}`, { // API 호출
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(doDatesData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            showNotification('Do dates successfully updated!', 'success');
+            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+            }else{
+                fetchTasksByDay();
+            }
+            fetchTaskDetails(); // 태스크 상세정보 갱신
+            fetchMainTaskList(); // 메인 태스크 리스트 갱신
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    function updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId) {
+        const updateData = {
+            task_id: movedTaskId,
+            old_do_date: fromDay,
+            new_do_date: toDay,
+            old_idx: oldIndex,
+            new_idx: newIndex
+        };
+        console.log('movedTaskId: ',movedTaskId);
+        sessionStorage.setItem('detailID', movedTaskId);
+
+        fetch('/api/updateOrderAndDoDate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Task updated successfully:', data);
+            showNotification('Successfully updated!', 'success');
+            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+            }else{
+                fetchTasksByDay();
+            }
+            fetchMainTaskList();
+            fetchTaskDetails();
+        })
+        .catch(error => console.error('Error updating task:', error));
+    }
+
+    // Initialize Sortable.js for a given task list element
+    function initSortable(taskListElement, day) {
+        new Sortable(taskListElement, {
+            group: 'shared',
+            animation: 150,
+            filter: '.empty-placeholder', // .empty-placeholder를 제외한 항목만 드래그할 수 있게 함
+            onEnd: function (evt) {
+                const fromId = evt.from.id;
+                const toId = evt.to.id;
+
+                const fromDay = fromId === 'taskList' ? 'NOTASSIGNED' : (fromId ? dayDateMap.get(fromId.replace('Tasks', '')) : 'NOTASSIGNED');
+                const toDay = toId === 'taskList' ? 'NOTASSIGNED' : (toId ? dayDateMap.get(toId.replace('Tasks', '')) : 'NOTASSIGNED');
+
+                const taskList = Array.from(evt.from.children).map(child => {
+                    return {
+                        task_id: child.getAttribute('data-task-id'),
+                        task_order: parseInt(child.getAttribute('data-task-order'))
+                    };
+                });
+
+                const movedTaskId = evt.item.getAttribute('data-task-id');  // The task ID of the moved task
+                const newIndex = evt.newIndex;
+                const oldIndex = evt.oldIndex;
+
+                if(fromDay == toDay && oldIndex == newIndex) return;
+                console.log('/fromDay:', fromDay, '/toDay:', toDay,'/oldIndex: ',oldIndex, '/newIndex: ',newIndex,'/movedTaskId: ',movedTaskId);
+                updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId);
+            }
+        });
+    }
+
+
+    function renderDayTasksList(day) {
+        const taskListForDay = document.getElementById(`${day}Tasks`);
+        if (!taskListForDay) {
+            console.error(`No element found with ID: ${day}Tasks`);
+            return;
+        }
+        taskListForDay.innerHTML = '';
+
+//        console.log('tasksByDay[day]: ',tasksByDay[day],", tasksByDay[day].length: ",tasksByDay[day].length);
+        if (tasksByDay[day] && tasksByDay[day].length > 0) {
+            tasksByDay[day].forEach((task, index) => {
+                const taskItem = createTaskItem(task);
+                taskListForDay.appendChild(taskItem);
+            });
+        } else {
+//            console.log(`No tasks available for ${day}`);
+            // Render an empty placeholder if there are no tasks
+            const emptyPlaceholder = document.createElement('li');
+            emptyPlaceholder.className = 'empty-placeholder';
+            emptyPlaceholder.textContent = 'No tasks available';
+            emptyPlaceholder.style.pointerEvents = 'none'; // Prevent any interaction with the placeholder
+            emptyPlaceholder.style.cursor = 'default'; // JavaScript로 커서 설정
+            taskListForDay.appendChild(emptyPlaceholder);
+        }
+
+        initSortable(taskListForDay, day);  // Initialize Sortable.js for the updated task list
+    }
+
+    function fetchMainTaskList() {
+        const taskList = document.getElementById('taskList'); // Ensure taskList is correctly referenced
+        if (!taskList) {
+            console.error('No element found with ID: taskList');
+            return;
+        }
+        taskList.innerHTML = ''; // Clear existing tasks
 
         switch (selectedSide) {
             case 'week':
-            fetch('/api/tasksNotAssigned')
-                .then(response => response.json())
-                .then(data => {
-                    // 받아온 데이터를 기반으로 리스트를 생성
-                    data.forEach(taskhub => {
-                        // li 요소 생성
-                        const li = document.createElement('li');
-                        li.classList.add('task-item');
-                        li.dataset.taskId = taskhub.task_id; // data-task-id 속성 추가
-
-                        // 체크박스 요소 생성
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        li.appendChild(checkbox);
-
-                        // taskContainer 요소 생성
-                        const taskContainer = document.createElement('a'); // Use <a> to wrap all content
-                        taskContainer.classList.add('task_content');
-
-                        // task_content 요소 생성
-                        const taskContent = document.createElement('span');
-                        taskContent.textContent = taskhub.task_content;
-                        taskContent.classList.add('task_content');
-
-                        // Apply CSS class if task_status is 2
-                        if (taskhub.task_status == 2) {
-                            taskContainer.classList.add('task-status-completed'); // Add custom class
+                fetch('/api/tasksNotAssigned')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            // Render an empty placeholder if there are no tasks
+                            const emptyPlaceholder = document.createElement('li');
+                            emptyPlaceholder.className = 'empty-placeholder';
+                            emptyPlaceholder.textContent = 'No tasks available';
+                            emptyPlaceholder.style.pointerEvents = 'none'; // Prevent any interaction with the placeholder
+                            emptyPlaceholder.style.cursor = 'default'; // JavaScript로 커서 설정
+                            taskList.appendChild(emptyPlaceholder);
+                        } else {
+                            data.forEach(task => {
+                                const taskItem = createTaskItem(task);
+                                taskList.appendChild(taskItem);
+                            });
                         }
 
-                        // work_name 요소 생성
-                        const workName = document.createElement('span');
-                        workName.classList.add('work_name');
-                        workName.textContent = taskhub.work_name;
-
-                        // due_date 요소 생성
-                        const dueDate = document.createElement('span');
-                        dueDate.classList.add('due_date');
-                        dueDate.textContent = taskhub.due_date;
-
-                        // Append taskContent, workName, and dueDate to taskContainer
-                        taskContainer.appendChild(taskContent);
-                        taskContainer.appendChild(workName);
-                        taskContainer.appendChild(dueDate);
-
-                        // Append taskContainer to <li>
-                        li.appendChild(taskContainer);
-
-                        // li를 ul에 추가
-                        taskList.appendChild(li);
-                    });
-                })
-                .catch(error => console.error('Error fetching taskhubList:', error));
-
-                break;
-            case 'delegation':
-                fetchStatus(5); // Fetch status 5
+                        // Initialize Sortable.js for the fetched task list
+                        initSortable(taskList, 'NOTASSIGNED'); // Use 'NOTASSIGNED' or any placeholder if needed
+                    })
+                    .catch(error => console.error('Error fetching tasks:', error));
                 break;
             case 'onhold':
-                fetchStatus(4); // Fetch status 4
+            case 'delegation':
+            case 'plan':
+            case 'completed':
+                fetchStatus(statusMap[selectedSide]);
                 break;
             case 'work':
-                break;
-            case 'completed':
-                fetchStatus(2); // Fetch status 2
                 break;
             default:
                 break;
         }
-
     }
 
     function fetchTaskDetails() {
@@ -661,39 +798,52 @@ function handleBlur(event) {
             }
         }
 
-        // fetch 요청을 보낼 때 isoDate가 빈 문자열이면, 서버로 baseDate 없이 요청을 보냄
-        fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+    // fetch 요청을 보낼 때 isoDate가 빈 문자열이면, 서버로 baseDate 없이 요청을 보냄
+    fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!Array.isArray(data)) {
+                throw new Error('Fetched data is not an array');
+            }
+            tasks = data;
+
+            // Create an array with all possible days you want to render
+            const allDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+            // Initialize tasksByDay with empty arrays for each day
+            tasksByDay = allDays.reduce((acc, day) => {
+                acc[day] = [];
+                return acc;
+            }, {});
+
+            // Populate tasksByDay with the actual tasks
+            tasks.forEach(task => {
+                const day = task.day_of_week;
+                if (!tasksByDay[day]) {
+                    tasksByDay[day] = [];
                 }
-                return response.json();
-            })
-            .then(data => {
-                if (!Array.isArray(data)) {
-                    throw new Error('Fetched data is not an array');
-                }
-                tasks = data;
-                tasksByDay = tasks.reduce((acc, task) => {
-                    const day = task.day_of_week;
-                    if (!acc[day]) {
-                        acc[day] = [];
-                    }
-                    acc[day].push(task);
-                    return acc;
-                }, {});
-                renderDayTitlesList();
-                Object.keys(tasksByDay).forEach(day => renderDayTasksList(day));
-            })
-            .catch(error => console.error('Error fetching tasks:', error));
-    }
+                tasksByDay[day].push(task);
+            });
+
+            renderDayTitlesList();
+
+            // Ensure that renderDayTasksList is called for all days, even if they are empty
+            allDays.forEach(day => renderDayTasksList(day));
+        })
+        .catch(error => console.error('Error fetching tasks:', error));
+}
 
     function fetchTasksByDay() {
         // Retrieve baseDate from sessionStorage
         const storedBaseDate = sessionStorage.getItem('baseDate');
         const day = sessionStorage.getItem('nav'); // Get the specified day
         let isoDate = '';
-console.log('fetchTasksByDay',storedBaseDate, day);
+//console.log('fetchTasksByDay',storedBaseDate, day);
         if (storedBaseDate) {
             const pBaseDate = new Date(storedBaseDate);
             // Check if the date object is valid
@@ -729,67 +879,28 @@ console.log('fetchTasksByDay',storedBaseDate, day);
                 }, {});
 
                 // Only render the tasks for the specified day
-                if (tasksByDay[day]) {
+//                if (tasksByDay[day]) {
                     renderDayTitlesList(day); // Render the day titles
                     renderDayTasksList(day); // Render the tasks for the specific day
-                } else {
-                    console.error(`No tasks found for the day: ${day}`);
-                }
+//                } else {
+//                    console.error(`No tasks found for the day: ${day}`);
+//                }
             })
             .catch(error => console.error('Error fetching tasks:', error));
     }
 
     function fetchStatus(pstat) {
-        const taskStatus = pstat;
-        fetch(`/api/findByStatus/${taskStatus}`)
-            .then(response => response.json())
-            .then(data => {
-                taskList.innerHTML = ''; // Clear current list
-
-                data.forEach(task => {
-                    const li = document.createElement('li');
-                    li.className = 'task-item';
-                    li.setAttribute('data-task-id', task.task_id);
-
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.checked = task.status === 'Completed';
-                    checkbox.className = 'task-checkbox';
-
-                    const taskContainer = document.createElement('a'); // Use <a> to wrap all content
-                    taskContainer.className = 'task_content';
-
-                    const taskContentSpan = document.createElement('span');
-                    taskContentSpan.textContent = task.task_content;
-                    taskContentSpan.className = 'task_content';
-
-                    const workNameSpan = document.createElement('span');
-                    workNameSpan.textContent = task.work_name;
-                    workNameSpan.className = 'work_name';
-
-                    const dueDateSpan = document.createElement('span');
-                    dueDateSpan.textContent = task.due_date;
-                    dueDateSpan.className = 'due_date';
-
-                    // Append spans to the taskContainer
-                    taskContainer.appendChild(taskContentSpan);
-                    taskContainer.appendChild(workNameSpan);
-                    taskContainer.appendChild(dueDateSpan);
-
-                    // Apply CSS class if task_status is 2
-                    if (task.task_status == 2) {
-                        taskContainer.classList.add('task-status-completed'); // Add custom class
-                    }
-
-                    // Append checkbox and taskContainer to <li>
-                    li.appendChild(checkbox);
-                    li.appendChild(taskContainer);
-
-                    // Append <li> to taskList
-                    taskList.appendChild(li);
-                });
-            })
-            .catch(error => console.error('Error fetching tasks:', error));
+    const taskStatus = pstat;
+    taskList.innerHTML = ''; // Clear current list
+    fetch(`/api/findByStatus/${taskStatus}`)
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(task => {
+                const taskItem = createTaskItem(task);
+                taskList.appendChild(taskItem);
+            });
+        })
+        .catch(error => console.error('Error fetching tasks:', error));
     }
 
     // 요일 제목 만듦
@@ -819,78 +930,6 @@ console.log('fetchTasksByDay',storedBaseDate, day);
         }
     }
 
-    function renderDayTasksList(day) {
-        const taskListForDay = document.getElementById(`${day}Tasks`);
-        if (!taskListForDay) {
-            console.error(`No element found with ID: ${day}Tasks`);
-            return;
-        }
-        taskListForDay.innerHTML = '';
-
-//    console.log('taskListForDay: ', taskListForDay,' / day: ', day);
-        if (tasksByDay[day]) {
-            tasksByDay[day].forEach((task, index) => {
-                const li = document.createElement('li');
-                li.className = 'day-item'; // Add class to the <li>
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = task.status === '2'; // Change this based on your task status logic
-                checkbox.className = 'task-checkbox'; // Add class to the checkbox
-                checkbox.addEventListener('change', () => toggleTaskCompletion(index));
-
-                // Create a container for task content, work name, and due date
-                const taskContainer = document.createElement('a'); // Use <a> to wrap all content
-                taskContainer.className = 'task_content';
-
-                const taskContentSpan = document.createElement('span');
-                taskContentSpan.textContent = task.task_content;
-                taskContentSpan.className = 'task_content'; // Add class to the task content
-
-                // Apply CSS class if task_status is 2
-                if (task.task_status == 2) {
-                    taskContainer.classList.add('task-status-completed'); // Add custom class
-                }
-
-                const workNameSpan = document.createElement('span');
-                workNameSpan.textContent = task.work_name;
-                workNameSpan.className = 'work_name';
-
-                const dueDateSpan = document.createElement('span');
-                dueDateSpan.textContent = task.due_date;
-                dueDateSpan.className = 'due_date';
-
-                // Append taskContentSpan, workNameSpan, and dueDateSpan to taskContainer
-                taskContainer.appendChild(taskContentSpan);
-                taskContainer.appendChild(workNameSpan);
-                taskContainer.appendChild(dueDateSpan);
-
-                li.appendChild(checkbox);
-                li.appendChild(taskContainer);
-
-                li.addEventListener('click', () => {
-                    sessionStorage.setItem('detailID', task.task_id);
-                    fetchTaskDetails(); // Pass task_id to function
-                });
-
-                taskListForDay.appendChild(li);
-            });
-        } else {
-            console.log(`No tasks available for ${day}`);
-        }
-    }
-
-
-    // Add a click event listener to each task item
-    taskList.addEventListener('click', function(event) {
-        const listItem = event.target.closest('li.task-item');
-        if (listItem) {
-            const taskId = listItem.getAttribute('data-task-id');
-            sessionStorage.setItem('detailID', taskId);
-            fetchTaskDetails();
-        }
-    });
-
     taskForm.addEventListener('submit', function(event) {
             event.preventDefault();
 
@@ -898,7 +937,6 @@ console.log('fetchTasksByDay',storedBaseDate, day);
             const action = event.submitter.value;
 
             console.log('event.submitter.value;'+ event.submitter.value);
-            // Check if any input fields are empty
             if(action == 'TASK+' && taskInput.value.trim() === '') {
                 showNotification('Enter a task', 'error');
                 return; // Prevent form submission
@@ -916,9 +954,7 @@ console.log('fetchTasksByDay',storedBaseDate, day);
             }
 
             formData.append('action', action);
-//            console.log("태스크 저장~ sessionStorage.getItem('baseDate')?? "+sessionStorage.getItem('baseDate'));
             console.log("태스크 저장~ selectedDate?? "+selectedDate);
-
 
             fetch('/api/save', {
                 method: 'POST',
@@ -965,14 +1001,14 @@ console.log('fetchTasksByDay',storedBaseDate, day);
 
     saveChangesButton.addEventListener('click', (event) => {
         event.preventDefault(); // Prevent the form from submitting the default way
-        const datesString = getDatesString();
-        // Collect form data
-        const taskData = {
+//        const datesString = getDatesString();
+
+        const taskData = { // Collect form data
             task_content: document.getElementById('taskName').value,
             // categoryName: document.getElementById('categoryName').value,
             // workName: document.getElementById('workName').value,
             due_date: document.getElementById('dueDate').value,
-            do_dates: datesString,
+//            do_dates: datesString,
 //            task_status: document.querySelector('input[name="status"]:checked').value,
             task_status: document.getElementById('taskStatus').value,
             task_memo: document.getElementById('taskMemo').value
@@ -1006,6 +1042,34 @@ console.log('fetchTasksByDay',storedBaseDate, day);
         });
     });
 
+    function modifyDoDates(){
+        const idForDetail = sessionStorage.getItem('detailID');
+        fetch(`/api/updateTask/${idForDetail}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(taskData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            //successModal.style.display = 'block';
+            showNotification('Successfully updated!', 'success');
+            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+            }else{
+                fetchTasksByDay();
+            }
+            fetchMainTaskList();
+            fetchTaskDetails();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            // Handle error (e.g., show an error message)
+        });
+    }
+
     deleteConfirmationButton.addEventListener('click', (event) => {
         event.preventDefault(); // Prevent the form from submitting the default way
         deleteConfirmationModal.style.display = 'block';
@@ -1015,6 +1079,7 @@ console.log('fetchTasksByDay',storedBaseDate, day);
 //    deleteConfirmationButton.addEventListener('click', (event) => {
 //        console.log('selectedDay? delete: ',selectedDay);
         const curId = sessionStorage.getItem('detailID');
+//        console.log('curId? delete: ',curId);
         if (curId) {
             // Send delete request to the server
             fetch(`/api/deleteTask/${curId}`, {
@@ -1094,25 +1159,24 @@ console.log('fetchTasksByDay',storedBaseDate, day);
             dateInput.type = 'date';
             dateInput.value = date; // Assuming the date is in YYYY-MM-DD format
             dateInput.id = `doDates_${index}`; // Unique ID
-
-            // Track the original value of the date input
-            let originalValue = dateInput.value;
+            let originalValue = dateInput.value; // Track the original value of the date input
 
             const removeButton = document.createElement('button');
             removeButton.type = 'button';
             removeButton.className = 'date-button remove';
             removeButton.textContent = '-';
             removeButton.addEventListener('click', () => {
-//                console.log('remove click??populate');
                 dateInputGroup.remove();
-                saveTaskData(); // Save changes when removing a date
+//                saveTaskData(); // Save changes when removing a date
+                updateDetailDoDate();
             });
 
-//            sessionStorage.setItem('baseDate', );
             // Add blur event listener to check if value has changed
             dateInput.addEventListener('blur', (event) => {
                 if (event.target.value !== originalValue) {
-                    saveTaskData(); // Call your function if the value has changed
+//                    saveTaskData(); // Call your function if the value has changed
+                    updateDetailDoDate();
+
                 }
             });
 
@@ -1147,14 +1211,16 @@ console.log('fetchTasksByDay',storedBaseDate, day);
         newRemoveButton.addEventListener('click', () => {
 //            console.log('remove click??addDate');
             newDateInputGroup.remove(); // Remove the date group when the remove button is clicked
-            saveTaskData(); // Save changes when removing a date
+//            saveTaskData(); // Save changes when removing a date
+            updateDetailDoDate();
         });
 
         // Add blur event listener to check if value has changed
         newDateInput.addEventListener('blur', (event) => {
         console.log('add button blur:: event.target.value: ',originalValue, '// event.target.value:',event.target.value);
             if (event.target.value !== originalValue) {
-                saveTaskData(); // Call your function if the value has changed
+//                saveTaskData(); // Call your function if the value has changed
+                updateDetailDoDate();
             }
         });
 
@@ -1171,21 +1237,26 @@ console.log('fetchTasksByDay',storedBaseDate, day);
     // Add event listener to the add date button
     addDateButton.addEventListener('click', addDateInputGroup);
 
-    const getDatesString = () => {
-        // Select all date input elements
-        const dateInputs = document.querySelectorAll('#doDatesContainer input[type="date"]');
+    const getDatesString = (replacementDate = null) => {
+        let datesArray;
 
-        // Convert NodeList to array, extract values, filter out empty values
-        const datesArray = Array.from(dateInputs)
-            .map(input => input.value)
-            .filter(value => value); // Remove empty values
+        if (replacementDate) {
+            // If a replacement date is provided, use it as the only date
+            datesArray = [replacementDate];
+        } else {
+            // Otherwise, get the dates from the inputs as usual
+            const dateInputs = document.querySelectorAll('#doDatesContainer input[type="date"]'); // Select all date input elements
+            datesArray = Array.from(dateInputs)
+                .map(input => input.value)
+                .filter(value => value); // Remove empty values
+        }
 
         // Sort the dates in ascending order
         datesArray.sort((a, b) => new Date(a) - new Date(b));
 
-        // Join the sorted dates with commas
         return datesArray.join(',');
     };
+
 
     function handleNavItemClick(event) {
         const target = event.target.closest('.nav-item');
@@ -1277,62 +1348,6 @@ console.log('fetchTasksByDay',storedBaseDate, day);
         }
     }
 
-    function fetchTasks(whatDay) {
-        fetch(`/api/tasks`)
-            .then(response => response.json())
-            .then(data => {
-                taskList.innerHTML = '';
-
-                // Filter tasks based on the day of the week
-                const filteredTasks = data.filter(task => task.day_of_week === whatDay);
-
-                // Add new tasks to the taskList
-                filteredTasks.forEach(task => {
-                    const li = document.createElement('li');
-                    li.className = 'task-item';
-                    li.setAttribute('data-task-id', task.task_id);
-
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.checked = task.status === '2';
-                    checkbox.className = 'task-checkbox';
-
-                    const taskContainer = document.createElement('a'); // Use <a> to wrap all content
-                    taskContainer.className = 'task_content';
-
-                    const taskContentSpan = document.createElement('span');
-                    taskContentSpan.textContent = task.task_content;
-                    taskContentSpan.className = 'task_content';
-
-                    const workNameSpan = document.createElement('span');
-                    workNameSpan.textContent = task.work_name;
-                    workNameSpan.className = 'work_name';
-
-                    const dueDateSpan = document.createElement('span');
-                    dueDateSpan.textContent = task.due_date;
-                    dueDateSpan.className = 'due_date';
-
-                    // Append spans to the taskContainer
-                    taskContainer.appendChild(taskContentSpan);
-                    taskContainer.appendChild(workNameSpan);
-                    taskContainer.appendChild(dueDateSpan);
-
-                    // Apply CSS class if task_status is 2
-                    if (task.task_status == 2) {
-                        taskContainer.classList.add('task-status-completed'); // Add custom class
-                    }
-
-                    // Append checkbox and taskContainer to <li>
-                    li.appendChild(checkbox);
-                    li.appendChild(taskContainer);
-
-                    // Append <li> to taskList
-                    taskList.appendChild(li);
-                });
-            })
-            .catch(error => console.error('Error fetching tasks:', error));
-    }
-
     // Utility function to format a date as YYYY-MM-DD
     function formatDate(date) {
         const year = date.getFullYear();
@@ -1369,32 +1384,55 @@ console.log('fetchTasksByDay',storedBaseDate, day);
         saveChangesButton.click();
     }
 
-//    taskMemoContent.addEventListener("keyup", () => {
-//      taskMemoContent.style.height = calcHeight(taskMemoContent.value) + "px";
-//    });
-//
-//    // Dealing with Textarea Height
-//    function calcHeight(value) {
-//      let numberOfLineBreaks = (value.match(/\n/g) || []).length;
-//      // min-height + lines x line-height + padding + border
-//      let newHeight = 20 + numberOfLineBreaks * 20 + 12 + 2;
-//      return newHeight;
-//    }
+    // Alternatively, if you need more control, use this:
+    function calcHeight(textarea) {
+        textarea.style.height = "auto"; // Reset height to auto to recalculate
+        textarea.style.height = textarea.scrollHeight + "px"; // Set height based on the scrollHeight
+    }
 
+    taskMemoContent.addEventListener("input", () => {
+        calcHeight(taskMemoContent);
+    });
 
-//taskMemoContent.addEventListener("input", () => {
-//    taskMemoContent.style.height = "auto"; // Reset the height to auto
-//    taskMemoContent.style.height = taskMemoContent.scrollHeight + "px"; // Set height to the scrollHeight
-//});
+    function createTaskItem(task) {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.setAttribute('data-task-id', task.task_id);
 
-// Alternatively, if you need more control, use this:
-function calcHeight(textarea) {
-    textarea.style.height = "auto"; // Reset height to auto to recalculate
-    textarea.style.height = textarea.scrollHeight + "px"; // Set height based on the scrollHeight
-}
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.status === 'Completed';
+        checkbox.className = 'task-checkbox';
 
-taskMemoContent.addEventListener("input", () => {
-    calcHeight(taskMemoContent);
-});
+        const taskContainer = document.createElement('a'); // Use <a> to wrap all content
+        taskContainer.className = 'task_content';
 
+        const taskContentSpan = document.createElement('span');
+        taskContentSpan.textContent = task.task_content;
+        taskContentSpan.className = 'task_content';
+
+        const workNameSpan = document.createElement('span');
+        workNameSpan.textContent = task.work_name;
+        workNameSpan.className = 'work_name';
+
+        const dueDateSpan = document.createElement('span');
+        dueDateSpan.textContent = task.due_date;
+        dueDateSpan.className = 'due_date';
+
+        // Append spans to the taskContainer
+        taskContainer.appendChild(taskContentSpan);
+        taskContainer.appendChild(workNameSpan);
+        taskContainer.appendChild(dueDateSpan);
+
+        // Apply CSS class if task_status is 2
+        if (task.task_status == 2) {
+            taskContainer.classList.add('task-status-completed'); // Add custom class
+        }
+
+        // Append checkbox and taskContainer to <li>
+        li.appendChild(checkbox);
+        li.appendChild(taskContainer);
+
+        return li;
+    }
 });

@@ -27,6 +27,7 @@
             <li class="side-item" data-side="work">WORK</li>
             <li class="side-item" data-side="onhold">ON HOLD</li>
             <li class="side-item" data-side="delegation">DELEGATION</li>
+            <li class="side-item" data-side="plan">PLAN</li>
             <li class="side-item" data-side="completed">COMPLETED</li>
         </ul>
     </nav>
@@ -45,14 +46,14 @@
                     </div>
                 </form>
                 <ul id="taskList">
-                    <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">
-                        <input type="checkbox">
-                        <a class="task_content_set">
-                            <span class="task_content" th:text="${taskhub.task_content}"></span>
-                            <span class="work_name" th:text="${taskhub.work_name}"></span>
-                            <span class="due_date" th:text="${taskhub.due_date}"></span>
-                        </a>
-                    </li>
+<!--                    <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">-->
+<!--                        <input type="checkbox">-->
+<!--                        <a class="task_content_set">-->
+<!--                            <span class="task_content" th:text="${taskhub.task_content}"></span>-->
+<!--                            <span class="work_name" th:text="${taskhub.work_name}"></span>-->
+<!--                            <span class="due_date" th:text="${taskhub.due_date}"></span>-->
+<!--                        </a>-->
+<!--                    </li>-->
                 </ul>
                 <div class="days-list" id="daysList">
                 </div>
@@ -90,7 +91,7 @@
                             <label for="dueDate">Due Date:</label>
                             <input type="date" id="dueDate">
                         </div>
-                        <div class="input-group">
+                        <div class="input-group do-dates-group">
                             <label for="doDates">Do Dates: <button type="button" id="addDateButton">+</button></label>
                             <div id="doDatesContainer">
                                 <input type="date" id="doDates">
@@ -106,6 +107,7 @@
                                 <option value="3">Canceled</option>
                                 <option value="4">On Hold</option>
                                 <option value="5">Delegation</option>
+                                <option value="6">Plan</option>
                             </select>
                         </div>
 
@@ -134,5 +136,7 @@
     </div>
 </div>
 <script src="script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+
 </body>
 </html>

@@ -15,8 +15,13 @@ public class TaskhubDTO {
     private String task_content;
     private String task_status;
     private String task_order;
+    private String task_order_idx;
+    private String new_order_idx;
+    private String old_order_idx;
     private String due_date;
     private String do_dates;
+    private String new_do_date;
+    private String old_do_date;
     private String create_date;
     private String task_memo;
     private String assignee_id;
