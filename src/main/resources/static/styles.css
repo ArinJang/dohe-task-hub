@@ -196,7 +196,8 @@ body {
     display: flex;
     align-items: center;
     margin-bottom: 7px;
-    cursor: pointer;
+    cursor: default;
+    /*cursor: pointer;*/
 }
 
 #taskList input[type="checkbox"] {
@@ -222,7 +223,8 @@ ul {
 
 #daysList li {
     margin-bottom: 7px;
-    cursor: pointer;
+    cursor: default;
+    /*cursor: pointer;*/
 }
 
 .task-detail {
@@ -558,6 +560,7 @@ ul {
 .task_content {
     font-size: 15px;
     margin-right: 5px;
+    cursor: pointer;
 }
 
 .work_name {

@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMonth = new Date().getMonth(); // 0-based index (0 = January)
     let currentYear = new Date().getFullYear();
     let currentWeek = getWeekOfMonth(new Date());
+//    console.log('시작: ',currentYear,currentMonth,currentWeek);
 
     const categories = {
         week: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
@@ -84,16 +85,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function getWeekOfMonth(date) {
-        const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-        const firstMonday = firstDayOfMonth.getDate() + (1 - firstDayOfMonth.getDay() + 7) % 7;
-        const daysFromFirstMonday = date.getDate() - firstMonday;
-        return Math.max(Math.ceil((daysFromFirstMonday + 1) / 7), 1); // Week number, ensure it starts at 1
+        const dayOfMonth = date.getDate();
+        const dayOfWeek = date.getDay() || 7; // Make Sunday (0) be treated as 7
+        const startOfWeek = new Date(date.getFullYear(), date.getMonth(), dayOfMonth - dayOfWeek + 1);
+        const firstMonday = new Date(date.getFullYear(), date.getMonth(), 1);
+
+        if (firstMonday.getDay() !== 1) {
+            firstMonday.setDate(firstMonday.getDate() + ((8 - firstMonday.getDay()) % 7));
+        }
+
+        const weekNumber = Math.ceil(((startOfWeek - firstMonday) / 86400000 + 1) / 7);
+        return weekNumber;
     }
 
     function getStartDateOfWeek(year, month, week) {
         const firstDayOfMonth = new Date(year, month, 1);
         const firstMonday = firstDayOfMonth.getDate() + (1 - firstDayOfMonth.getDay() + 7) % 7;
         const startDate = new Date(year, month, firstMonday + (week - 1) * 7);
+        console.log('getStartDateOfWeek함수- ',startDate);
         return startDate;
     }
 
@@ -113,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const startDate = getStartDateOfWeek(currentYear, currentMonth, currentWeek);
         sessionStorage.setItem('baseDate', startDate);
+//        console.log('updateWeekDisplay startDate ',startDate);
         sessionStorage.setItem('nav', '');
         selectedDate = null;
         weekDisplay.textContent = getFormattedWeekRange(startDate);
@@ -120,17 +130,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // NavigationBar 업데이트 함수
     function updateWeekDates() {
-        console.log('sessionStorage.getItem(today)',sessionStorage.getItem('today'));
 
         dayDateMap.clear();
         navigationBar.innerHTML = '';
-        if(sessionStorage.getItem('today') === 'true'   ) {
+        if(sessionStorage.getItem('today') === 'true') {
             currentMonth = new Date().getMonth(); // 0-based index (0 = January)
             currentYear = new Date().getFullYear();
             currentWeek = getWeekOfMonth(new Date());
         }
         const startDate = getStartDateOfWeek(currentYear, currentMonth, currentWeek);
-
         const dates = Array.from({ length: 7 }, (_, i) => {
             const date = new Date(startDate);
             date.setDate(startDate.getDate() + i);
