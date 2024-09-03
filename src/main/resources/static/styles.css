@@ -562,6 +562,24 @@ ul {
     margin-right: 5px;
     cursor: pointer;
 }
+/*.task_content {
+    display: inline-block;
+    width: calc(100% - 40px);
+    vertical-align: middle;
+    padding-right: 10px;
+    position: relative; *//* Add relative positioning *//*
+}
+*/
+.hamburger-icon {
+    /*display: inline-block;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);*/
+    font-size: 15px;
+    margin-right: 10px;
+    cursor: move;
+}
 
 .work_name {
     font-size: 12px;
@@ -679,4 +697,40 @@ ul {
     text-align: center; /* 텍스트 중앙 정렬 */
     pointer-events: none; /* 상호작용 비활성화 */
     cursor: default !important; /* 기본 커서 모양 강제 적용 */
+}
+
+input#userid, input#password {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    flex: 1; /* Allow inputs/selects to take up remaining space */
+    /*padding: 5px 10px 8px 10px; *//* Padding inside inputs *//*
+    font-size: 15px; *//* Font size */
+    border: 1px solid #ccc; /* Border for inputs/selects */
+    border-radius: 4px; /* Rounded corners */
+    box-sizing: border-box;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+button#loginSubmit {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+button#loginSubmit:hover {
+    background-color: #45a049;
 }

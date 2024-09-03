@@ -35,7 +35,7 @@ public class TaskhubService {
         params.put("task_content", taskhubDTO.getTask_content());
         params.put("do_dates", taskhubDTO.getDo_dates());
         params.put("task_order", 1);
-        params.put("writer_id", "arar");
+        params.put("user_id", "Terry");
 
         taskhubRepository.callInsertTaskAndDoDates(params);
     }

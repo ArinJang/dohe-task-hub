@@ -1,142 +1,160 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TASK HUB</title>
-    <link rel="stylesheet" href="styles.css">
+    <!DOCTYPE html>
+    <html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TASK HUB</title>
+        <link rel="stylesheet" href="styles.css">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans:wght@100..900&family=PT+Mono&family=Roboto+Slab:wght@100..900&family=Inconsolata:wght@200..900&family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
-</head>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans:wght@100..900&family=PT+Mono&family=Roboto+Slab:wght@100..900&family=Inconsolata:wght@200..900&family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
+    </head>
 
-<body>
-<div class="container">
-    <nav class="sidebar">
-        <div class="category">
-            <button id="prev-week">&#9664;</button>
-            <span id="week-display"></span>
-            <button id="next-week">&#9654;</button>
-        </div>
-        <ul id="side-list">
-            <li class="side-item active" data-side="week">
-                WEEK
-                <button id="today-button">TODAY</button>
-            </li>
-            <li class="side-item" data-side="work">WORK</li>
-            <li class="side-item" data-side="onhold">ON HOLD</li>
-            <li class="side-item" data-side="delegation">DELEGATION</li>
-            <li class="side-item" data-side="plan">PLAN</li>
-            <li class="side-item" data-side="completed">COMPLETED</li>
-        </ul>
-    </nav>
-    <div class="main-content">
-        <div id="navigation-bar"></div>
-        <div id="list-detail">
-            <div class="left-panel">
-                <form id="taskForm">
-                    <div class="task-input">
-                        <input type="text" id="taskInput" placeholder="Enter a task" name="task_content">
-                        <input type="submit" id="addTaskButton" value="TASK+" name="action">
-                    </div>
-                    <div class="work-input">
-                        <input type="text" id="workInput" placeholder="Enter a work" name="work_name">
-                        <input type="submit" id="addWorkButton" value="WORK+" name="action">
-                    </div>
-                </form>
-                <ul id="taskList">
-<!--                    <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">-->
-<!--                        <input type="checkbox">-->
-<!--                        <a class="task_content_set">-->
-<!--                            <span class="task_content" th:text="${taskhub.task_content}"></span>-->
-<!--                            <span class="work_name" th:text="${taskhub.work_name}"></span>-->
-<!--                            <span class="due_date" th:text="${taskhub.due_date}"></span>-->
-<!--                        </a>-->
-<!--                    </li>-->
-                </ul>
-                <div class="days-list" id="daysList">
-                </div>
+    <body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="category">
+                <button id="prev-week">&#9664;</button>
+                <span id="week-display"></span>
+                <button id="next-week">&#9654;</button>
             </div>
-            <div class="right-panel">
-                <div class="task-detail" id="taskDetail">
-                    <h3>Task Details</h3>
-                    <div class="task-detail-content" id="taskDetailContent" tabindex="0">
-                        <div class="input-group">
-                            <label for="taskName">Task:</label>
-                            <input type="text" id="taskName" placeholder="Select a task to view its details.">
+            <ul id="side-list">
+                <li class="side-item active" data-side="week">
+                    WEEK
+                    <button id="today-button">TODAY</button>
+                </li>
+                <li class="side-item" data-side="work">WORK</li>
+                <li class="side-item" data-side="onhold">ON HOLD</li>
+                <li class="side-item" data-side="delegation">DELEGATION</li>
+                <li class="side-item" data-side="plan">PLAN</li>
+                <li class="side-item" data-side="completed">COMPLETED</li>
+            </ul>
+        </nav>
+        <div class="main-content">
+            <div id="navigation-bar"></div>
+            <div id="list-detail">
+                <div class="left-panel">
+                    <form id="taskForm">
+                        <div class="task-input">
+                            <input type="text" id="taskInput" placeholder="Enter a task" name="task_content">
+                            <input type="submit" id="addTaskButton" value="TASK+" name="action">
                         </div>
-                        <div class="input-group">
-                            <label for="categoryName">Category:</label>
-                            <select id="categoryName">
-                                <option value="" disabled selected class="select-placeholder">Select a category</option>
-                                <option value="Work">Work</option>
-                                <option value="Personal">Personal</option>
-                                <option value="Study">Study</option>
-                                <option value="Other">Other</option>
-                            </select>
+                        <div class="work-input">
+                            <input type="text" id="workInput" placeholder="Enter a work" name="work_name">
+                            <input type="submit" id="addWorkButton" value="WORK+" name="action">
                         </div>
-                        <div class="input-group">
-                            <label for="workName">Work:</label>
-                            <select id="workName">
-                                <option value="" disabled selected class="select-placeholder">Select a work</option>
-                                <option value="Project A">Project A</option>
-                                <option value="Project B">Project B</option>
-                                <option value="Project C">Project C</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
+                    </form>
+                    <ul id="taskList">
+    <!--                    <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">-->
+    <!--                        <input type="checkbox">-->
+    <!--                        <a class="task_content_set">-->
+    <!--                            <span class="task_content" th:text="${taskhub.task_content}"></span>-->
+    <!--                            <span class="work_name" th:text="${taskhub.work_name}"></span>-->
+    <!--                            <span class="due_date" th:text="${taskhub.due_date}"></span>-->
+    <!--                        </a>-->
+    <!--                    </li>-->
+                    </ul>
+                    <div class="days-list" id="daysList">
+                    </div>
+                </div>
+                <div class="right-panel">
+                    <div class="task-detail" id="taskDetail">
+                        <h3>Task Details</h3>
+                        <div class="task-detail-content" id="taskDetailContent" tabindex="0">
+                            <div class="input-group">
+                                <label for="taskName">Task:</label>
+                                <input type="text" id="taskName" placeholder="Select a task to view its details.">
+                            </div>
+                            <div class="input-group">
+                                <label for="categoryName">Category:</label>
+                                <select id="categoryName">
+                                    <option value="" disabled selected class="select-placeholder">Select a category</option>
+                                    <option value="Work">Work</option>
+                                    <option value="Personal">Personal</option>
+                                    <option value="Study">Study</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="workName">Work:</label>
+                                <select id="workName">
+                                    <option value="" disabled selected class="select-placeholder">Select a work</option>
+                                    <option value="Project A">Project A</option>
+                                    <option value="Project B">Project B</option>
+                                    <option value="Project C">Project C</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
 
-                        <div class="input-group">
-                            <label for="dueDate">Due Date:</label>
-                            <input type="date" id="dueDate">
-                        </div>
-                        <div class="input-group do-dates-group">
-                            <label for="doDates">Do Dates: <button type="button" id="addDateButton">+</button></label>
-                            <div id="doDatesContainer">
-                                <input type="date" id="doDates">
+                            <div class="input-group">
+                                <label for="dueDate">Due Date:</label>
+                                <input type="date" id="dueDate">
+                            </div>
+                            <div class="input-group do-dates-group">
+                                <label for="doDates">Do Dates: <button type="button" id="addDateButton">+</button></label>
+                                <div id="doDatesContainer">
+                                    <input type="date" id="doDates">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Status:</label>
+                                <select id="taskStatus" name="status">
+                                    <option value="" disabled selected class="select-placeholder">Select a status</option>
+                                    <option value="0">Not Started</option>
+                                    <option value="1">In Progress</option>
+                                    <option value="2">Completed</option>
+                                    <option value="3">Canceled</option>
+                                    <option value="4">On Hold</option>
+                                    <option value="5">Delegation</option>
+                                    <option value="6">Plan</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="taskMemo">Memo:</label>
+                            </div>
+                            <textarea id="taskMemo" rows="4" cols="50" placeholder="Enter a memo"></textarea>
+                            <div class="button-container">
+                                <button id="saveChangesButton">Save</button>
+                                <button id="deleteConfirmationButton">Delete</button>
                             </div>
                         </div>
-                        <div class="input-group">
-                            <label>Status:</label>
-                            <select id="taskStatus" name="status">
-                                <option value="" disabled selected class="select-placeholder">Select a status</option>
-                                <option value="0">Not Started</option>
-                                <option value="1">In Progress</option>
-                                <option value="2">Completed</option>
-                                <option value="3">Canceled</option>
-                                <option value="4">On Hold</option>
-                                <option value="5">Delegation</option>
-                                <option value="6">Plan</option>
-                            </select>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="taskMemo">Memo:</label>
-                        </div>
-                        <textarea id="taskMemo" rows="4" cols="50" placeholder="Enter a memo"></textarea>
-                        <div class="button-container">
-                            <button id="saveChangesButton">Save</button>
-                            <button id="deleteConfirmationButton">Delete</button>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<div id="notificationContainer"></div>
-<!-- Modal Structure for Delete Confirmation -->
-<div id="deleteConfirmationModal" class="modal">
-    <div class="modal-content">
-        <h2>Deletion</h2>
-        <p>Are you sure you want to delete this task?</p>
-        <button id="confirmDeleteButton">Delete</button>
-        <button id="cancelDeleteButton">Cancel</button>
-    </div>
-</div>
-<script src="script.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 
-</body>
-</html>
+    <div id="notificationContainer"></div>
+    <!-- Modal Structure for Delete Confirmation -->
+    <div id="deleteConfirmationModal" class="modal">
+        <div class="modal-content">
+            <h2>Deletion</h2>
+            <p>Are you sure you want to delete this task?</p>
+            <button id="confirmDeleteButton">Delete</button>
+            <button id="cancelDeleteButton">Cancel</button>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <label for="userid">ID:</label>
+                <input type="text" id="userid" name="userid" required>
+                <br>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <br>
+                <button type="submit" id="loginSubmit">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+
+    </body>
+    </html>

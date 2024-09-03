@@ -4,9 +4,9 @@
 
 <mapper namespace="Taskhub">
     <!--<insert id="insertTask" parameterType="taskhubdto"> &lt;!&ndash; mybatis-config.xml 에서 설정한 Alias&ndash;&gt;
-        insert into TASK(task_content, do_dates, task_order, writer_id)
+        insert into TASK(task_content, do_dates, task_order, user_id)
         values(#{task_content}, #{do_dates}, 1, 'arar12')
-        &lt;!&ndash;        #{task_order}, #{writer_id})&ndash;&gt;
+        &lt;!&ndash;        #{task_order}, #{user_id})&ndash;&gt;
     </insert>
 
     <insert id="insertDoDate" parameterType="taskhubdto">
@@ -25,7 +25,7 @@
         #{task_content},
         #{do_dates},
         #{task_order},
-        #{writer_id}
+        #{user_id}
         )
     </select>
 
@@ -49,7 +49,7 @@
     </insert>
 
     <select id="findAll" resultType="taskhubdto">
-        <!--SELECT TASK_ID, TASK_CONTENT, WRITER_ID,
+        <!--SELECT TASK_ID, TASK_CONTENT, user_id,
         CONCAT('(', 'work_name',')') AS WORK_NAME,
         DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
         CONCAT('- ', DATE_FORMAT(DUE_DATE, '%m/%d')) AS DUE_DATE,
@@ -61,7 +61,7 @@
         SELECT
             T.TASK_ID,
             T.TASK_CONTENT,
-            T.WRITER_ID,
+            T.USER_ID,
             CONCAT('(', 'work_name', ')') AS WORK_NAME,
             DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
             CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
@@ -83,7 +83,7 @@
     </select>
 
     <!--<select id="findByDays" parameterType="map" resultType="taskhubdto">
-        SELECT TASK_ID, TASK_CONTENT, WRITER_ID,
+        SELECT TASK_ID, TASK_CONTENT, USER_ID,
         DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
         DATE_FORMAT(DUE_DATE, '%m-%d') AS DUE_DATE,
         DO_DATES,
@@ -209,7 +209,7 @@
     </select>
 
     <select id="findById" parameterType="String" resultType="taskhubdto">
-<!--        SELECT TASK_ID, TASK_CONTENT, TASK_STATUS, TASK_ORDER, TASK_MEMO, ASSIGNEE_ID, CATEGORY_ID AS CATEGORY_NAME, WORK_ID AS WORK_NAME, WRITER_ID,
+<!--        SELECT TASK_ID, TASK_CONTENT, TASK_STATUS, TASK_ORDER, TASK_MEMO, ASSIGNEE_ID, CATEGORY_ID AS CATEGORY_NAME, WORK_ID AS WORK_NAME, USER_ID,
         DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
         DATE_FORMAT(DUE_DATE, '%Y-%m-%d') AS DUE_DATE,
         DO_DATES,
@@ -224,7 +224,7 @@
         T.ASSIGNEE_ID,
         T.CATEGORY_ID AS CATEGORY_NAME,
         T.WORK_ID AS WORK_NAME,
-        T.WRITER_ID,
+        T.USER_ID,
         DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
         DATE_FORMAT(T.DUE_DATE, '%Y-%m-%d') AS DUE_DATE,
         UPPER(DATE_FORMAT(T.DUE_DATE, '%a')) AS day_of_week,
@@ -255,7 +255,7 @@
     </select>
 
     <select id="findByStatus" parameterType="String" resultType="taskhubdto">
-        SELECT T.TASK_ID, T.TASK_CONTENT, T.WRITER_ID,
+        SELECT T.TASK_ID, T.TASK_CONTENT, T.USER_ID,
         CONCAT('(', 'work_name',')') AS WORK_NAME,
         DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
         CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
