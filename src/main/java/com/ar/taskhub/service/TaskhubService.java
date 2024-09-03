@@ -90,6 +90,11 @@ public class TaskhubService {
     @Transactional
     public void updateOrderAndDoDate(TaskhubDTO taskhubDTO) {
         try {
+            if(taskhubDTO.getTask_status() != null) {
+                System.out.println("taskhubDTO.getTask_status() != null");
+                taskhubRepository.updateStatus(taskhubDTO.getTask_id(), taskhubDTO.getTask_status());
+            }
+
             // case1: 이동하는 날짜그룹 상이
             if(!Objects.equals(taskhubDTO.getNew_do_date(), taskhubDTO.getOld_do_date())) {
                 // 1. Update old DO_DATE TASK_ORDER
@@ -130,11 +135,15 @@ public class TaskhubService {
     }
 
     @Transactional
-    public void updateDetailDoDate(String taskId, String doDates) {
-        System.out.println("updateDetailDoDate doDates:: "+doDates);
+    public void updateDetailDoDate(TaskhubDTO taskhubDTO) {
+//        System.out.println("updateDetailDoDate doDates:: "+doDates);
         String[] dateArray;
+        String taskId = taskhubDTO.getTask_id();
+        String doDates = taskhubDTO.getDo_dates();
+        String taskStatus = taskhubDTO.getTask_status();
         if (doDates == null || doDates.trim().isEmpty()) {
             dateArray = new String[] { "9999-12-31" };
+            taskStatus = "";
         } else {
             dateArray = doDates.split(",");
         }
@@ -152,10 +161,13 @@ public class TaskhubService {
             System.out.println("updateDetailDoDate taskOrder:: "+taskOrder+" / date: "+date);
             // 각 날짜를 DODATES 테이블에 삽입
             taskhubRepository.insertDoDate(taskId, date.trim(), taskOrder);
-
+        }
+        if(taskStatus != null && !taskStatus.isEmpty()) {
+            System.out.println("5 Starting updateStatus..."+taskStatus);
+            taskhubRepository.updateStatus(taskId, taskStatus);
+            System.out.println("5 updateStatus end.");
         }
     }
-
     public Map<String, Object> getOldDoDateAndOrder(String taskId) {
         return taskhubRepository.getOldDoDateAndOrder(taskId);
     }

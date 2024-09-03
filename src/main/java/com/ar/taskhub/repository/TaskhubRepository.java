@@ -54,6 +54,13 @@ public class TaskhubRepository {
         sql.update("Taskhub.updateTask", taskhubDTO);
     }
 
+    public void updateStatus(String id, String status) {
+        Map<String, String> idStatus = new HashMap<>();
+        idStatus.put("task_id", id);
+        idStatus.put("task_status", status);
+        sql.update("Taskhub.updateStatus", idStatus);
+    }
+
     public void deleteTask(String taskId) {
         sql.delete("Taskhub.deleteTask", taskId);
     }

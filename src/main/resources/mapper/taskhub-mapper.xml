@@ -287,6 +287,13 @@
         WHERE TASK_ID = #{task_id}
     </update>
 
+    <update id="updateStatus" parameterType="map">
+        UPDATE TASK
+        SET
+        TASK_STATUS = #{task_status}
+        WHERE TASK_ID = #{task_id}
+    </update>
+
     <select id="getOldDoDateAndOrder" parameterType="String" resultType="map">
         SELECT DO_DATE AS old_do_date, TASK_ORDER AS old_order_idx
         FROM DODATES

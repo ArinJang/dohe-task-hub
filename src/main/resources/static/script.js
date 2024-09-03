@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
     const taskMemoContent = document.getElementById('taskMemo');
     let orderInCertainStatus = null;
-    let isTaskUpdateScheduled = false;
+//    let isTaskUpdateScheduled = false;
 
     const loginModal = document.getElementById('loginModal');
     const closeBtn = document.getElementsByClassName('close')[0];
@@ -323,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function clickSideBar(selectedSide) {
         fetchMainTaskList();
         sessionStorage.setItem('detailID', '');
+        orderInCertainStatus = null;
         fetchTaskDetails();
         switch (selectedSide) {
             case 'week':
@@ -559,7 +560,7 @@ function handleBlur(event) {
             currentValue = event.target.value;
             if (currentValue !== originalValues[id]) {
                 saveTaskData(); // Save task data if changed
-                isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
+//                isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
             }
             break;
         case 'taskStatus':
@@ -568,20 +569,20 @@ function handleBlur(event) {
                 if((originalValues.taskStatus == 4 || originalValues.taskStatus == 5 || originalValues.taskStatus == 6)
                 && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3)) {
 //                console.log('456 > 0123');
-                    updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'));
+                    updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue);
                 }
                 if(currentValue == 4) {
-                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-04');
+                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
                     //updateOrderAndDoDate(null, '9999-01-04', null, null, sessionStorage.getItem('detailID'));
                 } else if(currentValue == 5) {
-                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-05');
+                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
                     //updateOrderAndDoDate(null, '9999-01-05', null, null, sessionStorage.getItem('detailID'));
                 } else if(currentValue == 6) {
-                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-06');
+                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
                     //updateOrderAndDoDate(null, '9999-01-06', null, null, sessionStorage.getItem('detailID'));
                 }
-                saveTaskData(); // Save task data if changed
-                isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
+//                saveTaskData(); // Save task data if changed
+//                isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
             }
             break;
     }
@@ -613,21 +614,25 @@ function handleBlur(event) {
         }
     });
 
-    function updateDetailDoDate(id, dates) {
-//        console.log("0 updateDetailDoDate: ",dates);
-        //updateOrderAndDoDate(null, '9999-01-04', null, null, sessionStorage.getItem('detailID'));
+    function updateDetailDoDate(id, dates, status) {
+
+        const taskId = id ? id : sessionStorage.getItem('detailID');
         const datesString = dates ? dates : getDatesString();
+        const taskStatus = status ? status : "";
+        const updateData = {
+            task_id: taskId,
+            do_dates: datesString,
+            task_status: taskStatus
+        };
+        console.log("0 taskId: ",taskId,'/datesString:',datesString,'/taskStatus',taskStatus);
+        sessionStorage.setItem('detailID', taskId);
 
-//        console.log("1 updateDetailDoDate: ",datesString);
-        const doDatesData = { do_dates: datesString };
-        const idForDetail = sessionStorage.getItem('detailID');
-
-        fetch(`/api/updateDetailDoDate/${idForDetail}`, { // API 호출
+        fetch('/api/updateDetailDoDate', { // API 호출
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(doDatesData)
+            body: JSON.stringify(updateData)
         })
         .then(response => response.json())
         .then(data => {
@@ -641,24 +646,25 @@ function handleBlur(event) {
             }else{
                 fetchTasksByDay();
             }
-//            fetchTaskDetails(); // 태스크 상세정보 갱신
-//            fetchMainTaskList(); // 메인 태스크 리스트 갱신
+            fetchTaskDetails(); // 태스크 상세정보 갱신
+            fetchMainTaskList(); // 메인 태스크 리스트 갱신
 
-            isTaskUpdateScheduled = true; // Mark that a do date update has been scheduled
-            processUpdates(); // Process updates
+//            isTaskUpdateScheduled = true; // Mark that a do date update has been scheduled
+//            processUpdates(); // Process updates
         })
         .catch((error) => {
             console.error('Error:', error);
         });
     }
 
-    function updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId) {
+    function updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId, newStatus) {
         const updateData = {
             task_id: movedTaskId,
             old_do_date: fromDay,
             new_do_date: toDay,
             old_idx: oldIndex,
-            new_idx: newIndex
+            new_idx: newIndex,
+            task_status: newStatus
         };
         console.log('movedTaskId: ',movedTaskId);
         sessionStorage.setItem('detailID', movedTaskId);
@@ -698,16 +704,15 @@ function handleBlur(event) {
                 let fromDay;
                 let toDay;
 
-//                console.log('00: ',orderInCertainStatus);
                 if(orderInCertainStatus !== undefined && orderInCertainStatus !== null){
-//                    console.log('11: ',orderInCertainStatus);
+                    console.log('orderInCertainStatus!=null >',orderInCertainStatus);
                     fromDay = orderInCertainStatus;
                     toDay = orderInCertainStatus;
+                    orderInCertainStatus = null;
                 } else {
                     fromDay = fromId === 'taskList' ? 'NOTASSIGNED' : (fromId ? dayDateMap.get(fromId.replace('Tasks', '')) : 'NOTASSIGNED');
                     toDay = toId === 'taskList' ? 'NOTASSIGNED' : (toId ? dayDateMap.get(toId.replace('Tasks', '')) : 'NOTASSIGNED');
                 }
-                orderInCertainStatus = null;
 //                const fromDay = fromId === 'taskList' ? 'NOTASSIGNED' : (fromId ? dayDateMap.get(fromId.replace('Tasks', '')) : 'NOTASSIGNED');
 //                const toDay = toId === 'taskList' ? 'NOTASSIGNED' : (toId ? dayDateMap.get(toId.replace('Tasks', '')) : 'NOTASSIGNED');
 
@@ -1114,10 +1119,10 @@ function handleBlur(event) {
             }else{
                 fetchTasksByDay();
             }
-//            fetchMainTaskList();
-//            fetchTaskDetails();
-            isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
-            processUpdates(); // Process updates
+            fetchMainTaskList();
+            fetchTaskDetails();
+//            isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
+//            processUpdates(); // Process updates
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -1125,15 +1130,15 @@ function handleBlur(event) {
         });
     });
 
-    function processUpdates() {
-        if (isTaskUpdateScheduled) {
-//            fetchTasksByDateRange(); // Refresh task list
-//            fetchTasksByDay(); // Refresh tasks by day
-            fetchMainTaskList(); // Refresh main task list
-            fetchTaskDetails(); // Refresh task details
-            isTaskUpdateScheduled = false; // Reset the flag
-        }
-    }
+//    function processUpdates() {
+//        if (isTaskUpdateScheduled) {
+////            fetchTasksByDateRange(); // Refresh task list
+////            fetchTasksByDay(); // Refresh tasks by day
+//            fetchMainTaskList(); // Refresh main task list
+//            fetchTaskDetails(); // Refresh task details
+//            isTaskUpdateScheduled = false; // Reset the flag
+//        }
+//    }
 
     function modifyDoDates(){
         const idForDetail = sessionStorage.getItem('detailID');
