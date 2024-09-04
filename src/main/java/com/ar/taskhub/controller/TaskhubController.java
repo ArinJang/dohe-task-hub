@@ -189,7 +189,7 @@ public class TaskhubController {
             String newIdx = getStringValue(updateData.get("new_idx"));
             String taskStatus = (String) updateData.get("task_status");
 
-            System.out.println("0 updateOrderAndDoDate task_id: " + taskId);
+            System.out.println("0 updateOrderAndDoDate task_id: " + taskId+" / taskStatus: "+taskStatus);
             System.out.println("0 do_date: " + oldDoDate+"->"+newDoDate+" // idx: " + oldIdx+"->"+newIdx);
 
             //if (oldDoDate == null || oldIdx == null || newIdx == null) {

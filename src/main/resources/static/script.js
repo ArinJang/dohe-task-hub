@@ -439,154 +439,155 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initialize(); // Call initialize to set up the UI
 
-// Variables to store the original values of the inputs
-let originalValues = {
-    taskName: '',
-    categoryName: '',
-    workName: '',
-    dueDate: '',
-    taskMemo: '',
-    taskStatus: ''
-};
+    // Variables to store the original values of the inputs
+    let originalValues = {
+        taskName: '',
+        categoryName: '',
+        workName: '',
+        dueDate: '',
+        taskMemo: '',
+        taskStatus: ''
+    };
 
-function showTaskDetail(task) {
-    if (task && typeof task === 'object') {
-        // Update the values of the form fields with the task details
-        const taskNameInput = document.getElementById('taskName');
-        const categoryNameInput = document.getElementById('categoryName');
-        const workNameInput = document.getElementById('workName');
-        const dueDateInput = document.getElementById('dueDate');
-        const taskMemoInput = document.getElementById('taskMemo');
-        const taskStatusSelect = document.getElementById('taskStatus');
+    function showTaskDetail(task) {
+        if (task && typeof task === 'object') {
+            // Update the values of the form fields with the task details
+            const taskNameInput = document.getElementById('taskName');
+            const categoryNameInput = document.getElementById('categoryName');
+            const workNameInput = document.getElementById('workName');
+            const dueDateInput = document.getElementById('dueDate');
+            const taskMemoInput = document.getElementById('taskMemo');
+            const taskStatusSelect = document.getElementById('taskStatus');
 
-        taskNameInput.value = task.task_content || '';
-        originalValues.taskName = taskNameInput.value; // Store the original value
+            taskNameInput.value = task.task_content || '';
+            originalValues.taskName = taskNameInput.value; // Store the original value
 
-        categoryNameInput.value = task.category_name || '';
-        originalValues.categoryName = categoryNameInput.value; // Store the original value
+            categoryNameInput.value = task.category_name || '';
+            originalValues.categoryName = categoryNameInput.value; // Store the original value
 
-        workNameInput.value = task.work_name || '';
-        originalValues.workName = workNameInput.value; // Store the original value
+            workNameInput.value = task.work_name || '';
+            originalValues.workName = workNameInput.value; // Store the original value
 
-        dueDateInput.value = task.due_date || '';
-        originalValues.dueDate = dueDateInput.value; // Store the original value
+            dueDateInput.value = task.due_date || '';
+            originalValues.dueDate = dueDateInput.value; // Store the original value
 
-        taskMemoInput.value = task.task_memo || '';
-        originalValues.taskMemo = taskMemoInput.value; // Store the original value
-//        taskMemoInput.style.height = calcHeight(taskMemoInput.value) + "px";
-//        calcHeight(taskMemoContent);
-        taskMemoInput.style.height = "auto"; // Reset height to auto to recalculate
-        taskMemoInput.style.height = taskMemoContent.scrollHeight + "px"; // Set height based on the scrollHeight
+            taskMemoInput.value = task.task_memo || '';
+            originalValues.taskMemo = taskMemoInput.value; // Store the original value
+    //        taskMemoInput.style.height = calcHeight(taskMemoInput.value) + "px";
+    //        calcHeight(taskMemoContent);
+            taskMemoInput.style.height = "auto"; // Reset height to auto to recalculate
+            taskMemoInput.style.height = taskMemoContent.scrollHeight + "px"; // Set height based on the scrollHeight
 
-        // Convert do_dates string to an array
-        let doDatesArray = task.do_dates ? task.do_dates.split(',') : [];
-        populateDoDates(doDatesArray);
+            // Convert do_dates string to an array
+            let doDatesArray = task.do_dates ? task.do_dates.split(',') : [];
+            populateDoDates(doDatesArray);
 
-        taskStatusSelect.value = task.task_status || '';
-        originalValues.taskStatus = taskStatusSelect.value; // Store the original value
-//        console.log('taskStatusSelect.value',taskStatusSelect.value);
+            taskStatusSelect.value = task.task_status || '';
+            originalValues.taskStatus = taskStatusSelect.value; // Store the original value
+    //        console.log('taskStatusSelect.value',taskStatusSelect.value);
 
-//        // Map numeric status to corresponding text
-//        const statusMap = {
-//            0: "Not Started",
-//            1: "In Progress",
-//            2: "Completed",
-//            3: "Canceled",
-//            4: "On Hold",
-//            5: "Delegation"
-//        };
-//        const statusText = statusMap[task.task_status] || "";
-//
-//        statusRadios.forEach(radio => {
-//            radio.checked = (radio.nextSibling.textContent.trim() === statusText);
-//        });
-//        originalValues.taskStatus = statusText; // Store the original value
+    //        // Map numeric status to corresponding text
+    //        const statusMap = {
+    //            0: "Not Started",
+    //            1: "In Progress",
+    //            2: "Completed",
+    //            3: "Canceled",
+    //            4: "On Hold",
+    //            5: "Delegation"
+    //        };
+    //        const statusText = statusMap[task.task_status] || "";
+    //
+    //        statusRadios.forEach(radio => {
+    //            radio.checked = (radio.nextSibling.textContent.trim() === statusText);
+    //        });
+    //        originalValues.taskStatus = statusText; // Store the original value
 
-        // Add blur event listeners
-        taskNameInput.addEventListener('blur', handleBlur);
-        categoryNameInput.addEventListener('blur', handleBlur);
-        workNameInput.addEventListener('blur', handleBlur);
-        dueDateInput.addEventListener('blur', handleBlur);
-        taskMemoInput.addEventListener('blur', handleBlur);
-        taskStatusSelect.addEventListener('blur', handleBlur);
-//        statusRadios.forEach(radio => {
-//            radio.addEventListener('change', handleRadioChange);
-//        });
-    } else {
-        console.error('Invalid task object:', task);
+            // Add blur event listeners
+            taskNameInput.addEventListener('change', handleDetailChange);
+            categoryNameInput.addEventListener('change', handleDetailChange);
+            workNameInput.addEventListener('change', handleDetailChange);
+            dueDateInput.addEventListener('change', handleDetailChange);
+            taskMemoInput.addEventListener('change', handleDetailChange);
+            taskStatusSelect.addEventListener('change', handleDetailChange);
+    //        statusRadios.forEach(radio => {
+    //            radio.addEventListener('change', handleRadioChange);
+    //        });
+        } else {
+            console.error('Invalid task object:', task);
+        }
     }
-}
 
-function handleBlur(event) {
-    const id = event.target.id;
-    let currentValue;
+    function handleDetailChange(event) {
+        const id = event.target.id;
+        let currentValue;
 
-    switch (id) {
-//        case 'taskName':
-//            currentValue = event.target.value;
-//            if (currentValue !== originalValues.taskName) {
-//                saveTaskData();
-//            }
-//            break;
-//        case 'categoryName':
-//            currentValue = event.target.value;
-//            if (currentValue !== originalValues.categoryName) {
-//                saveTaskData();
-//            }
-//            break;
-//        case 'workName':
-//            currentValue = event.target.value;
-//            if (currentValue !== originalValues.workName) {
-//                saveTaskData();
-//            }
-//            break;
-//        case 'dueDate':
-//            currentValue = event.target.value;
-//            if (currentValue !== originalValues.dueDate) {
-//                saveTaskData();
-//            }
-//            break;
-//        case 'taskMemo':
-//            currentValue = event.target.value;
-//            if (currentValue !== originalValues.taskMemo) {
-//                saveTaskData();
-//            }
-//            break;
-        case 'taskName':
-        case 'categoryName':
-        case 'workName':
-        case 'dueDate':
-        case 'taskMemo':
-            currentValue = event.target.value;
-            if (currentValue !== originalValues[id]) {
-                saveTaskData(); // Save task data if changed
-//                isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
-            }
-            break;
-        case 'taskStatus':
-            currentValue = event.target.value;
-            if (currentValue !== originalValues.taskStatus) {
-                if((originalValues.taskStatus == 4 || originalValues.taskStatus == 5 || originalValues.taskStatus == 6)
-                && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3)) {
-//                console.log('456 > 0123');
-                    updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue);
+        switch (id) {
+    //        case 'taskName':
+    //            currentValue = event.target.value;
+    //            if (currentValue !== originalValues.taskName) {
+    //                saveTaskData();
+    //            }
+    //            break;
+    //        case 'categoryName':
+    //            currentValue = event.target.value;
+    //            if (currentValue !== originalValues.categoryName) {
+    //                saveTaskData();
+    //            }
+    //            break;
+    //        case 'workName':
+    //            currentValue = event.target.value;
+    //            if (currentValue !== originalValues.workName) {
+    //                saveTaskData();
+    //            }
+    //            break;
+    //        case 'dueDate':
+    //            currentValue = event.target.value;
+    //            if (currentValue !== originalValues.dueDate) {
+    //                saveTaskData();
+    //            }
+    //            break;
+    //        case 'taskMemo':
+    //            currentValue = event.target.value;
+    //            if (currentValue !== originalValues.taskMemo) {
+    //                saveTaskData();
+    //            }
+    //            break;
+            case 'taskName':
+            case 'categoryName':
+            case 'workName':
+            case 'dueDate':
+            case 'taskMemo':
+                currentValue = event.target.value;
+                if (currentValue !== originalValues[id]) {
+                    saveTaskData(); // Save task data if changed
+    //                isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
                 }
-                if(currentValue == 4) {
-                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
-                    //updateOrderAndDoDate(null, '9999-01-04', null, null, sessionStorage.getItem('detailID'));
-                } else if(currentValue == 5) {
-                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
-                    //updateOrderAndDoDate(null, '9999-01-05', null, null, sessionStorage.getItem('detailID'));
-                } else if(currentValue == 6) {
-                    updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
-                    //updateOrderAndDoDate(null, '9999-01-06', null, null, sessionStorage.getItem('detailID'));
+                break;
+            case 'taskStatus':
+                currentValue = event.target.value;
+                console.log('case taskStatus currentValue:',currentValue,'/originalValues[id]:',originalValues[id]);
+                if (currentValue !== originalValues[id]) {
+                    if((originalValues[id] == 4 || originalValues[id] == 5 || originalValues[id] == 6)
+                    && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3)) {
+    //                console.log('456 > 0123');
+                        document.querySelector('.do-dates-group').style.display = 'flex';
+                        updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue);
+                    } else if(currentValue == 4) {
+                        document.querySelector('.do-dates-group').style.display = 'none';
+                        updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
+                    } else if(currentValue == 5) {
+                        document.querySelector('.do-dates-group').style.display = 'none';
+                        updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
+                    } else if(currentValue == 6) {
+                        document.querySelector('.do-dates-group').style.display = 'none';
+                        updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
+                    } else {
+                        saveTaskData(); // Save task data if changed
+                    }
                 }
-//                saveTaskData(); // Save task data if changed
-//                isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
-            }
-            break;
+                break;
+        }
     }
-}
 
     function toggleTaskCompletion(index) {
         tasks[index].completed = !tasks[index].completed;
@@ -616,6 +617,7 @@ function handleBlur(event) {
 
     function updateDetailDoDate(id, dates, status) {
 
+        console.log("0 id: ",id,'/dates:',dates,'/status:',status);
         const taskId = id ? id : sessionStorage.getItem('detailID');
         const datesString = dates ? dates : getDatesString();
         const taskStatus = status ? status : "";
@@ -624,7 +626,7 @@ function handleBlur(event) {
             do_dates: datesString,
             task_status: taskStatus
         };
-        console.log("0 taskId: ",taskId,'/datesString:',datesString,'/taskStatus',taskStatus);
+        console.log("1 taskId: ",taskId,'/datesString:',datesString,'/taskStatus:',taskStatus);
         sessionStorage.setItem('detailID', taskId);
 
         fetch('/api/updateDetailDoDate', { // API 호출
@@ -705,6 +707,12 @@ function handleBlur(event) {
                 let toDay;
 
                 if(orderInCertainStatus !== undefined && orderInCertainStatus !== null){
+                    if(orderInCertainStatus == 2) {
+                        showNotification('A completed task cannot be moved!', 'error');
+//                        console.log('orderInCertainStatus!=null orderInCertainStatus == 2!! return');
+                        fetchStatus(2);
+                        return;
+                    }
                     console.log('orderInCertainStatus!=null >',orderInCertainStatus);
                     fromDay = orderInCertainStatus;
                     toDay = orderInCertainStatus;
@@ -822,6 +830,10 @@ function handleBlur(event) {
                     try {
                         const data = JSON.parse(text); // Parse text as JSON
                         showTaskDetail(data); // Pass parsed data to showTaskDetail
+                        if(data.task_status == 4 ||data.task_status == 5 ||data.task_status == 6){
+                            console.log('fetchTaskDetails status =456');
+                            document.querySelector('.do-dates-group').style.display = 'none';
+                        }
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
                     }
@@ -983,7 +995,6 @@ function handleBlur(event) {
             }
 
             orderInCertainStatus = taskStatus;
-            // 태스크 목록에 대해 정렬 가능하도록 초기화
             initSortable(taskList);
         })
         .catch(error => console.error('Error fetching tasks:', error));
@@ -1270,11 +1281,16 @@ function handleBlur(event) {
             });
 
             // Add blur event listener to check if value has changed
-            dateInput.addEventListener('blur', (event) => {
+//            dateInput.addEventListener('blur', (event) => {
+//                if (event.target.value !== originalValue) {
+////                    saveTaskData(); // Call your function if the value has changed
+//                    updateDetailDoDate();
+//                }
+//            });
+            dateInput.addEventListener('change', (event) => {
                 if (event.target.value !== originalValue) {
 //                    saveTaskData(); // Call your function if the value has changed
                     updateDetailDoDate();
-
                 }
             });
 
@@ -1314,10 +1330,16 @@ function handleBlur(event) {
         });
 
         // Add blur event listener to check if value has changed
-        newDateInput.addEventListener('blur', (event) => {
-        console.log('add button blur:: event.target.value: ',originalValue, '// event.target.value:',event.target.value);
+//        newDateInput.addEventListener('blur', (event) => {
+//            //console.log('add button blur:: event.target.value: ',originalValue, '// event.target.value:',event.target.value);
+//            if (event.target.value !== originalValue) {
+////                saveTaskData(); // Call your function if the value has changed
+//                updateDetailDoDate();
+//            }
+//        });
+        newDateInput.addEventListener('change', (event) => {
             if (event.target.value !== originalValue) {
-//                saveTaskData(); // Call your function if the value has changed
+//                    saveTaskData(); // Call your function if the value has changed
                 updateDetailDoDate();
             }
         });

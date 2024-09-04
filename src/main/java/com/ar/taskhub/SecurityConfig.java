@@ -1,47 +1,27 @@
 //package com.ar.taskhub;
 //
-//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.annotation.Bean;
 //import org.springframework.context.annotation.Configuration;
-//import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+//import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 //import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+//import org.springframework.security.web.SecurityFilterChain;
+//import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
+//import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 //
 //@Configuration
 //@EnableWebSecurity
-//public class SecurityConfig extends WebSecurityConfigurerAdapter {
-//
-//    private final CustomUserDetailsService userDetailsService;
-//
-//    @Autowired
-//    public SecurityConfig(CustomUserDetailsService userDetailsService) {
-//        this.userDetailsService = userDetailsService;
-//    }
-//
-//    @Override
-//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-//        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-//    }
-//
-//    @Override
-//    protected void configure(HttpSecurity http) throws Exception {
-//        http
-//                .csrf().disable()
-//                .authorizeRequests()
-//                .antMatchers("/login", "/css/**", "/js/**").permitAll() // 로그인 페이지는 누구나 접근 가능
-//                .anyRequest().authenticated()
-//                .and()
-//                .formLogin()
-//                .loginPage("/login")
-//                .defaultSuccessUrl("/dashboard", true) // 로그인 성공시 이동할 페이지
-//                .permitAll()
-//                .and()
-//                .logout()
-//                .logoutUrl("/logout")
-//                .logoutSuccessUrl("/login?logout")
-//                .permitAll();
-//    }
-//
+//public class SecurityConfig {
 //    @Bean
-//    public PasswordEncoder passwordEncoder() {
-//        return new BCryptPasswordEncoder();
+//    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http
+//                .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
+//                        .requestMatchers(new AntPathRequestMatcher("/**")).permitAll())
+//                .csrf((csrf) -> csrf
+//                        .ignoringRequestMatchers(new AntPathRequestMatcher("/h2-console/**")))
+//                .headers((headers) -> headers
+//                        .addHeaderWriter(new XFrameOptionsHeaderWriter(
+//                                XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN)))
+//        ;
+//        return http.build();
 //    }
 //}

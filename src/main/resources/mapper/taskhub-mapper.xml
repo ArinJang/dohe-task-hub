@@ -246,7 +246,6 @@
         TASK T
         WHERE
         T.TASK_ID = #{taskId};
-
     </select>
 
     <select id="findNewId" resultType="int">
@@ -272,18 +271,18 @@
 
     <update id="updateTask" parameterType="taskhubdto">
         UPDATE TASK
-        SET
-        TASK_CONTENT = #{task_content},
-        DUE_DATE = CASE
-        WHEN #{due_date} IS NULL OR #{due_date} = '' THEN NULL
-        ELSE #{due_date}
-        END,
+            SET
+            TASK_CONTENT = #{task_content},
+            DUE_DATE = CASE
+                        WHEN #{due_date} IS NULL OR #{due_date} = '' THEN NULL
+                        ELSE #{due_date}
+                        END,
         <!--DO_DATES = CASE
         WHEN #{do_dates} IS NULL OR #{do_dates} = '' THEN NULL
         ELSE #{do_dates}
         END,-->
-        TASK_STATUS = #{task_status},
-        TASK_MEMO = #{task_memo}
+            TASK_STATUS = #{task_status},
+            TASK_MEMO = #{task_memo}
         WHERE TASK_ID = #{task_id}
     </update>
 
@@ -304,8 +303,7 @@
     <select id="getMaxIdxOfNewDate" parameterType="String" resultType="String">
         SELECT COALESCE(MAX(TASK_ORDER) + 1, 0) AS new_idx
         FROM DODATES
-        WHERE DO_DATE = #{newDoDate}
-        ;
+        WHERE DO_DATE = #{newDoDate};
     </select>
 
     <update id="updateOrderAndDoDateInDifferentDate1" parameterType="taskhubdto">
@@ -351,16 +349,16 @@
         AND TASK_ORDER <![CDATA[<]]> #{old_order_idx};
     </update>
 
-    <update id="updateDetailDoDate" parameterType="taskhubdto">
-        UPDATE DODATES
-        SET
-        DO_DATES = CASE
-        WHEN #{do_dates} IS NULL OR #{do_dates} = '' THEN '9999-12-31'
-        ELSE #{do_dates}
-        END
-        <!--TASK_ORDER = 맥스보다 크게 설정-->
-        WHERE TASK_ID = #{task_id}
-    </update>
+<!--    <update id="updateDetailDoDate" parameterType="taskhubdto">-->
+<!--        UPDATE DODATES-->
+<!--        SET-->
+<!--        DO_DATES = CASE-->
+<!--        WHEN #{do_dates} IS NULL OR #{do_dates} = '' THEN '9999-12-31'-->
+<!--        ELSE #{do_dates}-->
+<!--        END-->
+<!--        &lt;!&ndash;TASK_ORDER = 맥스보다 크게 설정&ndash;&gt;-->
+<!--        WHERE TASK_ID = #{task_id}-->
+<!--    </update>-->
 
     <update id="assignOtherOrder" parameterType="String">
         -- 1. Temporarily set TASK_ORDER for the specified TASK_ID to a placeholder value
