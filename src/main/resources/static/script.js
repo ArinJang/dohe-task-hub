@@ -34,39 +34,44 @@ document.addEventListener('DOMContentLoaded', function() {
     var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
     const taskMemoContent = document.getElementById('taskMemo');
     let orderInCertainStatus = null;
+            sessionStorage.setItem('ifLoggedIn', 'false');
 //    let isTaskUpdateScheduled = false;
 
     const loginModal = document.getElementById('loginModal');
     const closeBtn = document.getElementsByClassName('close')[0];
+    const addUserModal = document.getElementById('addUserModal');
 
-    // Open the login modal
-    //loginModal.style.display = 'block';
+    const userInfoDiv = document.getElementById("user-info");
+    search();
+    const loginUserName =  sessionStorage.getItem("loginUserName");
+    console.log("0 Logged in user:", loginUserName);
 
-    // Close the login modal when the user clicks on the <span> (x)
-    closeBtn.onclick = function() {
-        loginModal.style.display = 'none';
+
+    // Open or close the login modal based on the loginUserName
+    if (loginUserName !== null && loginUserName !== '' && loginUserName !== 'null') {
+        loginModal.style.display = 'none';  // 로그인 상태에서 모달 숨김
+        console.log("1 OO Logged in user:", loginUserName);
+    } else {
+        loginModal.style.display = 'block'; // 로그인하지 않은 상태에서 모달 표시
+        console.log("2 XX Logged in user:", loginUserName);
     }
-
-    // Close the login modal if the user clicks anywhere outside of it
-    window.onclick = function(event) {
-        if (event.target === loginModal) {
-            loginModal.style.display = 'none';
-        }
-    }
-
     // Handle login form submission
-    document.getElementById('loginForm').onsubmit = function(event) {
+//    document.getElementById('loginForm').onsubmit = function(event) {
+////        event.preventDefault(); // Prevent default form submission
+//
+//        const username = document.getElementById('username').value;
+//        const password = document.getElementById('password').value;
+//    }
+
+    document.getElementById('addUser').addEventListener('click', function() {
+        addUserModal.style.display = 'block';
+    });
+    document.querySelector('.close').addEventListener('click', () => {
+        addUserModal.style.display = 'none';
+    });
+    document.getElementById('addUserForm').onsubmit = function(event) {
         event.preventDefault(); // Prevent default form submission
-
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        // Here you can add your login logic
-        console.log('Username:', username);
-        console.log('Password:', password);
-
-        // Close the modal after submission (or handle login)
-        loginModal.style.display = 'none';
+        addUserModal.style.display = 'none';
     }
 
     const statusMap = { // "side의 data-side" : "status"
@@ -484,25 +489,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             taskStatusSelect.value = task.task_status || '';
             originalValues.taskStatus = taskStatusSelect.value; // Store the original value
-    //        console.log('taskStatusSelect.value',taskStatusSelect.value);
 
-    //        // Map numeric status to corresponding text
-    //        const statusMap = {
-    //            0: "Not Started",
-    //            1: "In Progress",
-    //            2: "Completed",
-    //            3: "Canceled",
-    //            4: "On Hold",
-    //            5: "Delegation"
-    //        };
-    //        const statusText = statusMap[task.task_status] || "";
-    //
-    //        statusRadios.forEach(radio => {
-    //            radio.checked = (radio.nextSibling.textContent.trim() === statusText);
-    //        });
-    //        originalValues.taskStatus = statusText; // Store the original value
-
-            // Add blur event listeners
             taskNameInput.addEventListener('change', handleDetailChange);
             categoryNameInput.addEventListener('change', handleDetailChange);
             workNameInput.addEventListener('change', handleDetailChange);

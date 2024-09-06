@@ -47,6 +47,20 @@ body {
     height: 100vh;
 }
 
+.user-info {
+    position: absolute; /* Position the user-info section absolutely */
+    bottom: 10px; /* Distance from the bottom of the sidebar */
+    right: 10px; /* Distance from the right of the sidebar */
+    font-size: 12px; /* Make text smaller */
+    color: gray; /* Change text color to gray */
+    white-space: nowrap; /* Prevent line breaks */
+}
+
+.user-info span, .user-info p {
+    display: inline; /* Make sure they are inline */
+    margin: 0; /* Remove any default margin */
+}
+
 .main-content {
     flex-grow: 1;
     padding: 20px 20px 0px 20px;
@@ -177,14 +191,23 @@ body {
     flex: 1;
     padding: 7px 10px 10px 10px;
     font-size: 15px;
+    /*padding: 5px 10px 8px 10px; *//* Padding inside inputs */
+    border: 1px solid #ccc; /* Border for inputs/selects */
+    border-radius: 4px; /* Rounded corners */
 }
 
 #addTaskButton,
 #addWorkButton {
     width: 80px;
-    font-size: 15px;
     padding: 7px 10px 10px 10px;
-    cursor: pointer;
+    /*padding: 10px 20px;*/ /* Add padding */
+    border: none; /* Remove border */
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    font-size: 15px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 5px; /* Rounded corners */
 }
 
 #taskList {
@@ -195,7 +218,7 @@ body {
 #taskList li {
     display: flex;
     align-items: center;
-    margin-bottom: 7px;
+    margin-bottom: 5px;
     cursor: default;
     /*cursor: pointer;*/
 }
@@ -222,7 +245,7 @@ ul {
 }
 
 #daysList li {
-    margin-bottom: 7px;
+    margin-bottom: 5px;
     cursor: default;
     /*cursor: pointer;*/
 }
@@ -278,7 +301,6 @@ ul {
     gap: 10px; /* Space between buttons */
     margin-top: 20px; /* Add space above the buttons */
 }
-
 /* Save button styling */
 #saveChangesButton {
     background-color: #4CAF50; /* Green background */
@@ -646,9 +668,13 @@ ul {
     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
 
+#addUserModal{
+    z-index: 2; /* Sit on top */
+}
+
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto; /* Center the modal */
+    margin: 10% auto; /* Center the modal */
     padding: 20px;
     border: 1px solid #888;
     width: 300px; /* Width of the modal */
@@ -699,16 +725,91 @@ ul {
     cursor: default !important; /* 기본 커서 모양 강제 적용 */
 }
 
-input#userid, input#password {
-    width: 100%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    flex: 1; /* Allow inputs/selects to take up remaining space */
-    /*padding: 5px 10px 8px 10px; *//* Padding inside inputs *//*
-    font-size: 15px; *//* Font size */
-    border: 1px solid #ccc; /* Border for inputs/selects */
-    border-radius: 4px; /* Rounded corners */
+
+/* Align labels and inputs vertically */
+.login-form-group {
+    display: flex;
+    flex-direction: column; /* Stack label and input vertically */
+    margin-bottom: 10px;
+}
+
+.loginLabel, .addUserLabel {
+    margin-bottom: 5px; /* Space between label and input */
+    text-align: left;
+}
+
+input#username, input#password,
+input#newusername, input#newpassword,
+input#confirmpassword, input#adminpassword {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     box-sizing: border-box;
+    max-width: 300px; /* Input width limited to 300px */
+}
+
+/* Left-align Remember Me checkbox and label */
+.login-form-remember {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.login-form-remember label {
+    margin-left: 5px;
+}
+
+/* Button styling */
+button#loginSubmit, button#addUserSubmit {
+    background-color: #4CAF50; /* Green for Login */
+    color: white;
+    border: none;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px; /* Rounded corners */
+    width: 100%; /* Match the width of the inputs */
+    max-width: 300px; /* Same max-width as inputs */
+    box-sizing: border-box;
+    margin-top: 10px;
+    height: 40px;
+}
+
+button#loginSubmit:hover, button#addUserSubmit:hover, {
+    background-color: #45a049;
+}
+
+/* Gray color for other buttons */
+button#addUser, button#developerAccount {
+    background-color: #adadad; /* Gray color for other buttons */
+    color: white;
+    border: none;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px; /* Rounded corners */
+    width: calc(50% - 4px); /* Equal width */
+    box-sizing: border-box;
+    height: 40px;
+}
+
+button#addUser:hover, button#developerAccount:hover {
+    background-color: #bbb; /* Darker gray on hover */
+}
+
+/* Center Login button */
+.login-button-group {
+    display: flex;
+    justify-content: center; /* Center Login button */
+    margin-bottom: 8px;
+}
+
+/* Inline buttons with equal width */
+.login-button-group-inline {
+    display: flex;
+    justify-content: center; /* Center inline buttons */
+    gap: 8px; /* Space between buttons */
+    max-width: 300px; /* Total width same as Login button */
 }
 
 .close {
@@ -716,21 +817,4 @@ input#userid, input#password {
     float: right;
     font-size: 28px;
     font-weight: bold;
-}
-
-button#loginSubmit {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-}
-
-button#loginSubmit:hover {
-    background-color: #45a049;
 }

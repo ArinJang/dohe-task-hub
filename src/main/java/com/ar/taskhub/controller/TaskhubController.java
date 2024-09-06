@@ -2,6 +2,7 @@ package com.ar.taskhub.controller;
 
 import com.ar.taskhub.dto.TaskhubDTO;
 import com.ar.taskhub.service.TaskhubService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,8 +37,10 @@ public class TaskhubController {
     }
 
     @GetMapping("/tasksNotAssigned")
-    public List<TaskhubDTO> getTasksNotAssigned() {
-        return taskhubService.findAll();
+    public List<TaskhubDTO> getTasksNotAssigned(HttpSession session) {
+        TaskhubDTO taskhubDTO = new TaskhubDTO();
+        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+        return taskhubService.findAll(taskhubDTO);
     }
 
     @PostMapping("/save")
@@ -45,9 +48,11 @@ public class TaskhubController {
     public ResponseEntity<Map<String, Object>> save(@RequestParam(value = "task_content", required = true) String taskContent,
                                                     @RequestParam(value = "work_name", required = false) String workName,
                                                     @RequestParam(value = "do_dates", required = false) String do_dates,
-                                                    @RequestParam("action") String action) {
+                                                    @RequestParam("action") String action,
+                                                    HttpSession session) {
         System.out.println(">>> TaskhubController.save 2 Action: "+ action);
         TaskhubDTO taskhubDTO = new TaskhubDTO();
+        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
 
         if ("TASK+".equals(action)) {
             taskhubDTO.setTask_content(taskContent);
@@ -69,7 +74,7 @@ public class TaskhubController {
     }
 
     @GetMapping("/tasks")
-    public List<TaskhubDTO> getTasksByDateRange(@RequestParam(value = "baseDate", required = false) String baseDate) {
+    public List<TaskhubDTO> getTasksByDateRange(@RequestParam(value = "baseDate", required = false) String baseDate, HttpSession session) {
         LocalDate today;
 
         if (baseDate != null && !baseDate.isEmpty()) {
@@ -86,17 +91,30 @@ public class TaskhubController {
         String mon = formatDate(monday);
         String sun = formatDate(sunday);
 
-        return taskhubService.findByDoDates(mon, sun);
+//        Map<String, String> monSun = new HashMap<>();
+//        monSun.put("mon", mon);
+//        monSun.put("sun", sun);
+        TaskhubDTO taskhubDTO = new TaskhubDTO();
+        taskhubDTO.setMon(mon);
+        taskhubDTO.setSun(sun);
+        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+        System.out.println("id: "+session.getAttribute("loginUserId"));
+        return taskhubService.findByDoDates(taskhubDTO);
     }
 
     @GetMapping("/findByStatus/{taskStatus}")
-    public List<TaskhubDTO> getTasksByStatus(@PathVariable("taskStatus") String taskStatus) {
-        return taskhubService.findByStatus(taskStatus);
+    public List<TaskhubDTO> getTasksByStatus(@PathVariable("taskStatus") String taskStatus, HttpSession session) {
+        TaskhubDTO taskhubDTO = new TaskhubDTO();
+        taskhubDTO.setTask_status(taskStatus);
+        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+        return taskhubService.findByStatus(taskhubDTO);
     }
 
     @GetMapping("/tasksAdded")
-    public List<TaskhubDTO> getTasks() {
-        return taskhubService.findAll();
+    public List<TaskhubDTO> getTasks(HttpSession session) {
+        TaskhubDTO taskhubDTO = new TaskhubDTO();
+        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+        return taskhubService.findAll(taskhubDTO);
     }
 
     @GetMapping("/newId")

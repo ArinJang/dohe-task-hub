@@ -8,7 +8,7 @@ import lombok.ToString;
 @Setter
 @ToString
 public class TaskhubDTO {
-    private String user_id;
+    private Long user_id;
 
     //task 테이블
     private String task_id;

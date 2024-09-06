@@ -30,6 +30,22 @@
                 <li class="side-item" data-side="plan">PLAN</li>
                 <li class="side-item" data-side="completed">COMPLETED</li>
             </ul>
+
+            <!-- User name section -->
+            <div class="user-info">
+                <span>User Name : </span>
+                <p id="user-info" th:text="${session.loginUserName}"></p>
+            </div>
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+                function search() {
+                    const loginUserName = /*[[${session.loginUserName}]]*/;
+                    sessionStorage.setItem("loginUserName", loginUserName);
+                }
+                /*]]>*/
+            </script>
+
+
         </nav>
         <div class="main-content">
             <div id="navigation-bar"></div>
@@ -139,19 +155,59 @@
 
     <div id="loginModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
             <h2>Login</h2>
-            <form id="loginForm">
-                <label for="userid">ID:</label>
-                <input type="text" id="userid" name="userid" required>
-                <br>
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-                <br>
-                <button type="submit" id="loginSubmit">Login</button>
+            <form id="loginForm" action="/user/login" method="post">
+                <div class="login-form-group">
+                    <label for="username" class="loginLabel">Username:</label>
+                    <input type="text" id="username" name="userName" required>
+                </div>
+                <div class="login-form-group">
+                    <label for="password" class="loginLabel">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="login-form-remember">
+                    <input type="checkbox" id="rememberMe" name="rememberMe">
+                    <label for="rememberMe">Remember Me</label>
+                </div>
+                <div class="login-button-group">
+                    <button type="submit" id="loginSubmit">Login</button>
+                </div>
+                <div class="login-button-group-inline">
+                    <button type="button" id="addUser">Add a User</button>
+                    <button type="button" id="developerAccount">Use Developer Account</button>
+                </div>
             </form>
         </div>
     </div>
+
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add a user</h2>
+            <form id="addUserForm" action="/user/save" method="post">
+                <div class="login-form-group">
+                    <label for="username" class="addUserLabel">Username:</label>
+                    <input type="text" id="newusername" name="userName" required>
+                </div>
+                <div class="login-form-group">
+                    <label for="password" class="addUserLabel">Password:</label>
+                    <input type="password" id="newpassword" name="password" required>
+                </div>
+                <div class="login-form-group">
+                    <label for="password" class="addUserLabel">Confirm Password:</label>
+                    <input type="password" id="confirmpassword" name="confirmPassword" required>
+                </div>
+                <div class="login-form-group">
+                    <label for="username" class="addUserLabel">Admin approval password:</label>
+                    <input type="text" id="adminpassword" name="admin_password" required>
+                </div>
+                <div class="login-button-group">
+                    <button type="submit" id="addUserSubmit" disabled >Add this user</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>

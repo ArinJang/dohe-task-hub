@@ -3,22 +3,6 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="Taskhub">
-    <!--<insert id="insertTask" parameterType="taskhubdto"> &lt;!&ndash; mybatis-config.xml 에서 설정한 Alias&ndash;&gt;
-        insert into TASK(task_content, do_dates, task_order, user_id)
-        values(#{task_content}, #{do_dates}, 1, 'arar12')
-        &lt;!&ndash;        #{task_order}, #{user_id})&ndash;&gt;
-    </insert>
-
-    <insert id="insertDoDate" parameterType="taskhubdto">
-        INSERT INTO DODATES (TASK_ID, DO_DATE, TASK_ORDER)
-        VALUES (#{task_id}, #{do_dates},
-                (SELECT MAX(TASK_ORDER)+1000
-                   FROM DODATES
-                  WHERE DO_DATE = '9999-12-31') )
-       &lt;!&ndash; <foreach collection="dates" item="date" separator=",">
-            (#{taskId}, #{date}, NULL)
-        </foreach>&ndash;&gt;
-    </insert>-->
 
     <select id="callInsertTaskAndDoDates" parameterType="map">
         CALL InsertTaskAndDoDates(
@@ -49,15 +33,6 @@
     </insert>
 
     <select id="findAll" resultType="taskhubdto">
-        <!--SELECT TASK_ID, TASK_CONTENT, user_id,
-        CONCAT('(', 'work_name',')') AS WORK_NAME,
-        DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
-        CONCAT('- ', DATE_FORMAT(DUE_DATE, '%m/%d')) AS DUE_DATE,
-        DO_DATES,
-        TASK_STATUS
-        FROM TASK
-        WHERE DO_DATES IS NULL AND TASK_STATUS NOT IN (4,5,6)
-        ORDER BY TASK_ORDER DESC, TASK_ID DESC;-->
         SELECT
             T.TASK_ID,
             T.TASK_CONTENT,
@@ -75,87 +50,15 @@
         TASK T
         RIGHT JOIN
         DODATES D ON T.task_id = D.task_id
-        WHERE
-        D.do_date = '9999-12-31'
+        WHERE 1=1
+        AND T.USER_ID = #{user_id}
+        AND D.do_date = '9999-12-31'
         AND T.TASK_STATUS NOT IN (4, 5, 6)
         ORDER BY
         D.TASK_ORDER;
     </select>
 
-    <!--<select id="findByDays" parameterType="map" resultType="taskhubdto">
-        SELECT TASK_ID, TASK_CONTENT, USER_ID,
-        DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
-        DATE_FORMAT(DUE_DATE, '%m-%d') AS DUE_DATE,
-        DO_DATES,
-        UPPER(DATE_FORMAT(DUE_DATE, '%a')) AS day_of_week,
-        TASK_STATUS
-        FROM
-        TASK
-        WHERE
-        DUE_DATE BETWEEN #{mon} AND #{sun}
-    </select>-->
-
-    <select id="findByDoDates" parameterType="map" resultType="taskhubdto">
-        <!--WITH RECURSIVE numbers AS (
-        SELECT 1 AS num
-        UNION ALL
-        SELECT num + 1
-        FROM numbers
-        WHERE num <![CDATA[<]]> 100  &#45;&#45; Adjust based on your max expected number of dates
-        ),
-        split_dates AS (
-        SELECT
-        TASK_ID,
-        TASK_CONTENT,
-        CONCAT('- ', DATE_FORMAT(DUE_DATE, '%m/%d')) AS DUE_DATE,
-        TASK_STATUS,
-        CONCAT('(', 'work_name',')') AS WORK_NAME,
-        SUBSTRING_INDEX(
-        SUBSTRING_INDEX(DO_DATES, ',', numbers.num),
-        ',',
-        -1
-        ) AS split_date
-        FROM
-        TASK
-        JOIN
-        numbers
-        ON
-        CHAR_LENGTH(DO_DATES) - CHAR_LENGTH(REPLACE(DO_DATES, ',', '')) >= numbers.num - 1
-        WHERE
-        TRIM(
-        SUBSTRING_INDEX(
-        SUBSTRING_INDEX(DO_DATES, ',', numbers.num),
-        ',',
-        -1
-        )
-        ) != ''
-        ),
-        filtered_dates AS (
-        SELECT
-        TASK_ID,
-        TASK_CONTENT,
-        DUE_DATE,
-        TASK_STATUS,
-        WORK_NAME,
-        split_date AS DO_DATE
-        FROM
-        split_dates
-        WHERE
-        split_date BETWEEN #{mon} AND #{sun}
-        )
-        SELECT
-        TASK_ID,
-        TASK_CONTENT,
-        DUE_DATE,
-        TASK_STATUS,
-        WORK_NAME,
-        UPPER(DATE_FORMAT(DO_DATE, '%a')) AS day_of_week
-        FROM
-        filtered_dates
-        ORDER BY
-        TASK_STATUS,
-        TASK_ID DESC,
-        DO_DATE;-->
+    <select id="findByDoDates" parameterType="taskhubdto" resultType="taskhubdto">
         WITH RECURSIVE numbers AS (
         SELECT 1 AS num
         UNION ALL
@@ -177,7 +80,9 @@
         TASK T
         JOIN
         DODATES D ON T.TASK_ID = D.TASK_ID
-        WHERE
+        WHERE 1=1
+        AND T.USER_ID = #{user_id}
+        AND
         D.DO_DATE BETWEEN #{mon} AND #{sun}
         ),
         filtered_dates AS (
@@ -209,12 +114,6 @@
     </select>
 
     <select id="findById" parameterType="String" resultType="taskhubdto">
-<!--        SELECT TASK_ID, TASK_CONTENT, TASK_STATUS, TASK_ORDER, TASK_MEMO, ASSIGNEE_ID, CATEGORY_ID AS CATEGORY_NAME, WORK_ID AS WORK_NAME, USER_ID,
-        DATE_FORMAT(CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
-        DATE_FORMAT(DUE_DATE, '%Y-%m-%d') AS DUE_DATE,
-        DO_DATES,
-        UPPER(DATE_FORMAT(DUE_DATE, '%a')) AS day_of_week
-        FROM TASK WHERE TASK_ID = #{taskId}-->
         SELECT
         T.TASK_ID,
         T.TASK_CONTENT,
@@ -253,7 +152,7 @@
         WHERE DUE_DATE IS NULL
     </select>
 
-    <select id="findByStatus" parameterType="String" resultType="taskhubdto">
+    <select id="findByStatus" parameterType="taskhubdto" resultType="taskhubdto">
         SELECT T.TASK_ID, T.TASK_CONTENT, T.USER_ID,
         CONCAT('(', 'work_name',')') AS WORK_NAME,
         DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
@@ -264,7 +163,10 @@
             TASK T
             RIGHT JOIN
             DODATES D ON T.task_id = D.task_id
-        WHERE T.TASK_STATUS = #{taskStatus}
+        WHERE 1=1
+        AND T.USER_ID = #{user_id}
+        AND T.TASK_STATUS = #{task_status}
+        AND D.DO_DATE LIKE '9999-01-%'
         ORDER BY
         D.TASK_ORDER;
     </select>
@@ -277,10 +179,6 @@
                         WHEN #{due_date} IS NULL OR #{due_date} = '' THEN NULL
                         ELSE #{due_date}
                         END,
-        <!--DO_DATES = CASE
-        WHEN #{do_dates} IS NULL OR #{do_dates} = '' THEN NULL
-        ELSE #{do_dates}
-        END,-->
             TASK_STATUS = #{task_status},
             TASK_MEMO = #{task_memo}
         WHERE TASK_ID = #{task_id}
@@ -348,17 +246,6 @@
         AND TASK_ORDER >= #{new_order_idx}
         AND TASK_ORDER <![CDATA[<]]> #{old_order_idx};
     </update>
-
-<!--    <update id="updateDetailDoDate" parameterType="taskhubdto">-->
-<!--        UPDATE DODATES-->
-<!--        SET-->
-<!--        DO_DATES = CASE-->
-<!--        WHEN #{do_dates} IS NULL OR #{do_dates} = '' THEN '9999-12-31'-->
-<!--        ELSE #{do_dates}-->
-<!--        END-->
-<!--        &lt;!&ndash;TASK_ORDER = 맥스보다 크게 설정&ndash;&gt;-->
-<!--        WHERE TASK_ID = #{task_id}-->
-<!--    </update>-->
 
     <update id="assignOtherOrder" parameterType="String">
         -- 1. Temporarily set TASK_ORDER for the specified TASK_ID to a placeholder value

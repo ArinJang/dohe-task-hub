@@ -35,13 +35,13 @@ public class TaskhubService {
         params.put("task_content", taskhubDTO.getTask_content());
         params.put("do_dates", taskhubDTO.getDo_dates());
         params.put("task_order", 1);
-        params.put("user_id", "Terry");
+        params.put("user_id", taskhubDTO.getUser_id());
 
         taskhubRepository.callInsertTaskAndDoDates(params);
     }
 
-    public List<TaskhubDTO> findAll(){
-        return taskhubRepository.findAll();
+    public List<TaskhubDTO> findAll(TaskhubDTO taskhubDTO){
+        return taskhubRepository.findAll(taskhubDTO);
     }
 
 //    public List<TaskhubDTO> findByDays(String mon, String sun) {
@@ -50,8 +50,8 @@ public class TaskhubService {
 //        return taskhubRepository.findByDays(mon, sun);
 //    }
 
-    public List<TaskhubDTO> findByDoDates(String mon, String sun) {
-        return taskhubRepository.findByDoDates(mon, sun);
+    public List<TaskhubDTO> findByDoDates(TaskhubDTO taskhubDTO) {
+        return taskhubRepository.findByDoDates(taskhubDTO);
     }
 
     public TaskhubDTO findById(String taskId) {
@@ -84,8 +84,8 @@ public class TaskhubService {
         return taskhubRepository.getCategories();
     }
 
-    public List<TaskhubDTO> findByStatus(String taskStatus) {
-        return taskhubRepository.findByStatus(taskStatus);
+    public List<TaskhubDTO> findByStatus(TaskhubDTO taskhubDTO) {
+        return taskhubRepository.findByStatus(taskhubDTO);
     }
     @Transactional
     public void updateOrderAndDoDate(TaskhubDTO taskhubDTO) {

@@ -24,8 +24,8 @@ public class TaskhubRepository {
 //        sql.insert("Taskhub.insertDoDate", taskhubDTO); //Taskhub -> mapper의 namespace 가리킴
 //    }
 
-    public List<TaskhubDTO> findAll() {
-        return sql.selectList("Taskhub.findAll");
+    public List<TaskhubDTO> findAll(TaskhubDTO taskhubDTO) {
+        return sql.selectList("Taskhub.findAll", taskhubDTO);
     }
 
 //    public List<TaskhubDTO> findByDays(String mon, String sun) {
@@ -35,11 +35,8 @@ public class TaskhubRepository {
 //        return sql.selectList("Taskhub.findByDays", monSun);
 //    }
 
-    public List<TaskhubDTO> findByDoDates(String mon, String sun) {
-        Map<String, String> monSun = new HashMap<>();
-        monSun.put("mon", mon);
-        monSun.put("sun", sun);
-        return sql.selectList("Taskhub.findByDoDates", monSun);
+    public List<TaskhubDTO> findByDoDates(TaskhubDTO taskhubDTO) {
+        return sql.selectList("Taskhub.findByDoDates", taskhubDTO);
     }
 
     public TaskhubDTO findById(String taskId) {
@@ -73,8 +70,8 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.getCategories");
     }
 
-    public List<TaskhubDTO> findByStatus(String taskStatus) {
-        return sql.selectList("Taskhub.findByStatus", taskStatus);
+    public List<TaskhubDTO> findByStatus(TaskhubDTO taskhubDTO) {
+        return sql.selectList("Taskhub.findByStatus", taskhubDTO);
     }
 
 //    public void updateOrderAndDoDate0(TaskhubDTO taskhubDTO) {
