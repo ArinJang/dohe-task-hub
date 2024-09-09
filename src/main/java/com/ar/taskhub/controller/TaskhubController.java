@@ -30,6 +30,8 @@ public class TaskhubController {
     private final TaskhubService taskhubService;
     private static final Map<String, String> DATE_MAP = new HashMap<>();
 
+    TaskhubDTO taskNewDTO = new TaskhubDTO();
+
     @GetMapping("/save")
     public String save() {
         System.out.println(">>> TaskhubController.save 1");
@@ -97,29 +99,30 @@ public class TaskhubController {
         TaskhubDTO taskhubDTO = new TaskhubDTO();
         taskhubDTO.setMon(mon);
         taskhubDTO.setSun(sun);
-        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
-        System.out.println("id: "+session.getAttribute("loginUserId"));
+//        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+//        System.out.println("id: "+session.getAttribute("loginUserId"));
         return taskhubService.findByDoDates(taskhubDTO);
     }
 
     @GetMapping("/findByStatus/{taskStatus}")
-    public List<TaskhubDTO> getTasksByStatus(@PathVariable("taskStatus") String taskStatus, HttpSession session) {
-        TaskhubDTO taskhubDTO = new TaskhubDTO();
-        taskhubDTO.setTask_status(taskStatus);
-        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
-        return taskhubService.findByStatus(taskhubDTO);
+    public List<TaskhubDTO> getTasksByStatus(@PathVariable("taskStatus") String taskStatus) {
+//        TaskhubDTO taskhubDTO = new TaskhubDTO();
+//        taskhubDTO.setTask_status(taskStatus);
+//        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+//        System.out.println("getTasksByStatus>>>> "+taskhubDTO.getTask_status()+"/"+taskhubDTO.getUser_id());
+        return taskhubService.findByStatus(taskStatus);
     }
 
     @GetMapping("/tasksAdded")
-    public List<TaskhubDTO> getTasks(HttpSession session) {
-        TaskhubDTO taskhubDTO = new TaskhubDTO();
-        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
-        return taskhubService.findAll(taskhubDTO);
+    public List<TaskhubDTO> getTasks() {
+//        TaskhubDTO taskhubDTO = new TaskhubDTO();
+//        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+        return taskhubService.findAll(taskNewDTO);
     }
 
     @GetMapping("/newId")
     public int findNewId() {
-        return taskhubService.findNewId();
+        return taskhubService.findNewId(taskNewDTO);
     }
 
     @GetMapping("/findById/{task_id}")

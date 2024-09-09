@@ -167,15 +167,25 @@
                 </div>
                 <div class="login-form-remember">
                     <input type="checkbox" id="rememberMe" name="rememberMe">
-                    <label for="rememberMe">Remember Me</label>
+                    <label for="rememberMe">Remember me</label>
                 </div>
                 <div class="login-button-group">
                     <button type="submit" id="loginSubmit">Login</button>
                 </div>
                 <div class="login-button-group-inline">
                     <button type="button" id="addUser">Add a User</button>
-                    <button type="button" id="developerAccount">Use Developer Account</button>
+                    <button type="submit" id="developerAccount">Use Developer Account</button>
                 </div>
+                <script>
+                    document.getElementById('developerAccount').addEventListener('click', function() {
+                        // Set predefined values for username and password
+                        document.getElementById('username').value = 'admin';
+                        document.getElementById('password').value = 'admin';
+
+                        // Submit the form
+                        document.getElementById('loginForm').submit();
+                    });
+                </script>
             </form>
         </div>
     </div>

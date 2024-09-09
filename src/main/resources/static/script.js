@@ -696,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(orderInCertainStatus !== undefined && orderInCertainStatus !== null){
                     if(orderInCertainStatus == 2) {
                         showNotification('A completed task cannot be moved!', 'error');
-//                        console.log('orderInCertainStatus!=null orderInCertainStatus == 2!! return');
+                        console.log('orderInCertainStatus!=null orderInCertainStatus == 2!! return');
                         fetchStatus(2);
                         return;
                     }
@@ -961,6 +961,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchStatus(pstat) {
+//    console.log('fetchStatus(pstat)> ',pstat);
     const taskStatus = pstat;
     taskList.innerHTML = ''; // Clear current list
     fetch(`/api/findByStatus/${taskStatus}`)

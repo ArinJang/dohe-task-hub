@@ -1,13 +1,12 @@
 package com.ar.taskhub.service;
 
 import com.ar.taskhub.dto.TaskhubDTO;
-import com.ar.taskhub.repository.TaskhubRepository;
+import com.ar.taskhub.repository.mybatis.TaskhubRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,8 +59,8 @@ public class TaskhubService {
 //        return taskhubRepository.findById(taskId);
     }
 
-    public int findNewId() {
-        return taskhubRepository.findNewId();
+    public int findNewId(TaskhubDTO taskhubDTO) {
+        return taskhubRepository.findNewId(taskhubDTO);
     }
 
     public void updateTask(TaskhubDTO taskhubDTO) {
@@ -84,8 +83,8 @@ public class TaskhubService {
         return taskhubRepository.getCategories();
     }
 
-    public List<TaskhubDTO> findByStatus(TaskhubDTO taskhubDTO) {
-        return taskhubRepository.findByStatus(taskhubDTO);
+    public List<TaskhubDTO> findByStatus(String taskStatus) {
+        return taskhubRepository.findByStatus(taskStatus);
     }
     @Transactional
     public void updateOrderAndDoDate(TaskhubDTO taskhubDTO) {

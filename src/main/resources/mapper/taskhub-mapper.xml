@@ -4,6 +4,10 @@
 
 <mapper namespace="Taskhub">
 
+    <sql id="sessionUserIdCondition">
+        AND T.USER_ID = #{user_id}
+    </sql>
+
     <select id="callInsertTaskAndDoDates" parameterType="map">
         CALL InsertTaskAndDoDates(
         #{task_content},
@@ -19,16 +23,19 @@
 
     <!-- 1. TASK_ORDER 값을 계산 -->
     <select id="getMaxTaskOrder" resultType="int">
-        SELECT COALESCE(MAX(TASK_ORDER) + 1, 0)
-        FROM DODATES
-        WHERE DO_DATE = #{doDate}
+        SELECT COALESCE(MAX(D.TASK_ORDER) + 1, 0)
+        FROM DODATES D
+             JOIN TASK T ON T.TASK_ID = D.TASK_ID
+        WHERE 1=1
+        AND T.TASK_ID = #{user_id}
+        AND D.DO_DATE = #{do_date}
     </select>
 
     <!-- 2. INSERT 실행 -->
     <insert id="insertDoDate">
         INSERT INTO DODATES (TASK_ID, DO_DATE, TASK_ORDER)
         VALUES (#{taskId}
-              , #{doDate}
+              , #{do_date}
               , #{taskOrder});
     </insert>
 
@@ -147,9 +154,11 @@
         T.TASK_ID = #{taskId};
     </select>
 
-    <select id="findNewId" resultType="int">
+    <select id="findNewId" parameterType="taskhubdto" resultType="int">
         SELECT MAX(TASK_ID) FROM TASK
-        WHERE DUE_DATE IS NULL
+        WHERE 1=1
+        AND TASK_ID = #{user_id}
+        AND DUE_DATE IS NULL
     </select>
 
     <select id="findByStatus" parameterType="taskhubdto" resultType="taskhubdto">
@@ -159,14 +168,15 @@
         CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
         D.DO_DATE,
         T.TASK_STATUS
-        FROM
-            TASK T
-            RIGHT JOIN
-            DODATES D ON T.task_id = D.task_id
+        FROM TASK T
+             RIGHT JOIN
+             DODATES D ON T.task_id = D.task_id
         WHERE 1=1
         AND T.USER_ID = #{user_id}
-        AND T.TASK_STATUS = #{task_status}
-        AND D.DO_DATE LIKE '9999-01-%'
+        AND (
+        (#{task_status} = 2 AND T.TASK_STATUS = #{task_status})
+        OR (#{task_status} != 2 AND T.TASK_STATUS = #{task_status} AND D.DO_DATE LIKE '9999-01-%')
+        )
         ORDER BY
         D.TASK_ORDER;
     </select>
@@ -198,53 +208,76 @@
         LIMIT 1;
     </select>
 
-    <select id="getMaxIdxOfNewDate" parameterType="String" resultType="String">
-        SELECT COALESCE(MAX(TASK_ORDER) + 1, 0) AS new_idx
-        FROM DODATES
-        WHERE DO_DATE = #{newDoDate};
+    <select id="getMaxIdxOfNewDate" parameterType="taskhubdto" resultType="String">
+        SELECT COALESCE(MAX(D.TASK_ORDER) + 1, 0) AS new_idx
+        FROM
+        TASK T
+        JOIN
+        DODATES D ON
+        T.TASK_ID = D.TASK_ID
+        WHERE 1=1
+        AND T.TASK_ID = #{user_id}
+        AND D.DO_DATE = #{newDoDate};
     </select>
 
     <update id="updateOrderAndDoDateInDifferentDate1" parameterType="taskhubdto">
         <!-- [case1: 이동하는 날짜그룹 상이] 1. taskid의 원래 do_date에서 현 task_id가 빠진 채로 다시 인덱싱하여 TASK_ORDER 부여 -->
-        UPDATE DODATES
-        SET TASK_ORDER = TASK_ORDER - 1
-        WHERE DO_DATE = #{old_do_date} AND TASK_ORDER <![CDATA[>]]> #{old_order_idx};
+        UPDATE DODATES D
+        JOIN TASK T ON T.TASK_ID = D.TASK_ID
+        SET D.TASK_ORDER = D.TASK_ORDER - 1
+        WHERE 1=1
+        AND T.TASK_ID = #{user_id}
+        AND D.DO_DATE = #{old_do_date}
+        AND D.TASK_ORDER <![CDATA[>]]> #{old_order_idx};
     </update>
 
     <update id="updateOrderAndDoDateInDifferentDate2" parameterType="taskhubdto">
         <!-- [case1: 이동하는 날짜그룹 상이] 2. taskid가 이동하는 do_date에서 현 task_id가 이동하려는 인덱스 이하의 데이터들의 task_order 1 증가 -->
-        UPDATE DODATES
-        SET TASK_ORDER = TASK_ORDER + 1
-        WHERE DO_DATE = #{new_do_date} AND TASK_ORDER >= #{new_order_idx};
+        UPDATE DODATES D
+        JOIN TASK T ON T.TASK_ID = D.TASK_ID
+        SET D.TASK_ORDER = D.TASK_ORDER + 1
+        WHERE 1=1
+        AND T.TASK_ID = #{user_id}
+        AND D.DO_DATE = #{new_do_date}
+        AND D.TASK_ORDER >= #{new_order_idx};
     </update>
 
     <update id="updateOrderAndDoDateOfTask" parameterType="taskhubdto">
         <!-- [case1 & case2] 현재 taskid의 do_date와 task_order 변경-->
-        UPDATE DODATES
+        UPDATE DODATES D
+        JOIN TASK T ON T.TASK_ID = D.TASK_ID
         SET
-        DO_DATE = #{new_do_date},
-        TASK_ORDER = #{new_order_idx}
-        WHERE TASK_ID = #{task_id} AND DO_DATE = #{old_do_date};
+        D.DO_DATE = #{new_do_date},
+        D.TASK_ORDER = #{new_order_idx}
+        WHERE 1=1
+        AND T.TASK_ID = #{user_id}
+        AND D.TASK_ID = #{task_id}
+        AND D.DO_DATE = #{old_do_date};
         <!--INSERT INTO DODATES (DO_DATE, TASK_ID, TASK_ORDER) VALUES
         (#{new_do_date},#{task_id},#{task_order_idx})-->
     </update>
 
     <update id="updateOrderAndDoDateInSameDateDown" parameterType="taskhubdto">
         <!-- [case2: 이동하는 날짜그룹 동일] 1. Moving Downwards -->
-        UPDATE DODATES
-        SET TASK_ORDER = TASK_ORDER - 1
-        WHERE DO_DATE = #{new_do_date}
-        AND TASK_ORDER > #{old_order_idx}
-        AND TASK_ORDER <![CDATA[<=]]> #{new_order_idx};
+        UPDATE DODATES D
+        SET D.TASK_ORDER = D.TASK_ORDER - 1
+        WHERE 1=1
+        AND T.TASK_ID = #{user_id}
+        AND D.DO_DATE = #{new_do_date}
+        AND D.TASK_ORDER > #{old_order_idx}
+        AND D.TASK_ORDER <![CDATA[<=]]> #{new_order_idx};
     </update>
 
     <update id="updateOrderAndDoDateInSameDateUp" parameterType="taskhubdto">
         <!-- [case2: 이동하는 날짜그룹 동일] 2. Moving Upwards -->
-        UPDATE DODATES
-        SET TASK_ORDER = TASK_ORDER + 1
-        WHERE DO_DATE = #{new_do_date}
-        AND TASK_ORDER >= #{new_order_idx}
-        AND TASK_ORDER <![CDATA[<]]> #{old_order_idx};
+        UPDATE DODATES D
+        JOIN TASK T ON T.TASK_ID = D.TASK_ID
+        SET D.TASK_ORDER = D.TASK_ORDER + 1
+        WHERE 1=1
+        AND T.TASK_ID = #{user_id}
+        AND D.DO_DATE = #{new_do_date}
+        AND D.TASK_ORDER >= #{new_order_idx}
+        AND D.TASK_ORDER <![CDATA[<]]> #{old_order_idx};
     </update>
 
     <update id="assignOtherOrder" parameterType="String">
@@ -254,7 +287,34 @@
         WHERE TASK_ID = #{task_id};
     </update>
 
-    <update id="rearrangeOrder" parameterType="String">
+    <update id="rearrangeOrder" parameterType="map">
+        <!--WITH OrderedTasks AS (
+        SELECT
+        D.DO_DATE,
+        D.TASK_ID,
+        CASE
+        WHEN @current_do_date = D.DO_DATE THEN @row_number := @row_number + 1
+        ELSE @row_number := 0
+        END AS new_task_order,
+        @current_do_date := D.DO_DATE
+        FROM
+        (SELECT @row_number := -1, @current_do_date := NULL) AS vars,  &#45;&#45; Initialize variables
+        DODATES D
+        WHERE
+        D.DO_DATE IN (
+        SELECT DO_DATE
+        FROM DODATES
+        WHERE TASK_ID = #{task_id}
+        )
+        AND D.TASK_ID != #{task_id}  &#45;&#45; Exclude the TASK_ID being processed
+        ORDER BY
+        D.DO_DATE, D.TASK_ORDER
+        )
+        UPDATE DODATES D
+        JOIN OrderedTasks OT
+        ON D.DO_DATE = OT.DO_DATE AND D.TASK_ID = OT.TASK_ID
+        SET D.TASK_ORDER = OT.new_task_order;-->
+        -- Step 1: Define the CTE to calculate the new task order
         WITH OrderedTasks AS (
         SELECT
         D.DO_DATE,
@@ -267,8 +327,10 @@
         FROM
         (SELECT @row_number := -1, @current_do_date := NULL) AS vars,  -- Initialize variables
         DODATES D
+        JOIN TASK T ON D.TASK_ID = T.TASK_ID  -- Join with TASK to filter by user_id
         WHERE
-        D.DO_DATE IN (
+        T.user_id = #{user_id}  -- Filter by user_id
+        AND D.DO_DATE IN (
         SELECT DO_DATE
         FROM DODATES
         WHERE TASK_ID = #{task_id}
@@ -277,10 +339,16 @@
         ORDER BY
         D.DO_DATE, D.TASK_ORDER
         )
+
+        -- Step 2: Update the DODATES table with the new task order values
         UPDATE DODATES D
         JOIN OrderedTasks OT
-        ON D.DO_DATE = OT.DO_DATE AND D.TASK_ID = OT.TASK_ID
-        SET D.TASK_ORDER = OT.new_task_order;
+        ON D.DO_DATE = OT.DO_DATE
+        AND D.TASK_ID = OT.TASK_ID
+        JOIN TASK T ON D.TASK_ID = T.TASK_ID  -- Join with TASK to filter by user_id
+        SET D.TASK_ORDER = OT.new_task_order
+        WHERE T.user_id = #{user_id};  -- Ensure only rows for the specified user_id are updated
+
     </update>
 
     <delete id="deleteTask" parameterType="String">

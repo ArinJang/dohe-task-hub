@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD MyBatis Configuration 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
-<!--    <settings>-->
-<!--        <setting name="logImpl" value="STDOUT_LOGGING"/>-->
-<!--    </settings>-->
+    <!-- Settings -->
+    <settings>
+        <setting name="logImpl" value="STDOUT_LOGGING"/> <!-- Optional: For logging SQL statements -->
+    </settings>
+
+    <!-- Type Aliases -->
     <typeAliases>
-        <typeAlias type="com.ar.taskhub.dto.TaskhubDTO" alias="taskhubdto"></typeAlias>
-        <typeAlias type="com.ar.taskhub.dto.TaskhubDTO" alias="taskhubFile"></typeAlias>
+        <typeAlias type="com.ar.taskhub.dto.TaskhubDTO" alias="taskhubdto"/>
+        <typeAlias type="com.ar.taskhub.dto.TaskhubDTO" alias="taskhubFile"/>
     </typeAliases>
+
+    <!-- Plugins -->
+<!--    <plugins>
+        <plugin interceptor="com.ar.taskhub.interceptor.UserSessionInterceptor"/>
+        <plugin interceptor="com.ar.taskhub.interceptor.InterceptorConfig"/>
+    </plugins>-->
 </configuration>

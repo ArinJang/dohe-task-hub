@@ -46,7 +46,7 @@ public class UserController {
 
         } else {
             // login 실패
-            return "redirect:/index";
+            return "redirect:/";
         }
     }
 //
