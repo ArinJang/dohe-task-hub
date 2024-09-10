@@ -33,9 +33,12 @@
 
             <!-- User name section -->
             <div class="user-info">
-                <span>User Name : </span>
+                <span>User Name: </span>
                 <p id="user-info" th:text="${session.loginUserName}"></p>
             </div>
+            <form action="/user/logout" style="display: inline;" id="logoutButton">
+                <button type="submit" class="logout-button">logout</button>
+            </form>
             <script th:inline="javascript">
                 /*<![CDATA[*/
                 function search() {
@@ -205,14 +208,14 @@
                 </div>
                 <div class="login-form-group">
                     <label for="password" class="addUserLabel">Confirm Password:</label>
-                    <input type="password" id="confirmpassword" name="confirmPassword" required>
+                    <input type="password" id="confirmpassword" required>
                 </div>
                 <div class="login-form-group">
                     <label for="username" class="addUserLabel">Admin approval password:</label>
-                    <input type="text" id="adminpassword" name="admin_password" required>
+                    <input type="text" id="adminpassword" required placeholder="t _ _ _ _">
                 </div>
                 <div class="login-button-group">
-                    <button type="submit" id="addUserSubmit" disabled >Add this user</button>
+                    <button type="submit" id="addUserSubmit" disabled>Add this user</button>
                 </div>
             </form>
         </div>

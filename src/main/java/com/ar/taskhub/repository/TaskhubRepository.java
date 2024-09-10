@@ -1,4 +1,4 @@
-package com.ar.taskhub.repository.mybatis;
+package com.ar.taskhub.repository;
 
 import com.ar.taskhub.dto.TaskhubDTO;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Repository("taskhubRepository")  // 명시적으로 Bean 이름 지정
+@Repository
+//@Repository("taskhubRepository")  // 명시적으로 Bean 이름 지정
 @RequiredArgsConstructor
 public class TaskhubRepository {
     private final SqlSessionTemplate sql;
@@ -22,8 +23,8 @@ public class TaskhubRepository {
 //        sql.insert("Taskhub.insertDoDate", taskhubDTO); //Taskhub -> mapper의 namespace 가리킴
 //    }
 
-    public List<TaskhubDTO> findAll(TaskhubDTO taskhubDTO) {
-        return sql.selectList("Taskhub.findAll", taskhubDTO);
+    public List<TaskhubDTO> findAll(Long user_id) {
+        return sql.selectList("Taskhub.findAll", user_id);
     }
 
 //    public List<TaskhubDTO> findByDays(String mon, String sun) {
@@ -41,19 +42,16 @@ public class TaskhubRepository {
         return sql.selectOne("Taskhub.findById", taskId);
     }
 
-    public int findNewId(TaskhubDTO taskhubDTO) {
-        return sql.selectOne("Taskhub.findNewId",taskhubDTO);
+    public int findNewId(Long user_id) {
+        return sql.selectOne("Taskhub.findNewId", user_id);
     }
 
     public void updateTask(TaskhubDTO taskhubDTO) {
         sql.update("Taskhub.updateTask", taskhubDTO);
     }
 
-    public void updateStatus(String id, String status) {
-        Map<String, String> idStatus = new HashMap<>();
-        idStatus.put("task_id", id);
-        idStatus.put("task_status", status);
-        sql.update("Taskhub.updateStatus", idStatus);
+    public void updateStatus(Map<String, Object> params) {
+        sql.update("Taskhub.updateStatus", params);
     }
 
     public void deleteTask(String taskId) {
@@ -64,13 +62,11 @@ public class TaskhubRepository {
         sql.delete("Taskhub.deleteDoDatesByTaskId", taskId);
     }
 
-    public List<TaskhubDTO> getCategories() {
-        return sql.selectList("Taskhub.getCategories");
+    public List<TaskhubDTO> getCategories(Long user_id) {
+        return sql.selectList("Taskhub.getCategories", user_id);
     }
 
-    public List<TaskhubDTO> findByStatus(String taskStatus) {
-        Map<String, String> params = new HashMap<>();
-        params.put("task_status", taskStatus);
+    public List<TaskhubDTO> findByStatus(Map<String, Object> params) {
         return sql.selectList("Taskhub.findByStatus", params);
     }
 
@@ -98,30 +94,22 @@ public class TaskhubRepository {
         sql.update("Taskhub.updateOrderAndDoDateInSameDateUp", taskhubDTO);
     }
 
-    public void callInsertTaskAndDoDates(Map<String, Object> params) {
-        sql.selectOne("Taskhub.callInsertTaskAndDoDates", params);
+    public void callInsertTaskAndDoDates(TaskhubDTO taskhubDTO) {
+        sql.selectOne("Taskhub.callInsertTaskAndDoDates", taskhubDTO);
     }
 
-    public int getMaxTaskOrder(String do_date) {
-        return sql.selectOne("Taskhub.getMaxTaskOrder", do_date);
+    public int getMaxTaskOrder(Map<String, Object> params) {
+        return sql.selectOne("Taskhub.getMaxTaskOrder", params);
     }
 
-    public void insertDoDate(String taskId, String do_date, int taskOrder) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("taskId", taskId);
-        params.put("do_date", do_date);
-        params.put("taskOrder", taskOrder);
-//        System.out.println("Repository doDate:"+doDate);
-
+    public void insertDoDate(Map<String, Object> params) {
         sql.insert("Taskhub.insertDoDate", params);
     }
 
     public void assignOtherOrder(String taskId) {
         sql.update("Taskhub.assignOtherOrder", taskId);
     }
-    public void rearrangeOrder(String taskId) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("task_id", taskId);
+    public void rearrangeOrder(Map<String, Object> params) {
         sql.update("Taskhub.rearrangeOrder", params);
     }
 
@@ -129,9 +117,7 @@ public class TaskhubRepository {
         return sql.selectOne("Taskhub.getOldDoDateAndOrder", taskId);
     }
 
-    public String getMaxIdxOfNewDate(String newDoDate) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("newDoDate", newDoDate);
+    public String getMaxIdxOfNewDate(Map<String, Object> params) {
         return sql.selectOne("Taskhub.getMaxIdxOfNewDate", params);
     }
 }

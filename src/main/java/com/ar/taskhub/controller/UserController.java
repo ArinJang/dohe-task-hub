@@ -22,11 +22,11 @@ public class UserController {
 //    }
 
     @PostMapping("/user/save")
-    public String save(@ModelAttribute UserDTO userDTO) {
+    public void save(@ModelAttribute UserDTO userDTO) {
         System.out.println("UserController.save");
         System.out.println("userDTO = " + userDTO);
         userService.save(userDTO);
-        return "index";
+//        return "index";
     }
 
 //    @GetMapping("/user/login")
@@ -85,11 +85,11 @@ public class UserController {
 //        return "redirect:/user/";
 //    }
 //
-//    @GetMapping("/user/logout")
-//    public String logout(HttpSession session) {
-//        session.invalidate();
-//        return "index";
-//    }
+    @GetMapping("/user/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/";
+    }
 //
 //    @PostMapping("/user/email-check")
 //    public @ResponseBody String emailCheck(@RequestParam("userEmail") String userEmail) {

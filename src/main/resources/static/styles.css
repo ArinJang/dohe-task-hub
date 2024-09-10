@@ -49,8 +49,9 @@ body {
 
 .user-info {
     position: absolute; /* Position the user-info section absolutely */
-    bottom: 10px; /* Distance from the bottom of the sidebar */
-    right: 10px; /* Distance from the right of the sidebar */
+    bottom: 30px; /* Distance from the bottom of the sidebar */
+    right: 5px; /* Distance from the right of the sidebar */
+    /*max-width: 50px;*/
     font-size: 12px; /* Make text smaller */
     color: gray; /* Change text color to gray */
     white-space: nowrap; /* Prevent line breaks */
@@ -59,6 +60,26 @@ body {
 .user-info span, .user-info p {
     display: inline; /* Make sure they are inline */
     margin: 0; /* Remove any default margin */
+}
+
+.logout-button {
+    position: absolute; /* Position the user-info section absolutely */
+    bottom: 15px; /* Distance from the bottom of the sidebar */
+    right: 5px; /* Distance from the right of the sidebar */
+    background-color: transparent;
+    font-size: 12px; /* Make text smaller */
+    color: gray; /* Change text color to gray */
+    border: 0px; /* Define border with width, style, and color */
+    cursor: pointer;
+    display: inline; /* Make sure they are inline */
+    font-family: "Inconsolata", monospace;
+    font-weight: 500;
+    padding: 0 0 0 0;
+}
+
+.logout-button:hover {
+    color: #87CEEB;
+    text-decoration: underline;
 }
 
 .main-content {
@@ -198,6 +219,8 @@ body {
 
 #addTaskButton,
 #addWorkButton {
+    background-color: #87CEEB; /* Sky blue */
+    color: white;
     width: 80px;
     padding: 7px 10px 10px 10px;
     /*padding: 10px 20px;*/ /* Add padding */
@@ -208,6 +231,11 @@ body {
     font-size: 15px; /* Font size */
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
+}
+
+#addTaskButton:hover,
+#addWorkButton:hover {
+    background-color: #4bb1db; /* Darker green on hover */
 }
 
 #taskList {
@@ -258,6 +286,8 @@ ul {
     top: 20px;
     max-height: calc(100vh - 70px); /* 화면의 높이에 맞춰 최대 높이 설정 */
     overflow-y: auto; /* 내용이 넘칠 때만 수직 스크롤 추가 */
+    /*border: none;*/
+    border-radius: 5px; /* Rounded corners */
 }
 
 

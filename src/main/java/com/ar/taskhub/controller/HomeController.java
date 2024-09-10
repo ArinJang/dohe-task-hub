@@ -30,12 +30,12 @@ public class HomeController {
     @GetMapping("/")
     public String index(Model model, HttpSession session) {
         System.out.println(">>> HomeController <<<");
-        TaskhubDTO taskhubDTO = new TaskhubDTO();
-        taskhubDTO.setUser_id((long) 2); // admin 계정의 user_id로 고정
+//        TaskhubDTO taskhubDTO = new TaskhubDTO();
+//        taskhubDTO.setUser_id((long) 2); // admin 계정의 user_id로 고정
 
         // Fetch all tasks
-        List<TaskhubDTO> taskhubDTOList = taskhubService.findAll(taskhubDTO);
-        model.addAttribute("taskhubList", taskhubDTOList);
+//        List<TaskhubDTO> taskhubDTOList = taskhubService.findAllfromHome(2L);
+//        model.addAttribute("taskhubList", taskhubDTOList);
 
         return "index";
     }

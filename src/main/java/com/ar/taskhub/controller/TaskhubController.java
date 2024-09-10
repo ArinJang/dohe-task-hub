@@ -30,8 +30,6 @@ public class TaskhubController {
     private final TaskhubService taskhubService;
     private static final Map<String, String> DATE_MAP = new HashMap<>();
 
-    TaskhubDTO taskNewDTO = new TaskhubDTO();
-
     @GetMapping("/save")
     public String save() {
         System.out.println(">>> TaskhubController.save 1");
@@ -39,33 +37,29 @@ public class TaskhubController {
     }
 
     @GetMapping("/tasksNotAssigned")
-    public List<TaskhubDTO> getTasksNotAssigned(HttpSession session) {
-        TaskhubDTO taskhubDTO = new TaskhubDTO();
-        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
-        return taskhubService.findAll(taskhubDTO);
+    public List<TaskhubDTO> getTasksNotAssigned() {
+        return taskhubService.findAll();
     }
 
     @PostMapping("/save")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> save(@RequestParam(value = "task_content", required = true) String taskContent,
+    public ResponseEntity<Map<String, Object>> save(@RequestParam(value = "task_content", required = false) String taskContent,
                                                     @RequestParam(value = "work_name", required = false) String workName,
                                                     @RequestParam(value = "do_dates", required = false) String do_dates,
-                                                    @RequestParam("action") String action,
-                                                    HttpSession session) {
-        System.out.println(">>> TaskhubController.save 2 Action: "+ action);
-        TaskhubDTO taskhubDTO = new TaskhubDTO();
-        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+                                                    @RequestParam("action") String action) {
+        System.out.println(">>> TaskhubController.save 2 Action: " + action);
+//        TaskhubDTO taskhubDTO = new TaskhubDTO();
 
         if ("TASK+".equals(action)) {
-            taskhubDTO.setTask_content(taskContent);
-            taskhubDTO.setDo_dates(do_dates);
+            workName = null;
         } else if ("WORK+".equals(action)) {
-            taskhubDTO.setWork_name(workName);
+            taskContent = null;
+            do_dates = null;
         } else {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Invalid action"));
         }
 
-        taskhubService.save(taskhubDTO);
+        taskhubService.save(taskContent, workName, do_dates);
 
         // Return a JSON response
         Map<String, Object> response = new HashMap<>();
@@ -76,53 +70,23 @@ public class TaskhubController {
     }
 
     @GetMapping("/tasks")
-    public List<TaskhubDTO> getTasksByDateRange(@RequestParam(value = "baseDate", required = false) String baseDate, HttpSession session) {
-        LocalDate today;
-
-        if (baseDate != null && !baseDate.isEmpty()) {
-            today = LocalDate.parse(baseDate); // 문자열을 LocalDate로 변환
-//            System.out.println("baseDate passed::: "+baseDate);
-//            System.out.println("baseDate parsed::: "+today);
-        } else {
-            today = LocalDate.now(); // baseDate가 없으면 현재 날짜를 사용
-//            System.out.println("baseDate is null");
-        }
-
-        LocalDate monday = getMonday(today);
-        LocalDate sunday = getSunday(today);
-        String mon = formatDate(monday);
-        String sun = formatDate(sunday);
-
-//        Map<String, String> monSun = new HashMap<>();
-//        monSun.put("mon", mon);
-//        monSun.put("sun", sun);
-        TaskhubDTO taskhubDTO = new TaskhubDTO();
-        taskhubDTO.setMon(mon);
-        taskhubDTO.setSun(sun);
-//        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
-//        System.out.println("id: "+session.getAttribute("loginUserId"));
-        return taskhubService.findByDoDates(taskhubDTO);
+    public List<TaskhubDTO> getTasksByDateRange(@RequestParam(value = "baseDate", required = false) String baseDate) {
+        return taskhubService.findByDoDates(baseDate);
     }
 
     @GetMapping("/findByStatus/{taskStatus}")
     public List<TaskhubDTO> getTasksByStatus(@PathVariable("taskStatus") String taskStatus) {
-//        TaskhubDTO taskhubDTO = new TaskhubDTO();
-//        taskhubDTO.setTask_status(taskStatus);
-//        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
-//        System.out.println("getTasksByStatus>>>> "+taskhubDTO.getTask_status()+"/"+taskhubDTO.getUser_id());
         return taskhubService.findByStatus(taskStatus);
     }
 
     @GetMapping("/tasksAdded")
     public List<TaskhubDTO> getTasks() {
-//        TaskhubDTO taskhubDTO = new TaskhubDTO();
-//        taskhubDTO.setUser_id((Long) session.getAttribute("loginUserId"));
-        return taskhubService.findAll(taskNewDTO);
+        return taskhubService.findAll();
     }
 
     @GetMapping("/newId")
     public int findNewId() {
-        return taskhubService.findNewId(taskNewDTO);
+        return taskhubService.findNewId();
     }
 
     @GetMapping("/findById/{task_id}")
@@ -135,7 +99,7 @@ public class TaskhubController {
     public ResponseEntity<Map<String, Object>> updateTask(
             @PathVariable("taskId") String taskId,
             @RequestBody TaskhubDTO taskhubDTO) {
-        System.out.println(">>> TaskhubController.updateTask taskid: "+taskId);
+        System.out.println(">>> TaskhubController.updateTask taskid: " + taskId);
         System.out.println("TaskhubDTO: " + taskhubDTO);
 
         // Set the task ID in the DTO and update the task
@@ -162,7 +126,7 @@ public class TaskhubController {
         taskhubDTO.setDo_dates(doDates);
         taskhubDTO.setTask_status(taskStatus);
 
-        System.out.println(">>> updateDetailDoDate taskId:"+taskId+" /doDates:"+doDates+" /taskStatus:"+taskStatus);
+        System.out.println(">>> updateDetailDoDate taskId:" + taskId + " /doDates:" + doDates + " /taskStatus:" + taskStatus);
         taskhubService.updateDetailDoDate(taskhubDTO);
 
         Map<String, Object> response = new HashMap<>();
@@ -210,8 +174,8 @@ public class TaskhubController {
             String newIdx = getStringValue(updateData.get("new_idx"));
             String taskStatus = (String) updateData.get("task_status");
 
-            System.out.println("0 updateOrderAndDoDate task_id: " + taskId+" / taskStatus: "+taskStatus);
-            System.out.println("0 do_date: " + oldDoDate+"->"+newDoDate+" // idx: " + oldIdx+"->"+newIdx);
+            System.out.println("0 updateOrderAndDoDate task_id: " + taskId + " / taskStatus: " + taskStatus);
+            System.out.println("0 do_date: " + oldDoDate + "->" + newDoDate + " // idx: " + oldIdx + "->" + newIdx);
 
             //if (oldDoDate == null || oldIdx == null || newIdx == null) {
             if (oldDoDate == null || oldDoDate.isEmpty() || oldIdx == null || oldIdx.isEmpty() || newIdx == null || newIdx.isEmpty()) {
@@ -239,8 +203,8 @@ public class TaskhubController {
             taskhubDTO.setOld_order_idx(oldIdx);
             taskhubDTO.setNew_order_idx(newIdx);
             taskhubDTO.setTask_status(taskStatus);
-            System.out.println("1 updateOrderAndDoDate task_id: " + taskhubDTO.getTask_id()+"/taskStatus: "+taskStatus);
-            System.out.println("1 do_date: " + taskhubDTO.getOld_do_date()+"->"+taskhubDTO.getNew_do_date()+" // idx: " + taskhubDTO.getOld_order_idx()+"->"+taskhubDTO.getNew_order_idx());
+            System.out.println("1 updateOrderAndDoDate task_id: " + taskhubDTO.getTask_id() + "/taskStatus: " + taskStatus);
+            System.out.println("1 do_date: " + taskhubDTO.getOld_do_date() + "->" + taskhubDTO.getNew_do_date() + " // idx: " + taskhubDTO.getOld_order_idx() + "->" + taskhubDTO.getNew_order_idx());
 
             taskhubService.updateOrderAndDoDate(taskhubDTO);
 
@@ -288,18 +252,4 @@ public class TaskhubController {
         return taskhubService.getCategories();
     }
 
-    // 현재 날짜를 기준으로 해당 주의 월요일 날짜를 구하는 메소드
-    public static LocalDate getMonday(LocalDate date) {
-        return date.with(DayOfWeek.MONDAY);
-    }
-
-    // 현재 날짜를 기준으로 해당 주의 일요일 날짜를 구하는 메소드
-    public static LocalDate getSunday(LocalDate date) {
-        return date.with(DayOfWeek.SUNDAY);
-    }
-    // 날짜를 문자열로 포맷하는 메소드
-    public static String formatDate(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        return date.format(formatter);
-    }
 }

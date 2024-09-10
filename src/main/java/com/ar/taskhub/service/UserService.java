@@ -2,10 +2,12 @@ package com.ar.taskhub.service;
 
 import com.ar.taskhub.dto.UserDTO;
 import com.ar.taskhub.entity.UserEntity;
-import com.ar.taskhub.repository.jpa.UserRepository;
+import com.ar.taskhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service

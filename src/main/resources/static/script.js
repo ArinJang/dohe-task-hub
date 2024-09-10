@@ -34,10 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
     const taskMemoContent = document.getElementById('taskMemo');
     let orderInCertainStatus = null;
-            sessionStorage.setItem('ifLoggedIn', 'false');
+    sessionStorage.setItem('ifLoggedIn', 'false');
 //    let isTaskUpdateScheduled = false;
 
     const loginModal = document.getElementById('loginModal');
+    const logoutButton = document.getElementById('logoutButton');
     const closeBtn = document.getElementsByClassName('close')[0];
     const addUserModal = document.getElementById('addUserModal');
 
@@ -50,9 +51,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Open or close the login modal based on the loginUserName
     if (loginUserName !== null && loginUserName !== '' && loginUserName !== 'null') {
         loginModal.style.display = 'none';  // 로그인 상태에서 모달 숨김
+        logoutButton.style.display = 'inline';  // 로그인 상태에서 로그아웃 버튼 표시
         console.log("1 OO Logged in user:", loginUserName);
     } else {
         loginModal.style.display = 'block'; // 로그인하지 않은 상태에서 모달 표시
+        logoutButton.style.display = 'none';  // 로그아웃 상태에서 로그아웃 버튼 숨김
         console.log("2 XX Logged in user:", loginUserName);
     }
     // Handle login form submission
@@ -70,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addUserModal.style.display = 'none';
     });
     document.getElementById('addUserForm').onsubmit = function(event) {
-        event.preventDefault(); // Prevent default form submission
+//        event.preventDefault(); // Prevent default form submission
         addUserModal.style.display = 'none';
     }
 
@@ -362,18 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         clickSideBar(selectedSide);
     });
-
-//    function showForm() {
-//        document.querySelector('.do-dates-group').style.visibility = 'visible';
-//        taskForm.style.visibility = 'visible';
-//        daysList.style.visibility = 'visible';
-//    }
-//
-//    function hideForm() {
-//        document.querySelector('.do-dates-group').style.visibility = 'hidden';
-//        taskForm.style.visibility = 'hidden';
-//        daysList.style.visibility = 'hidden';
-//    }
 
     function showForm() {
         document.querySelector('.do-dates-group').style.display = 'flex';
@@ -811,10 +802,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         fetch(`/api/findById/${taskId}`)
-            .then(response => response.text()) // Read response as text
+            .then(response => {
+//                console.log('Response status:', response.status); // 상태 코드 출력
+                return response.text(); // 응답을 텍스트로 변환
+            })
             .then(text => {
+//                console.log('Response text:', text); // 응답 내용 출력
                 if (text) {
                     try {
+    console.log('fetchTaskDetails id?',sessionStorage.getItem('detailID'));
                         const data = JSON.parse(text); // Parse text as JSON
                         showTaskDetail(data); // Pass parsed data to showTaskDetail
                         if(data.task_status == 4 ||data.task_status == 5 ||data.task_status == 6){
@@ -869,45 +865,45 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-    // fetch 요청을 보낼 때 isoDate가 빈 문자열이면, 서버로 baseDate 없이 요청을 보냄
-    fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (!Array.isArray(data)) {
-                throw new Error('Fetched data is not an array');
-            }
-            tasks = data;
-
-            // Create an array with all possible days you want to render
-            const allDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-
-            // Initialize tasksByDay with empty arrays for each day
-            tasksByDay = allDays.reduce((acc, day) => {
-                acc[day] = [];
-                return acc;
-            }, {});
-
-            // Populate tasksByDay with the actual tasks
-            tasks.forEach(task => {
-                const day = task.day_of_week;
-                if (!tasksByDay[day]) {
-                    tasksByDay[day] = [];
+        // fetch 요청을 보낼 때 isoDate가 빈 문자열이면, 서버로 baseDate 없이 요청을 보냄
+        fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
-                tasksByDay[day].push(task);
-            });
+                return response.json();
+            })
+            .then(data => {
+                if (!Array.isArray(data)) {
+                    throw new Error('Fetched data is not an array');
+                }
+                tasks = data;
 
-            renderDayTitlesList();
+                // Create an array with all possible days you want to render
+                const allDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-            // Ensure that renderDayTasksList is called for all days, even if they are empty
-            allDays.forEach(day => renderDayTasksList(day));
-        })
-        .catch(error => console.error('Error fetching tasks:', error));
-}
+                // Initialize tasksByDay with empty arrays for each day
+                tasksByDay = allDays.reduce((acc, day) => {
+                    acc[day] = [];
+                    return acc;
+                }, {});
+
+                // Populate tasksByDay with the actual tasks
+                tasks.forEach(task => {
+                    const day = task.day_of_week;
+                    if (!tasksByDay[day]) {
+                        tasksByDay[day] = [];
+                    }
+                    tasksByDay[day].push(task);
+                });
+
+                renderDayTitlesList();
+
+                // Ensure that renderDayTasksList is called for all days, even if they are empty
+                allDays.forEach(day => renderDayTasksList(day));
+            })
+            .catch(error => console.error('Error fetching tasks:', error));
+    }
 
     function fetchTasksByDay() {
         // Retrieve baseDate from sessionStorage
