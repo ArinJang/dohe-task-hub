@@ -26,7 +26,7 @@ public class TaskhubService {
 
     public TaskhubDTO getLoginIdDTO() {
         TaskhubDTO newDTO = new TaskhubDTO();
-        newDTO.setUser_id((Long) session.getAttribute("loginUserId"));
+        newDTO.setUser_id((Long) session.getAttribute("sessionUserId"));
         return newDTO;
     }
 
@@ -39,10 +39,9 @@ public class TaskhubService {
 //    }
 
     @Transactional
-    public void save(String taskContent, String workName, String do_dates) {
+    public void insertTask(String taskContent, String do_dates) {
         TaskhubDTO taskDTO = getLoginIdDTO();  // DTO는 요청마다 새로 생성
         if(taskContent != null) taskDTO.setTask_content(taskContent);
-        if(workName != null) taskDTO.setWork_name(workName);
         if(do_dates == null || do_dates.isEmpty()) {
             taskDTO.setDo_dates("9999-12-31");
         } else {
@@ -52,10 +51,18 @@ public class TaskhubService {
         taskhubRepository.callInsertTaskAndDoDates(taskDTO);
     }
 
+    public void insertWork(String workName) {
+        TaskhubDTO taskDTO = getLoginIdDTO();
+        if(workName != null) taskDTO.setWork_name(workName);
+        taskhubRepository.insertWork(taskDTO);
+    }
+
     public List<TaskhubDTO> findAll(){
-        System.out.println("service findAll(Long defaultId)? "+getLoginIdDTO().getUser_id());
+//        System.out.println("service findAll(Long defaultId)? "+getLoginIdDTO().getUser_id());
         Long user_id = getLoginIdDTO().getUser_id() == null ? 2 : getLoginIdDTO().getUser_id();
-        return taskhubRepository.findAll(user_id);
+        List<TaskhubDTO> dto = taskhubRepository.findAll(user_id);
+        System.out.println("dto:::"+dto);
+        return dto;
     }
 
 //    public List<TaskhubDTO> findAllfromHome(Long defaultId){
@@ -95,6 +102,15 @@ public class TaskhubService {
         taskDTO.setSun(sun);
         return taskhubRepository.findByDoDates(taskDTO);
     }
+
+    public List<TaskhubDTO> findByWork() {
+        return taskhubRepository.findByWork(getLoginIdDTO().getUser_id());
+    }
+
+    public List<TaskhubDTO> findWorks() {
+        return taskhubRepository.findWorks(getLoginIdDTO().getUser_id());
+    }
+
     // 현재 날짜를 기준으로 해당 주의 월요일 날짜를 구하는 메소드
     public static LocalDate getMonday(LocalDate date) {
         return date.with(DayOfWeek.MONDAY);
@@ -125,6 +141,10 @@ public class TaskhubService {
         taskhubRepository.updateTask(taskDTO);
     }
 
+    public void updateWork(TaskhubDTO taskDTO) {
+        taskhubRepository.updateWork(taskDTO);
+    }
+
     @Transactional
     public void deleteTask(String taskId) {
         System.out.println("service delete: "+taskId);
@@ -137,6 +157,21 @@ public class TaskhubService {
         taskhubRepository.rearrangeOrder(params);
         System.out.println("Starting deleteTask...");
         taskhubRepository.deleteTask(taskId);
+        System.out.println("delete end...");
+    }
+
+    @Transactional
+    public void deleteWork(String workId) {
+        System.out.println("service delete: "+workId);
+        System.out.println("Starting updateTaskDeletingWorkId...");
+        Long work_id = Long.valueOf(workId);
+        taskhubRepository.updateTaskDeletingWorkId(work_id);
+        System.out.println("Starting updateTaskDeletingWorkId...");
+        Map<String, Object> params = new HashMap<>();
+        params.put("work_id", workId);
+        params.put("user_id", getLoginIdDTO().getUser_id());
+        System.out.println("Starting deleteWork...");
+        taskhubRepository.deleteWork(params);
         System.out.println("delete end...");
     }
 
@@ -261,4 +296,5 @@ public class TaskhubService {
         params.put("user_id", getLoginIdDTO().getUser_id());
         return taskhubRepository.getMaxIdxOfNewDate(params);
     }
+
 }

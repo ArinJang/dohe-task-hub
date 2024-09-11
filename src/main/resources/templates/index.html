@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>TASK HUB</title>
         <link rel="stylesheet" href="styles.css">
-
+        <link rel="icon" href="/favicon_task.png">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans:wght@100..900&family=PT+Mono&family=Roboto+Slab:wght@100..900&family=Inconsolata:wght@200..900&family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
             <!-- User name section -->
             <div class="user-info">
                 <span>User Name: </span>
-                <p id="user-info" th:text="${session.loginUserName}"></p>
+                <p id="user-info" th:text="${session.sessionUserName}"></p>
             </div>
             <form action="/user/logout" style="display: inline;" id="logoutButton">
                 <button type="submit" class="logout-button">logout</button>
@@ -42,8 +42,8 @@
             <script th:inline="javascript">
                 /*<![CDATA[*/
                 function search() {
-                    const loginUserName = /*[[${session.loginUserName}]]*/;
-                    sessionStorage.setItem("loginUserName", loginUserName);
+                    const sessionUserName = /*[[${session.sessionUserName}]]*/;
+                    sessionStorage.setItem("sessionUserName", sessionUserName);
                 }
                 /*]]>*/
             </script>
@@ -88,21 +88,11 @@
                             <div class="input-group">
                                 <label for="categoryName">Category:</label>
                                 <select id="categoryName">
-                                    <option value="" disabled selected class="select-placeholder">Select a category</option>
-                                    <option value="Work">Work</option>
-                                    <option value="Personal">Personal</option>
-                                    <option value="Study">Study</option>
-                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div class="input-group">
                                 <label for="workName">Work:</label>
                                 <select id="workName">
-                                    <option value="" disabled selected class="select-placeholder">Select a work</option>
-                                    <option value="Project A">Project A</option>
-                                    <option value="Project B">Project B</option>
-                                    <option value="Project C">Project C</option>
-                                    <option value="Other">Other</option>
                                 </select>
                             </div>
 
@@ -151,8 +141,16 @@
         <div class="modal-content">
             <h2>Deletion</h2>
             <p>Are you sure you want to delete this task?</p>
-            <button id="confirmDeleteButton">Delete</button>
-            <button id="cancelDeleteButton">Cancel</button>
+            <button id="confirmDeleteButton" class="confirmDel">Delete</button>
+            <button id="cancelDeleteButton" class="cancelDel">Cancel</button>
+        </div>
+    </div>
+    <div id="deleteConfirmationModalWork" class="modal">
+        <div class="modal-content">
+            <h2>Deletion</h2>
+            <p id="deleteMessage">Delete this work?<br>Tasks will be set to null.</p>
+            <button id="confirmDeleteButtonWork" class="confirmDel" data-work-id="" data-work-name="">Delete</button>
+            <button id="cancelDeleteButtonWork" class="cancelDel">Cancel</button>
         </div>
     </div>
 
@@ -162,11 +160,11 @@
             <form id="loginForm" action="/user/login" method="post">
                 <div class="login-form-group">
                     <label for="username" class="loginLabel">Username:</label>
-                    <input type="text" id="username" name="userName" required>
+                    <input type="text" id="username" name="userName" autocomplete="userName" required>
                 </div>
                 <div class="login-form-group">
                     <label for="password" class="loginLabel">Password:</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required>
                 </div>
                 <div class="login-form-remember">
                     <input type="checkbox" id="rememberMe" name="rememberMe">

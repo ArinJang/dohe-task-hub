@@ -35,7 +35,7 @@ public class UserService {
                 // 비밀번호 일치
                 // entity -> dto 변환 후 리턴
                 UserDTO dto = UserDTO.toUserDTO(userEntity);
-                System.out.println("LOGIN SUCCESS>_<");
+//                System.out.println("LOGIN SUCCESS>_<");
                 return dto;
             } else {
                 // 비밀번호 불일치(로그인실패)

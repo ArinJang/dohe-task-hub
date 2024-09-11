@@ -38,6 +38,14 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findByDoDates", taskhubDTO);
     }
 
+    public List<TaskhubDTO> findByWork(Long user_id) {
+        return sql.selectList("Taskhub.findByWork", user_id);
+    }
+
+    public List<TaskhubDTO> findWorks(Long user_id) {
+        return sql.selectList("Taskhub.findWorks", user_id);
+    }
+
     public TaskhubDTO findById(String taskId) {
         return sql.selectOne("Taskhub.findById", taskId);
     }
@@ -49,6 +57,13 @@ public class TaskhubRepository {
     public void updateTask(TaskhubDTO taskhubDTO) {
         sql.update("Taskhub.updateTask", taskhubDTO);
     }
+    public void updateTaskDeletingWorkId(Long work_id) {
+        sql.update("Taskhub.updateTaskDeletingWorkId", work_id);
+    }
+
+    public void updateWork(TaskhubDTO taskhubDTO) {
+        sql.update("Taskhub.updateWork", taskhubDTO);
+    }
 
     public void updateStatus(Map<String, Object> params) {
         sql.update("Taskhub.updateStatus", params);
@@ -56,6 +71,10 @@ public class TaskhubRepository {
 
     public void deleteTask(String taskId) {
         sql.delete("Taskhub.deleteTask", taskId);
+    }
+
+    public void deleteWork(Map<String, Object> params) {
+        sql.delete("Taskhub.deleteWork", params);
     }
 
     public void deleteDoDatesByTaskId(String taskId) {
@@ -98,6 +117,10 @@ public class TaskhubRepository {
         sql.selectOne("Taskhub.callInsertTaskAndDoDates", taskhubDTO);
     }
 
+    public void insertWork(TaskhubDTO taskhubDTO) {
+        sql.insert("Taskhub.insertWork", taskhubDTO);
+    }
+
     public int getMaxTaskOrder(Map<String, Object> params) {
         return sql.selectOne("Taskhub.getMaxTaskOrder", params);
     }
@@ -120,4 +143,5 @@ public class TaskhubRepository {
     public String getMaxIdxOfNewDate(Map<String, Object> params) {
         return sql.selectOne("Taskhub.getMaxIdxOfNewDate", params);
     }
+
 }

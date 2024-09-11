@@ -181,6 +181,46 @@ body {
     display: inline;
 }
 
+.work-edit-btn {
+    visibility: hidden;
+    margin-left: 5px;
+    /*position: absolute;
+    top: 50%;
+    transform: translateY(-50%);*/
+    background: transparent;
+    border: 0px;
+    cursor: pointer;
+    color: #87CEEB;
+}
+.work-delete-btn {
+    visibility: hidden;
+    margin-left: 5px;
+    /*position: absolute;
+    top: 50%;
+    transform: translateY(-50%);*/
+    background: transparent;
+    border: 0px;
+    cursor: pointer;
+    color: #f44336;
+}
+
+/* .custom-day-font이 hover될 때 .work-edit-btn 색상 변경 */
+.work-title:hover .work-edit-btn,
+.work-title:hover .work-delete-btn {
+    visibility: visible;
+    /*color: black;*/
+}
+
+.work-edit-btn:hover {
+    color: #4bb1db;
+    font-weight: bold;
+}
+
+.work-delete-btn:hover {
+    color: #d32f2f;
+    font-weight: bold;
+}
+
 #list-detail {
     display: flex;
     flex-direction: row; /* Side by side layout for left and right panels */
@@ -198,7 +238,7 @@ body {
 .task-input {
     display: flex;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 .work-input {
@@ -235,7 +275,7 @@ body {
 
 #addTaskButton:hover,
 #addWorkButton:hover {
-    background-color: #4bb1db; /* Darker green on hover */
+    background-color: #4bb1db;
 }
 
 #taskList {
@@ -349,7 +389,7 @@ ul {
     background-color: #45a049; /* Darker green on hover */
 }
 
-#confirmDeleteButton {
+.confirmDel {
     background-color: #f44336; /* Red background */
     color: white; /* White text */
     border: none; /* Remove border */
@@ -363,11 +403,11 @@ ul {
     margin-right: 10px; /* Space between buttons */
 }
 
-#confirmDeleteButton:hover {
+.confirmDel:hover {
     background-color: #d32f2f; /* Darker red on hover */
 }
 
-#cancelDeleteButton {
+.cancelDel {
     background-color: #ccc; /* Gray background */
     color: black; /* Black text */
     border: none; /* Remove border */
@@ -380,10 +420,9 @@ ul {
     border-radius: 5px; /* Rounded corners */
 }
 
-#cancelDeleteButton:hover {
+.cancelDel:hover {
     background-color: #aaa; /* Darker gray on hover */
 }
-
 
 #saveCloseButton {
     background-color: #ccc; /* Gray background */
@@ -633,6 +672,12 @@ ul {
     cursor: move;
 }
 
+.non-hamburger-icon {
+    font-size: 15px;
+    margin-right: 10px;
+    cursor: default;
+}
+
 .work_name {
     font-size: 12px;
     color: lightblue; /* Light sky blue color */
@@ -847,4 +892,9 @@ button#addUser:hover, button#developerAccount:hover {
     float: right;
     font-size: 28px;
     font-weight: bold;
+}
+
+#overdue .task_content,
+#overdue .work_name {
+    color: OrangeRed;
 }

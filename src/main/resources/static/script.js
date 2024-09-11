@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const navigationBar = document.getElementById('navigation-bar');
     const listDetail = document.getElementById('list-detail');
     const taskInput = document.getElementById('taskInput');
-    const workInput = document.querySelector('.work-input');
+    const workInput = document.getElementById('workInput');
+    const workInputArea = document.querySelector('.work-input');
     const addTaskButton = document.getElementById('addTaskButton');
     const taskList = document.getElementById('taskList');
     const dayList = document.getElementById('dayList');
@@ -18,10 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const addDateButton = document.getElementById('addDateButton');
     const doDatesContainer = document.getElementById('doDatesContainer');
     const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
-    const confirmDeleteButton = document.getElementById('confirmDeleteButton');
-    const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+    const deleteConfirmationModalWork = document.getElementById('deleteConfirmationModalWork');
     const saveChangesButton = document.getElementById('saveChangesButton');
-    const deleteConfirmationButton = document.getElementById('deleteConfirmationButton');
     let daysListVisible = true;
     let selectedDate = null;
     let selectedSide = 'week';
@@ -43,28 +42,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const addUserModal = document.getElementById('addUserModal');
 
     const userInfoDiv = document.getElementById("user-info");
-    search();
-    const loginUserName =  sessionStorage.getItem("loginUserName");
-    console.log("0 Logged in user:", loginUserName);
 
+    search(); // index.html 함수
+    const sessionUserName = sessionStorage.getItem("sessionUserName");
+    const localUserName = localStorage.getItem("localUserName");
+    const localPassword = localStorage.getItem("localPassword");
+    const rememberMeCheckbox = document.getElementById("rememberMe");
 
-    // Open or close the login modal based on the loginUserName
-    if (loginUserName !== null && loginUserName !== '' && loginUserName !== 'null') {
+    console.log("* localStorage:", localUserName);
+    console.log("* sessionStorage:", sessionUserName);
+
+    if (localUserName) {
+        document.getElementById("username").value = localUserName;
+        rememberMeCheckbox.checked = true;
+    }
+    if (localPassword) {
+        document.getElementById("password").value = localPassword;
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        const rememberMeCheckbox = document.getElementById("rememberMe");
+        if (rememberMeCheckbox.checked) {
+            localStorage.setItem("localUserName", document.getElementById("username").value);
+            localStorage.setItem("localPassword", document.getElementById("password").value);
+        } else {
+            localStorage.removeItem("localUserName");
+            localStorage.removeItem("localPassword");
+        }
+    });
+
+    // Open or close the login modal based on the sessionUserName
+    if (sessionUserName !== null && sessionUserName !== '' && sessionUserName !== 'null') {
         loginModal.style.display = 'none';  // 로그인 상태에서 모달 숨김
         logoutButton.style.display = 'inline';  // 로그인 상태에서 로그아웃 버튼 표시
-        console.log("1 OO Logged in user:", loginUserName);
+        console.log("1 OO Logged in user:", sessionUserName);
     } else {
         loginModal.style.display = 'block'; // 로그인하지 않은 상태에서 모달 표시
         logoutButton.style.display = 'none';  // 로그아웃 상태에서 로그아웃 버튼 숨김
-        console.log("2 XX Logged in user:", loginUserName);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//        document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+//        document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+//        document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        console.log("2 XX Logged in user:", sessionUserName);
     }
-    // Handle login form submission
-//    document.getElementById('loginForm').onsubmit = function(event) {
-////        event.preventDefault(); // Prevent default form submission
-//
-//        const username = document.getElementById('username').value;
-//        const password = document.getElementById('password').value;
-//    }
 
     document.getElementById('addUser').addEventListener('click', function() {
         addUserModal.style.display = 'block';
@@ -100,6 +123,15 @@ document.addEventListener('DOMContentLoaded', function() {
             acc[day] = []; // 새로운 배열을 생성
         }
         acc[day].push(task); // 해당 요일의 배열에 task를 추가
+        return acc; // 누적기(acc)를 반환하여 다음 반복에서 계속 사용
+    }, {});
+
+    var tasksByWork = tasks.reduce((acc, task) => {
+        const work = task.work_name; // 각 task의 day_of_week 속성 값 추출
+        if (!acc[work]) { // 해당 요일에 대한 배열이 아직 존재하지 않으면
+            acc[work] = []; // 새로운 배열을 생성
+        }
+        acc[work].push(task); // 해당 요일의 배열에 task를 추가
         return acc; // 누적기(acc)를 반환하여 다음 반복에서 계속 사용
     }, {});
 
@@ -165,7 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // NavigationBar 업데이트 함수
     function updateWeekDates() {
-
         dayDateMap.clear();
         navigationBar.innerHTML = '';
         if(sessionStorage.getItem('today') === 'true') {
@@ -251,9 +282,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateNavigationBar(category) {
         navigationBar.innerHTML = '';
         if (category === 'work') {
-            workInput.style.display = 'flex';
+            workInputArea.style.display = 'flex';
         } else {
-            workInput.style.display = 'none';
+            workInputArea.style.display = 'none';
         }
         if (category === 'week') {
             updateWeekDates();
@@ -328,14 +359,21 @@ document.addEventListener('DOMContentLoaded', function() {
         activeItem.classList.add('active');
     }
 
-    function clickSideBar(selectedSide) {
+    function clickSideBar(selectedSide, keepDetail) {
         fetchMainTaskList();
-        sessionStorage.setItem('detailID', '');
-        orderInCertainStatus = null;
-        fetchTaskDetails();
+        if(!keepDetail){
+            sessionStorage.setItem('detailID', '');
+            fetchTaskDetails();
+        }
+            orderInCertainStatus = null;
         switch (selectedSide) {
             case 'week':
-                fetchTasksByDateRange(); // Call this first
+//                fetchTasksByDateRange(); // Call this first
+                if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+                    fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+                }else{
+                    fetchTasksByDay();
+                }
                 renderDayTitlesList(); // Ensure days list is rendered first
                 showForm();
                 break;
@@ -363,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target.classList.contains('side-item')) {
             setSide(selectedSide);
         }
-        clickSideBar(selectedSide);
+        clickSideBar(selectedSide, false);
     });
 
     function showForm() {
@@ -421,6 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchMainTaskList();
         fetchTasksByDateRange(); // Call this first
 //        renderDayTitlesList(); // Ensure days list is rendered first
+        putWorksToSelect();
         const today = new Date();
         currentMonth = today.getMonth();
         currentYear = today.getFullYear();
@@ -461,7 +500,8 @@ document.addEventListener('DOMContentLoaded', function() {
             categoryNameInput.value = task.category_name || '';
             originalValues.categoryName = categoryNameInput.value; // Store the original value
 
-            workNameInput.value = task.work_name || '';
+            //workNameInput.value = task.work_name || '';
+            workNameInput.value = task.work_id;
             originalValues.workName = workNameInput.value; // Store the original value
 
             dueDateInput.value = task.due_date || '';
@@ -469,8 +509,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             taskMemoInput.value = task.task_memo || '';
             originalValues.taskMemo = taskMemoInput.value; // Store the original value
-    //        taskMemoInput.style.height = calcHeight(taskMemoInput.value) + "px";
-    //        calcHeight(taskMemoContent);
             taskMemoInput.style.height = "auto"; // Reset height to auto to recalculate
             taskMemoInput.style.height = taskMemoContent.scrollHeight + "px"; // Set height based on the scrollHeight
 
@@ -500,36 +538,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentValue;
 
         switch (id) {
-    //        case 'taskName':
-    //            currentValue = event.target.value;
-    //            if (currentValue !== originalValues.taskName) {
-    //                saveTaskData();
-    //            }
-    //            break;
-    //        case 'categoryName':
-    //            currentValue = event.target.value;
-    //            if (currentValue !== originalValues.categoryName) {
-    //                saveTaskData();
-    //            }
-    //            break;
-    //        case 'workName':
-    //            currentValue = event.target.value;
-    //            if (currentValue !== originalValues.workName) {
-    //                saveTaskData();
-    //            }
-    //            break;
-    //        case 'dueDate':
-    //            currentValue = event.target.value;
-    //            if (currentValue !== originalValues.dueDate) {
-    //                saveTaskData();
-    //            }
-    //            break;
-    //        case 'taskMemo':
-    //            currentValue = event.target.value;
-    //            if (currentValue !== originalValues.taskMemo) {
-    //                saveTaskData();
-    //            }
-    //            break;
             case 'taskName':
             case 'categoryName':
             case 'workName':
@@ -537,8 +545,8 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'taskMemo':
                 currentValue = event.target.value;
                 if (currentValue !== originalValues[id]) {
+//                console.log('currentValue: ',currentValue,' originalValues[id]: ', originalValues[id]);
                     saveTaskData(); // Save task data if changed
-    //                isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
                 }
                 break;
             case 'taskStatus':
@@ -621,16 +629,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("showNotification or not?? show!");
                 showNotification('Do dates successfully updated!', 'success');
             }
-            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-            }else{
-                fetchTasksByDay();
-            }
+//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+//            }else{
+//                fetchTasksByDay();
+//            }
             fetchTaskDetails(); // 태스크 상세정보 갱신
-            fetchMainTaskList(); // 메인 태스크 리스트 갱신
-
-//            isTaskUpdateScheduled = true; // Mark that a do date update has been scheduled
-//            processUpdates(); // Process updates
+//            fetchMainTaskList(); // 메인 태스크 리스트 갱신
+            clickSideBar(selectedSide, true);
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -660,13 +666,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
 //            console.log('Task updated successfully:', data);
             showNotification('Successfully updated!', 'success');
-            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-            }else{
-                fetchTasksByDay();
-            }
-            fetchMainTaskList();
-            fetchTaskDetails();
+//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+//            }else{
+//                fetchTasksByDay();
+//            }
+//            fetchMainTaskList();
+//            fetchTaskDetails();
+            clickSideBar(selectedSide, true);
         })
         .catch(error => console.error('Error updating task:', error));
     }
@@ -684,6 +691,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 let fromDay;
                 let toDay;
 
+                if(selectedSide == 'work') {
+//                    showNotification('Tasks in Work Menu cannot be moved!', 'error');
+//                    clickSideBar('work');
+//                    return;
+                }
                 if(orderInCertainStatus !== undefined && orderInCertainStatus !== null){
                     if(orderInCertainStatus == 2) {
                         showNotification('A completed task cannot be moved!', 'error');
@@ -728,25 +740,72 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         taskListForDay.innerHTML = '';
 
-//        console.log('tasksByDay[day]: ',tasksByDay[day],", tasksByDay[day].length: ",tasksByDay[day].length);
         if (tasksByDay[day] && tasksByDay[day].length > 0) {
             tasksByDay[day].forEach((task, index) => {
-                const taskItem = createTaskItem(task);
+                const taskItem = createTaskItem(task, true, true);
+                    if(task.is_overdue == '1'){
+                        taskItem.id = 'overdue';
+                    }
                 taskListForDay.appendChild(taskItem);
             });
         } else {
-//            console.log(`No tasks available for ${day}`);
-            // Render an empty placeholder if there are no tasks
             const emptyPlaceholder = document.createElement('li');
             emptyPlaceholder.className = 'empty-placeholder';
             emptyPlaceholder.textContent = 'No tasks available';
             emptyPlaceholder.style.pointerEvents = 'none'; // Prevent any interaction with the placeholder
-            emptyPlaceholder.style.cursor = 'default'; // JavaScript로 커서 설정
+            emptyPlaceholder.style.cursor = 'default';
             taskListForDay.appendChild(emptyPlaceholder);
         }
-
-        initSortable(taskListForDay, null);  // Initialize Sortable.js for the updated task list
+        initSortable(taskListForDay, null);
     }
+
+    function renderWorkTasksList(workName) {
+        const taskListForWork = document.getElementById(`${workName}Tasks`);
+        if (!taskListForWork) {
+            console.error(`No element found with ID: ${workName}Tasks`);
+            return;
+        }
+
+        taskListForWork.innerHTML = '';
+
+        // tasksByWork[workName]에서 tasks 배열을 가져와 작업을 렌더링
+        const tasksForWork = tasksByWork[workName]?.tasks || [];
+
+        if (tasksForWork.length > 0) {
+            // task_id가 null이 아닌 task들만 필터링
+            const filteredTasks = tasksForWork.filter(task => task.task_id !== null);
+
+            if (filteredTasks.length > 0) {
+                filteredTasks.forEach((task, index) => {
+                    // 각 task를 렌더링
+                    const taskItem = createTaskItem(task, false, false);
+                    if(task.is_overdue == '1'){
+                        taskItem.id = 'overdue';
+                    }
+                    taskListForWork.appendChild(taskItem);
+                });
+            } else {
+                // 유효한 작업이 없을 경우, 빈 자리 표시를 추가
+                const emptyPlaceholder = document.createElement('li');
+                emptyPlaceholder.className = 'empty-placeholder';
+                emptyPlaceholder.textContent = 'No tasks available';
+                emptyPlaceholder.style.pointerEvents = 'none'; // 빈 자리 표시 클릭 방지
+                emptyPlaceholder.style.cursor = 'default'; // 커서 설정
+                taskListForWork.appendChild(emptyPlaceholder);
+            }
+        } else {
+            // 해당 workName에 작업이 없을 경우, 빈 자리 표시 추가
+            const emptyPlaceholder = document.createElement('li');
+            emptyPlaceholder.className = 'empty-placeholder';
+            emptyPlaceholder.textContent = 'No tasks available';
+            emptyPlaceholder.style.pointerEvents = 'none'; // 빈 자리 표시 클릭 방지
+            emptyPlaceholder.style.cursor = 'default'; // 커서 설정
+            taskListForWork.appendChild(emptyPlaceholder);
+        }
+
+        initSortable(taskListForWork, null);  // 업데이트된 작업 목록에 대해 Sortable.js 초기화
+    }
+
 
     function fetchMainTaskList() {
         const taskList = document.getElementById('taskList'); // Ensure taskList is correctly referenced
@@ -771,7 +830,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             taskList.appendChild(emptyPlaceholder);
                         } else {
                             data.forEach(task => {
-                                const taskItem = createTaskItem(task);
+                                const taskItem = createTaskItem(task, true, true);
+                                if(task.is_overdue == '1'){
+                                    taskItem.id = 'overdue';
+                                }
                                 taskList.appendChild(taskItem);
                             });
                         }
@@ -786,6 +848,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchStatus(statusMap[selectedSide]);
                 break;
             case 'work':
+                fetchTasksByWork();
+                putWorksToSelect();
                 break;
             default:
                 break;
@@ -810,12 +874,15 @@ document.addEventListener('DOMContentLoaded', function() {
 //                console.log('Response text:', text); // 응답 내용 출력
                 if (text) {
                     try {
-    console.log('fetchTaskDetails id?',sessionStorage.getItem('detailID'));
+                        console.log('fetchTaskDetails id?',sessionStorage.getItem('detailID'));
                         const data = JSON.parse(text); // Parse text as JSON
+//                            console.log('>>>>>> ',data.work_name);
                         showTaskDetail(data); // Pass parsed data to showTaskDetail
                         if(data.task_status == 4 ||data.task_status == 5 ||data.task_status == 6){
                             console.log('fetchTaskDetails status =456');
                             document.querySelector('.do-dates-group').style.display = 'none';
+                        } else {
+                            document.querySelector('.do-dates-group').style.display = 'flex';
                         }
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
@@ -898,8 +965,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 renderDayTitlesList();
-
-                // Ensure that renderDayTasksList is called for all days, even if they are empty
                 allDays.forEach(day => renderDayTasksList(day));
             })
             .catch(error => console.error('Error fetching tasks:', error));
@@ -956,6 +1021,42 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching tasks:', error));
     }
 
+    function fetchTasksByWork() {
+        fetch(`/api/tasksByWork`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!Array.isArray(data)) {
+                    throw new Error('Fetched data is not an array');
+                }
+
+            tasks = data;
+            // tasksByWork를 work_name을 키로 하고 work_id 및 tasks 배열을 포함하는 구조로 만듦
+            tasksByWork = tasks.reduce((acc, task) => {
+                const workName = task.work_name;
+                const workId = task.work_id;
+
+                if (!acc[workName]) {
+                    acc[workName] = {
+                        work_id: workId,
+                        tasks: []
+                    };
+                }
+                acc[workName].tasks.push(task);
+                return acc;
+            }, {});
+
+            renderWorkTitlesList();
+            Object.keys(tasksByWork).forEach(workName => renderWorkTasksList(workName));
+//                renderWorkTasksList();
+            })
+            .catch(error => console.error('Error fetching tasks:', error));
+    }
+
     function fetchStatus(pstat) {
 //    console.log('fetchStatus(pstat)> ',pstat);
     const taskStatus = pstat;
@@ -965,7 +1066,15 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.length > 0) {
                 data.forEach(task => {
-                    const taskItem = createTaskItem(task);
+                    var taskItem;
+                    if(pstat == 2) {
+                        taskItem = createTaskItem(task, false, true);
+                    } else {
+                        taskItem = createTaskItem(task, true, true);
+                    }
+                    if(task.is_overdue == '1'){
+                        taskItem.id = 'overdue';
+                    }
                     taskList.appendChild(taskItem);
                 });
             } else {
@@ -991,7 +1100,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (aDay == null) { // Render all days
             daysOfWeek.forEach(day => {
                 const ul = document.createElement('ul');
-                ul.id = `${day}Tasks`; // Ensure the ID matches what is used in renderDayTasksList
+                ul.id = `${day}Tasks`;
 
                 const li = document.createElement('li');
 //                console.log('!'+ dayDateMap.get(day));
@@ -1010,53 +1119,116 @@ document.addEventListener('DOMContentLoaded', function() {
             daysList.appendChild(li);
         }
     }
+    // 워크 제목 만듦
+    function renderWorkTitlesList() {
+        daysList.innerHTML = '';
+
+        Object.keys(tasksByWork).forEach(workName => {
+//            const tasksForWork = tasksByWork[workName];
+            const workId = tasksByWork[workName].work_id; // work_id 가져오기
+
+            const ul = document.createElement('ul');
+//            ul.id = `tasks_for_${workName.replace(/\s+/g, '_')}`; // Ensure ID is unique and valid
+            ul.id = `${workName}Tasks`;
+
+            const li = document.createElement('li');
+            li.className = 'work-li';
+
+            // Create the strong text element for workName
+            const workTitle = document.createElement('p');
+            workTitle.className = 'work-title';
+            workTitle.innerHTML = `<strong>[[</strong> <strong class="custom-day-font">${workName}</strong> <strong>]]</strong>`;
+
+            // Create the edit button
+            const editBtn = document.createElement('span');
+            editBtn.textContent = '✎';
+            editBtn.className = 'work-edit-btn';
+            editBtn.addEventListener('click', function(event) {
+                event.stopPropagation();
+                let promptMessage = 'Edit work:';
+                const newName = prompt(promptMessage, workName);
+                if (newName) {
+                    saveWork(workId, newName);
+                }
+            });
+            const deleteBtn = document.createElement('span');
+            deleteBtn.textContent = '✖';
+            deleteBtn.className = 'work-delete-btn';
+            deleteBtn.addEventListener('click', function(event) {
+                event.stopPropagation();
+//                const confirmButton = document.getElementById('confirmDeleteButtonWork');
+                document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-id', workId);
+                document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-name', workName);
+//                if (confirm(`Delete '${workName}'?\nTasks will be set to null.`)) {
+//                    deleteWork(workId);
+//                }
+                document.getElementById('deleteMessage').innerHTML = `Delete this work '${workName}'?<br>Tasks' work will be set to null.`;
+                deleteConfirmationModalWork.style.display = 'block';
+            });
+            workTitle.appendChild(editBtn);
+            workTitle.appendChild(deleteBtn);
+            li.appendChild(workTitle);
+//            li.appendChild(editBtn);
+//            li.appendChild(deleteBtn);
+            li.appendChild(ul); // Append the ul below the title and button
+            daysList.appendChild(li);
+        });
+    }
 
     taskForm.addEventListener('submit', function(event) {
-            event.preventDefault();
+        event.preventDefault();
 
-            const formData = new FormData(taskForm);
-            const action = event.submitter.value;
+        const formData = new FormData(taskForm);
+        const action = event.submitter.value;
 
-            console.log('event.submitter.value;'+ event.submitter.value);
-            if(action == 'TASK+' && taskInput.value.trim() === '') {
-                showNotification('Enter a task', 'error');
-                return; // Prevent form submission
-            }
-            if(action == 'WORK+' && workInput.value.trim() === '') {
-                showNotification('Enter a work', 'error');
-                return; // Prevent form submission
-            }
+        console.log('event.submitter.value;'+ event.submitter.value);
+        if(action == 'TASK+' && taskInput.value.trim() === '') {
+            showNotification('Enter a task', 'error');
+            return; // Prevent form submission
+        }
+        if(action == 'WORK+' && workInput.value.trim() === '') {
+            showNotification('Enter a work', 'error');
+            return; // Prevent form submission
+        }
 
-            // selectedDate가 null이 아닐 때 do_dates에 추가
+        // selectedDate가 null이 아닐 때 do_dates에 추가
 //            if (sessionStorage.getItem('baseDate') !== null && sessionStorage.getItem('baseDate') !== '') {
-            if (selectedDate !== null && selectedDate !== '') {
+        if (selectedDate !== null && selectedDate !== '') {
 //                formData.append('do_dates', sessionStorage.getItem('baseDate'));
-                formData.append('do_dates', selectedDate);
+            formData.append('do_dates', selectedDate);
+        }
+
+        formData.append('action', action);
+        console.log("태스크 저장~ selectedDate?? "+selectedDate);
+
+        fetch('/api/save', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            taskInput.value = '';
+            workInput.value = '';
+            if(selectedSide == 'work') {
+                clickSideBar('work', true);
+                putWorksToSelect();
+//                showTaskDetail();
+                return;
             }
-
-            formData.append('action', action);
-            console.log("태스크 저장~ selectedDate?? "+selectedDate);
-
-            fetch('/api/save', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                taskInput.value = '';
-                workInput.value = '';
-                if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-                    fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-                }else{
-                    fetchTasksByDay();
-                }
-                fetchTasksAdded();
-//                fetchTaskDetails();
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+//            }else{
+//                fetchTasksByDay();
+//            }
+//                fetchTasksAdded();
+                fetchTaskDetails();
+            fetchNewId();
+            clickSideBar(selectedSide, true);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
         });
+    });
 
     function fetchTasksAdded() {
         fetchNewId();
@@ -1087,7 +1259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const taskData = { // Collect form data
             task_content: document.getElementById('taskName').value,
             // categoryName: document.getElementById('categoryName').value,
-            // workName: document.getElementById('workName').value,
+            work_id: document.getElementById('workName').value,
             due_date: document.getElementById('dueDate').value,
 //            do_dates: datesString,
 //            task_status: document.querySelector('input[name="status"]:checked').value,
@@ -1109,15 +1281,14 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log('Success:', data);
             //successModal.style.display = 'block';
             showNotification('Successfully updated!', 'success');
-            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-            }else{
-                fetchTasksByDay();
-            }
-            fetchMainTaskList();
+//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+//            }else{
+//                fetchTasksByDay();
+//            }
+//            fetchMainTaskList();
             fetchTaskDetails();
-//            isTaskUpdateScheduled = true; // Mark that a task update has been scheduled
-//            processUpdates(); // Process updates
+            clickSideBar(selectedSide, true);
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -1125,15 +1296,48 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-//    function processUpdates() {
-//        if (isTaskUpdateScheduled) {
-////            fetchTasksByDateRange(); // Refresh task list
-////            fetchTasksByDay(); // Refresh tasks by day
-//            fetchMainTaskList(); // Refresh main task list
-//            fetchTaskDetails(); // Refresh task details
-//            isTaskUpdateScheduled = false; // Reset the flag
-//        }
-//    }
+    function saveWork(workId, newName) {
+//        const workId = workId;
+        const taskData = {
+            work_name: newName
+        };
+        fetch(`/api/updateWork/${workId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(taskData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            showNotification('Work updated!', 'success');
+            clickSideBar('work', false);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            // Handle error (e.g., show an error message)
+        });
+    }
+
+    function deleteWork(workId) {
+        // Send delete request to the server
+        fetch(`/api/deleteWork/${workId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Deleted:', data);
+            showNotification('Work deleted.', 'delete');
+            clickSideBar('work', false);
+            deleteConfirmationModalWork.style.display = 'none';
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
 
     function modifyDoDates(){
         const idForDetail = sessionStorage.getItem('detailID');
@@ -1149,13 +1353,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Success:', data);
             //successModal.style.display = 'block';
             showNotification('Successfully updated!', 'success');
-            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-            }else{
-                fetchTasksByDay();
-            }
-            fetchMainTaskList();
+//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+//            }else{
+//                fetchTasksByDay();
+//            }
+//            fetchMainTaskList();
             fetchTaskDetails();
+            clickSideBar(selectedSide, true);
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -1163,14 +1368,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    deleteConfirmationButton.addEventListener('click', (event) => {
+    document.getElementById('deleteConfirmationButton').addEventListener('click', (event) => {
         event.preventDefault(); // Prevent the form from submitting the default way
         deleteConfirmationModal.style.display = 'block';
     });
 
-    confirmDeleteButton.addEventListener('click', () => {
-//    deleteConfirmationButton.addEventListener('click', (event) => {
-//        console.log('selectedDay? delete: ',selectedDay);
+//    document.getElementById('deleteConfirmationButtonWork').addEventListener('click', (event) => {
+//        event.preventDefault(); // Prevent the form from submitting the default way
+//        deleteConfirmationModalWork.style.display = 'block';
+//    });
+
+    document.getElementById('confirmDeleteButton').addEventListener('click', () => {
         const curId = sessionStorage.getItem('detailID');
 //        console.log('curId? delete: ',curId);
         if (curId) {
@@ -1189,28 +1397,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('Task deleted.', 'delete');
 
                 sessionStorage.setItem('detailID', '');
-                if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-                    fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-                }else{
-                    fetchTasksByDay();
-                }
-                fetchMainTaskList();
+//                if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+//                    fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+//                }else{
+//                    fetchTasksByDay();
+//                }
+//                fetchMainTaskList();
                 fetchTaskDetails();
+                clickSideBar(selectedSide, false);
             })
             .catch((error) => {
                 console.error('Error:', error);
             });
         }
     });
+    document.getElementById('confirmDeleteButtonWork').addEventListener('click', () => {
+        const workId = document.getElementById('confirmDeleteButtonWork').getAttribute('data-work-id');
+        console.log("워크삭제, 아이디: ",workId);
+        deleteWork(workId); // 실제 삭제 함수 호출
+    });
 
-    cancelDeleteButton.addEventListener('click', () => {
+    document.getElementById('cancelDeleteButton').addEventListener('click', () => {
         deleteConfirmationModal.style.display = 'none';
+    });
+
+    document.getElementById('cancelDeleteButtonWork').addEventListener('click', () => {
+        deleteConfirmationModalWork.style.display = 'none';
     });
 
     // Close the delete confirmation modal when the user clicks anywhere outside of the modal
     window.addEventListener('click', (event) => {
         if (event.target === deleteConfirmationModal) {
             deleteConfirmationModal.style.display = 'none';
+        }
+        if (event.target === deleteConfirmationModalWork) {
+            deleteConfirmationModalWork.style.display = 'none';
         }
     });
 
@@ -1226,7 +1447,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create and append default option
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
-                defaultOption.textContent = 'Select a category';
+                /*defaultOption.textContent = 'Select a category';*/
                 categorySelect.appendChild(defaultOption);
 
                 // Create and append each category option
@@ -1501,7 +1722,7 @@ document.addEventListener('DOMContentLoaded', function() {
         calcHeight(taskMemoContent);
     });
 
-    function createTaskItem(task) {
+    function createTaskItem(task, hamburgerYN, workYN) {
         const li = document.createElement('li');
         li.className = 'task-item';
         li.setAttribute('data-task-id', task.task_id);
@@ -1519,32 +1740,67 @@ document.addEventListener('DOMContentLoaded', function() {
         taskContentSpan.className = 'task_content';
 
         const workNameSpan = document.createElement('span');
-        workNameSpan.textContent = task.work_name;
-        workNameSpan.className = 'work_name';
+        if(workYN) {
+            workNameSpan.textContent = task.work_name;
+            workNameSpan.className = 'work_name';
+        } else {
+            workNameSpan.textContent = '';
+            workNameSpan.className = 'work_name';
+        }
 
         const dueDateSpan = document.createElement('span');
         dueDateSpan.textContent = task.due_date;
         dueDateSpan.className = 'due_date';
 
-        // Append spans to the taskContainer
         taskContainer.appendChild(taskContentSpan);
         taskContainer.appendChild(workNameSpan);
         taskContainer.appendChild(dueDateSpan);
 
-        // Apply CSS class if task_status is 2
-        if (task.task_status == 2 || task.task_status == 3) {
+        if (task.task_status == 2 || task.task_status == 3) { // completed or canceled
             taskContainer.classList.add('task-status-completed'); // Add custom class
         }
 
         const hamburgerIcon = document.createElement('span');
-        hamburgerIcon.className = 'hamburger-icon';
-        hamburgerIcon.textContent = '☰'; // Using the Unicode character for hamburger icon
-
-        // Append checkbox and taskContainer to <li>
-        //li.appendChild(checkbox);
+        if(hamburgerYN) {
+            hamburgerIcon.className = 'hamburger-icon';
+            hamburgerIcon.textContent = '☰'; // Using the Unicode character for hamburger icon
+        } else {
+            hamburgerIcon.className = 'non-hamburger-icon';
+            hamburgerIcon.textContent = '▷'; // Using the Unicode character for hamburger icon
+        }
         li.appendChild(hamburgerIcon);
+        //li.appendChild(checkbox);
         li.appendChild(taskContainer);
 
         return li;
+    }
+
+    function putWorksToSelect() {
+        console.log('putWorksToSelect');
+        fetch('/api/works')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const selectElement = document.getElementById('workName');
+
+                // Clear existing options except for the placeholder
+                selectElement.innerHTML = '<option value="" selected class="select-placeholder">Select a work</option>';
+
+                /*const option = document.createElement('option');
+                option.value = null;
+                option.textContent = 'clear';
+                selectElement.appendChild(option);*/
+                data.forEach(work => {
+                    const option = document.createElement('option');
+                    option.value = work.work_id;
+                    option.textContent = work.work_name;
+                    selectElement.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching works:', error));
     }
 });

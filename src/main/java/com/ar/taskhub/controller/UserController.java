@@ -37,11 +37,10 @@ public class UserController {
     @PostMapping("/user/login")
     public String login(@ModelAttribute UserDTO userDTO, HttpSession session) {
         UserDTO loginResult = userService.login(userDTO);
-        if (loginResult != null) {
-            // login 성공
-            System.out.println("LOGIN SUCCESS>_<");
-            session.setAttribute("loginUserName", loginResult.getUserName());
-            session.setAttribute("loginUserId", loginResult.getUserId());
+        if (loginResult != null) { // login success
+//            System.out.println("LOGIN SUCCESSSUCCESSSUCCESS>_<");
+            session.setAttribute("sessionUserName", loginResult.getUserName());
+            session.setAttribute("sessionUserId", loginResult.getUserId());
             return "redirect:/";
 
         } else {

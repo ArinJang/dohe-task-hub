@@ -51,27 +51,45 @@ public class TaskhubController {
 //        TaskhubDTO taskhubDTO = new TaskhubDTO();
 
         if ("TASK+".equals(action)) {
-            workName = null;
+//            workName = null;
+            taskhubService.insertTask(taskContent, do_dates);
+
+            // Return a JSON response
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Task or Work saved successfully.");
+
+            return ResponseEntity.ok(response);
         } else if ("WORK+".equals(action)) {
-            taskContent = null;
-            do_dates = null;
+//            taskContent = null;
+//            do_dates = null;
+
+            taskhubService.insertWork(workName);
+
+            // Return a JSON response
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Task or Work saved successfully.");
+
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Invalid action"));
         }
-
-        taskhubService.save(taskContent, workName, do_dates);
-
-        // Return a JSON response
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "success");
-        response.put("message", "Task or Work saved successfully.");
-
-        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/tasks")
     public List<TaskhubDTO> getTasksByDateRange(@RequestParam(value = "baseDate", required = false) String baseDate) {
         return taskhubService.findByDoDates(baseDate);
+    }
+
+    @GetMapping("/tasksByWork")
+    public List<TaskhubDTO> getTasksByWork() {
+        return taskhubService.findByWork();
+    }
+
+    @GetMapping("/works")
+    public List<TaskhubDTO> getWorks() {
+        return taskhubService.findWorks();
     }
 
     @GetMapping("/findByStatus/{taskStatus}")
@@ -105,6 +123,26 @@ public class TaskhubController {
         // Set the task ID in the DTO and update the task
         taskhubDTO.setTask_id(taskId);
         taskhubService.updateTask(taskhubDTO);
+
+        // Return a JSON response
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Task updated successfully.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/updateWork/{workId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateWork(
+            @PathVariable("workId") String workId,
+            @RequestBody TaskhubDTO taskhubDTO) {
+        System.out.println(">>> TaskhubController.updateWork workId: " + workId);
+//        System.out.println("TaskhubDTO: " + taskhubDTO);
+
+        // Set the task ID in the DTO and update the task
+        taskhubDTO.setWork_id(workId);
+        taskhubService.updateWork(taskhubDTO);
 
         // Return a JSON response
         Map<String, Object> response = new HashMap<>();
@@ -243,6 +281,28 @@ public class TaskhubController {
             Map<String, Object> response = new HashMap<>();
             response.put("status", "error");
             response.put("message", "Failed to delete task. Task might not exist.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @DeleteMapping("/deleteWork/{workId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteWork(@PathVariable("workId") String workId) {
+        System.out.println(">>> TaskhubController.deleteWork Work ID: " + workId);
+        try {
+            // Call the service layer to delete the task
+            taskhubService.deleteWork(workId);
+
+            // Return a JSON response
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Work deleted successfully.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Handle error (e.g., task not found)
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Failed to delete work. Work might not exist.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
