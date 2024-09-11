@@ -28,13 +28,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var selectedNav = null;
     var selectedDay = null;
     const validationModal = document.getElementById('validationModal');
-//    console.log("TOP++ sessionStorage.getItem('nav')?! ",sessionStorage.getItem('nav'));
     var taskDetailContent = document.getElementById('taskDetailContent');
     var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
     const taskMemoContent = document.getElementById('taskMemo');
     let orderInCertainStatus = null;
     sessionStorage.setItem('ifLoggedIn', 'false');
-//    let isTaskUpdateScheduled = false;
 
     const loginModal = document.getElementById('loginModal');
     const logoutButton = document.getElementById('logoutButton');
@@ -49,8 +47,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const localPassword = localStorage.getItem("localPassword");
     const rememberMeCheckbox = document.getElementById("rememberMe");
 
-    console.log("* localStorage:", localUserName);
-    console.log("* sessionStorage:", sessionUserName);
+    console.log("*localStorage:", localUserName);
+    console.log("*sessionStorage:", sessionUserName);
 
     if (localUserName) {
         document.getElementById("username").value = localUserName;
@@ -71,14 +69,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Open or close the login modal based on the sessionUserName
     if (sessionUserName !== null && sessionUserName !== '' && sessionUserName !== 'null') {
-        loginModal.style.display = 'none';  // 로그인 상태에서 모달 숨김
-        logoutButton.style.display = 'inline';  // 로그인 상태에서 로그아웃 버튼 표시
-        console.log("1 OO Logged in user:", sessionUserName);
+        loginModal.style.display = 'none';  // 로그인 상태: 모달 숨김
+        logoutButton.style.display = 'inline';  // 로그인 상태: 로그아웃 버튼 표시
+//        console.log("1 OO Logged in user:", sessionUserName);
     } else {
-        loginModal.style.display = 'block'; // 로그인하지 않은 상태에서 모달 표시
-        logoutButton.style.display = 'none';  // 로그아웃 상태에서 로그아웃 버튼 숨김
+        loginModal.style.display = 'block'; // 로그아웃 상태: 모달 표시
+        logoutButton.style.display = 'none';  // 로그아웃 상태: 로그아웃 버튼 숨김
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //        document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //        document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        console.log("2 XX Logged in user:", sessionUserName);
+//        console.log("2 XX Logged in user:", sessionUserName);
     }
 
     document.getElementById('addUser').addEventListener('click', function() {
@@ -178,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         endDate.setDate(startDate.getDate() + 6); // One week later
         const startMonthDay = `${startDate.getMonth() + 1}/${startDate.getDate()}`;
         const endMonthDay = `${endDate.getMonth() + 1}/${endDate.getDate()}`;
-        return `${startMonthDay}~${endMonthDay}`;
+        return `${startMonthDay} ~ ${endMonthDay}`;
     }
 
     function updateWeekDisplay() {
@@ -469,13 +466,11 @@ document.addEventListener('DOMContentLoaded', function() {
         navigationBar.addEventListener('click', handleNavItemClick); // 이벤트 리스너 등록
 
         if(sessionStorage.getItem('nav') && sessionStorage.getItem('nav').trim() !== '') triggerNavItemClick(sessionStorage.getItem('nav'));
-
     }
 
     initialize(); // Call initialize to set up the UI
 
-    // Variables to store the original values of the inputs
-    let originalValues = {
+    let originalValues = { // Variables to store the original values of the inputs
         taskName: '',
         categoryName: '',
         workName: '',
@@ -546,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentValue = event.target.value;
                 if (currentValue !== originalValues[id]) {
 //                console.log('currentValue: ',currentValue,' originalValues[id]: ', originalValues[id]);
-                    saveTaskData(); // Save task data if changed
+                    saveChangesButton.click();
                 }
                 break;
             case 'taskStatus':
@@ -568,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.querySelector('.do-dates-group').style.display = 'none';
                         updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
                     } else {
-                        saveTaskData(); // Save task data if changed
+                        saveChangesButton.click();
                     }
                 }
                 break;
@@ -602,8 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateDetailDoDate(id, dates, status) {
-
-        console.log("0 id: ",id,'/dates:',dates,'/status:',status);
+//        console.log("0 id: ",id,'/dates:',dates,'/status:',status);
         const taskId = id ? id : sessionStorage.getItem('detailID');
         const datesString = dates ? dates : getDatesString();
         const taskStatus = status ? status : "";
@@ -612,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
             do_dates: datesString,
             task_status: taskStatus
         };
-        console.log("1 taskId: ",taskId,'/datesString:',datesString,'/taskStatus:',taskStatus);
+//        console.log("1 taskId: ",taskId,'/datesString:',datesString,'/taskStatus:',taskStatus);
         sessionStorage.setItem('detailID', taskId);
 
         fetch('/api/updateDetailDoDate', { // API 호출
@@ -748,14 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 taskListForDay.appendChild(taskItem);
             });
-        } else {
-            const emptyPlaceholder = document.createElement('li');
-            emptyPlaceholder.className = 'empty-placeholder';
-            emptyPlaceholder.textContent = 'No tasks available';
-            emptyPlaceholder.style.pointerEvents = 'none'; // Prevent any interaction with the placeholder
-            emptyPlaceholder.style.cursor = 'default';
-            taskListForDay.appendChild(emptyPlaceholder);
-        }
+        } else taskListForDay.appendChild(addPlaceholderForEmptyList());
         initSortable(taskListForDay, null);
     }
 
@@ -784,28 +771,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     taskListForWork.appendChild(taskItem);
                 });
-            } else {
-                // 유효한 작업이 없을 경우, 빈 자리 표시를 추가
-                const emptyPlaceholder = document.createElement('li');
-                emptyPlaceholder.className = 'empty-placeholder';
-                emptyPlaceholder.textContent = 'No tasks available';
-                emptyPlaceholder.style.pointerEvents = 'none'; // 빈 자리 표시 클릭 방지
-                emptyPlaceholder.style.cursor = 'default'; // 커서 설정
-                taskListForWork.appendChild(emptyPlaceholder);
-            }
-        } else {
-            // 해당 workName에 작업이 없을 경우, 빈 자리 표시 추가
-            const emptyPlaceholder = document.createElement('li');
-            emptyPlaceholder.className = 'empty-placeholder';
-            emptyPlaceholder.textContent = 'No tasks available';
-            emptyPlaceholder.style.pointerEvents = 'none'; // 빈 자리 표시 클릭 방지
-            emptyPlaceholder.style.cursor = 'default'; // 커서 설정
-            taskListForWork.appendChild(emptyPlaceholder);
-        }
+            } else taskListForWork.appendChild(addPlaceholderForEmptyList());
+        } else taskListForWork.appendChild(addPlaceholderForEmptyList());
 
         initSortable(taskListForWork, null);  // 업데이트된 작업 목록에 대해 Sortable.js 초기화
     }
-
 
     function fetchMainTaskList() {
         const taskList = document.getElementById('taskList'); // Ensure taskList is correctly referenced
@@ -820,15 +790,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch('/api/tasksNotAssigned')
                     .then(response => response.json())
                     .then(data => {
-                        if (data.length === 0) {
-                            // Render an empty placeholder if there are no tasks
-                            const emptyPlaceholder = document.createElement('li');
-                            emptyPlaceholder.className = 'empty-placeholder';
-                            emptyPlaceholder.textContent = 'No tasks available';
-                            emptyPlaceholder.style.pointerEvents = 'none'; // Prevent any interaction with the placeholder
-                            emptyPlaceholder.style.cursor = 'default'; // JavaScript로 커서 설정
-                            taskList.appendChild(emptyPlaceholder);
-                        } else {
+                        if (data.length === 0) taskList.appendChild(addPlaceholderForEmptyList());
+                        else {
                             data.forEach(task => {
                                 const taskItem = createTaskItem(task, true, true);
                                 if(task.is_overdue == '1'){
@@ -1078,13 +1041,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     taskList.appendChild(taskItem);
                 });
             } else {
-                // 태스크가 없을 때 빈 자리 표시자를 추가
-                const emptyPlaceholder = document.createElement('li');
-                emptyPlaceholder.className = 'empty-placeholder';
-                emptyPlaceholder.textContent = 'No tasks available';
-                emptyPlaceholder.style.pointerEvents = 'none'; // 상호작용 방지
-                emptyPlaceholder.style.cursor = 'default'; // 커서 설정
-                taskList.appendChild(emptyPlaceholder);
+                taskList.appendChild(addPlaceholderForEmptyList());
             }
 
             orderInCertainStatus = taskStatus;
@@ -1158,11 +1115,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.stopPropagation();
 //                const confirmButton = document.getElementById('confirmDeleteButtonWork');
                 document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-id', workId);
-                document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-name', workName);
-//                if (confirm(`Delete '${workName}'?\nTasks will be set to null.`)) {
-//                    deleteWork(workId);
-//                }
-                document.getElementById('deleteMessage').innerHTML = `Delete this work '${workName}'?<br>Tasks' work will be set to null.`;
+//                document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-name', workName);
+                document.getElementById('deleteMessage').innerHTML = `Delete this work?<br>Tasks' work will be set to null.`;
                 deleteConfirmationModalWork.style.display = 'block';
             });
             workTitle.appendChild(editBtn);
@@ -1485,27 +1439,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateDetailDoDate();
             });
 
-            // Add blur event listener to check if value has changed
-//            dateInput.addEventListener('blur', (event) => {
-//                if (event.target.value !== originalValue) {
-////                    saveTaskData(); // Call your function if the value has changed
-//                    updateDetailDoDate();
-//                }
-//            });
             dateInput.addEventListener('change', (event) => {
                 if (event.target.value !== originalValue) {
 //                    saveTaskData(); // Call your function if the value has changed
                     updateDetailDoDate();
                 }
             });
-
             dateInputGroup.appendChild(dateInput);
             dateInputGroup.appendChild(removeButton);
 
             doDatesContainer.appendChild(dateInputGroup);
         });
     };
-
 
     const addDateInputGroup = () => {
         // Get the current number of date input groups
@@ -1534,14 +1479,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateDetailDoDate();
         });
 
-        // Add blur event listener to check if value has changed
-//        newDateInput.addEventListener('blur', (event) => {
-//            //console.log('add button blur:: event.target.value: ',originalValue, '// event.target.value:',event.target.value);
-//            if (event.target.value !== originalValue) {
-////                saveTaskData(); // Call your function if the value has changed
-//                updateDetailDoDate();
-//            }
-//        });
         newDateInput.addEventListener('change', (event) => {
             if (event.target.value !== originalValue) {
 //                    saveTaskData(); // Call your function if the value has changed
@@ -1652,7 +1589,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-
     // 클릭된 .nav-item을 찾는 함수
     function findNavItemByDate(date) {
         return document.querySelector(`.nav-item[data-date="${date}"]`);
@@ -1707,10 +1643,10 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => notification.remove(), 200); // Remove element after fade-out
         }, 1500);
     }
-    function saveTaskData() {
-        // Programmatically trigger the click event on saveChangesButton
-        saveChangesButton.click();
-    }
+//    function saveTaskData() {
+//        // Programmatically trigger the click event on saveChangesButton
+//        saveChangesButton.click();
+//    }
 
     // Alternatively, if you need more control, use this:
     function calcHeight(textarea) {
@@ -1802,5 +1738,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             })
             .catch(error => console.error('Error fetching works:', error));
+    }
+
+    function addPlaceholderForEmptyList() {
+        const emptyPlaceholder = document.createElement('li');
+        emptyPlaceholder.className = 'empty-placeholder';
+        emptyPlaceholder.textContent = 'No tasks available';
+        emptyPlaceholder.style.pointerEvents = 'none'; // Prevent any interaction with the placeholder
+        emptyPlaceholder.style.cursor = 'default';
+        return emptyPlaceholder;
     }
 });

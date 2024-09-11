@@ -118,7 +118,7 @@ public class TaskhubController {
             @PathVariable("taskId") String taskId,
             @RequestBody TaskhubDTO taskhubDTO) {
         System.out.println(">>> TaskhubController.updateTask taskid: " + taskId);
-        System.out.println("TaskhubDTO: " + taskhubDTO);
+//        System.out.println("TaskhubDTO: " + taskhubDTO);
 
         // Set the task ID in the DTO and update the task
         taskhubDTO.setTask_id(taskId);
