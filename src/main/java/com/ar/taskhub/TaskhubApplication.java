@@ -3,8 +3,10 @@ package com.ar.taskhub;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling // 스케줄러 활성화
 @EntityScan("com.ar.taskhub.entity") // 실제 패키지 경로로 수정
 //@EntityScan(basePackages = {"com.ar.taskhub.entity"})
 public class TaskhubApplication {

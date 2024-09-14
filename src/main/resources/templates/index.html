@@ -33,12 +33,12 @@
 
             <!-- User name section -->
             <div class="user-info">
-                <span>User Name: </span>
-                <p id="user-info" th:text="${session.sessionUserName}"></p>
+                <span>User:</span>
+                <p id="user-info" th:text="${session.sessionUserName}"></p>&nbsp;
+                <form action="/user/logout" style="display: inline;" id="logoutButton">
+                    <button type="submit" class="logout-button">[logout]</button>
+                </form>
             </div>
-            <form action="/user/logout" style="display: inline;" id="logoutButton">
-                <button type="submit" class="logout-button">logout</button>
-            </form>
             <script th:inline="javascript">
                 /*<![CDATA[*/
                 function search() {
@@ -47,7 +47,6 @@
                 }
                 /*]]>*/
             </script>
-
 
         </nav>
         <div class="main-content">
@@ -79,11 +78,11 @@
                 </div>
                 <div class="right-panel">
                     <div class="task-detail" id="taskDetail">
-                        <h3>[ Task Details ]</h3>
+                        <h3>[ Task Detail ]</h3>
                         <div class="task-detail-content" id="taskDetailContent" tabindex="0">
                             <div class="input-group">
                                 <label for="taskName">Task:</label>
-                                <input type="text" id="taskName" placeholder="Select a task to view its details.">
+                                <input type="text" id="taskName" placeholder="Select a task to view its detail.">
                             </div>
                             <div class="input-group">
                                 <label for="categoryName">Category:</label>
@@ -110,13 +109,22 @@
                                 <label>Status:</label>
                                 <select id="taskStatus" name="status">
                                     <option value="" disabled selected class="select-placeholder">Select a status</option>
-                                    <option value="0">Not Started</option>
-                                    <option value="1">In Progress</option>
+                                    <!--<option value="0">Not Started</option>-->
+                                    <option value="1">Default</option>
                                     <option value="2">Completed</option>
                                     <option value="3">Canceled</option>
                                     <option value="4">On Hold</option>
                                     <option value="5">Delegation</option>
                                     <option value="6">Plan</option>
+                                </select>
+                            </div>
+                            <div class="input-group done-group">
+                                <label>Done:</label>
+                                <select id="taskDone" name="done">
+                                    <option value="" disabled selected class="select-placeholder">Check if it's done</option>
+                                    <option value="1">Default</option>
+                                    <option value="2">Done</option>
+                                    <option value="3">Waiting(default??)</option>
                                 </select>
                             </div>
 

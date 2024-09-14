@@ -27,6 +27,10 @@
         DELETE FROM DODATES WHERE TASK_ID = #{taskId}
     </delete>
 
+    <delete id="deleteDoDatesByTaskId2" parameterType="map">
+        DELETE FROM DODATES WHERE TASK_ID = #{task_id} AND DO_DATE = #{do_date}
+    </delete>
+
     <!-- 1. TASK_ORDER 값을 계산 -->
     <select id="getMaxTaskOrder" parameterType="map" resultType="int">
         SELECT COALESCE(MAX(D.TASK_ORDER) + 1, 0)
@@ -53,11 +57,13 @@
             COALESCE(CONCAT('(', W.WORK_NAME, ')'), '') AS WORK_NAME,
             DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
             CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
-            CASE
+            <!--CASE
             WHEN D.DO_DATE = '9999-12-31' THEN NULL
             ELSE D.DO_DATE
-            END AS DO_DATE,
+            END AS DO_DATE,-->
+            D.DO_DATE,
             D.TASK_ORDER,
+            D.TASK_DONE,
             T.TASK_STATUS,
             CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
                  ELSE 0
@@ -74,7 +80,7 @@
     </select>
 
     <select id="findByDoDates" parameterType="taskhubdto" resultType="taskhubdto">
-        WITH RECURSIVE numbers AS (SELECT
+        <!--WITH RECURSIVE numbers AS (SELECT
                                     1 AS num
                                     UNION ALL
                                     SELECT
@@ -89,6 +95,7 @@
                         T.TASK_STATUS,
                         COALESCE(CONCAT('(', W.WORK_NAME, ')'), '') AS WORK_NAME,
                         D.DO_DATE,
+                        D.TASK_DONE,
                         D.TASK_ORDER
                         FROM
                         TASK T
@@ -104,6 +111,7 @@
                                 TASK_ID,
                                 TASK_CONTENT,
                                 DUE_DATE,
+                                TASK_DONE,
                                 TASK_STATUS,
                                 WORK_NAME,
                                 DO_DATE,
@@ -114,6 +122,7 @@
             TASK_ID,
             TASK_CONTENT,
             DUE_DATE,
+            TASK_DONE,
             TASK_STATUS,
             WORK_NAME,
             UPPER(DATE_FORMAT(DO_DATE, '%a')) AS day_of_week,
@@ -124,7 +133,28 @@
         ORDER BY
         TASK_ORDER,
         TASK_STATUS,
-        TASK_ID DESC;
+        TASK_ID DESC;-->
+        SELECT
+        T.TASK_ID,
+        T.TASK_CONTENT,
+        CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
+        D.TASK_DONE,
+        T.TASK_STATUS,
+        COALESCE(CONCAT('(', (SELECT WORK_NAME FROM WORK WHERE WORK_ID = T.WORK_ID), ')'), '') AS WORK_NAME,
+        UPPER(DATE_FORMAT(D.DO_DATE, '%a')) AS day_of_week,
+        CASE    WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE()
+                AND T.TASK_STATUS NOT IN (2, 3) THEN 1
+                ELSE 0
+                END                         AS IS_OVERDUE,
+        D.DO_DATE
+        FROM TASK T RIGHT JOIN DODATES D
+             ON T.task_id = D.task_id
+        WHERE 1 = 1
+        <include refid = "sessionUserId" />
+        AND D.do_date BETWEEN #{mon} AND #{sun}
+        ORDER BY D.TASK_ORDER,
+                 T.TASK_STATUS,
+                 D.TASK_ID DESC
     </select>
 
     <select id="findByWork" parameterType="Long" resultType="taskhubdto">
@@ -158,7 +188,7 @@
         ORDER BY W.WORK_ID;
     </select>
 
-    <select id="findById" parameterType="String" resultType="taskhubdto">
+    <select id="findById" parameterType="map" resultType="taskhubdto">
         SELECT
         T.TASK_ID,
         T.TASK_CONTENT,
@@ -176,7 +206,6 @@
         IFNULL(
         (SELECT GROUP_CONCAT(
         CASE
-        <!--WHEN D.DO_DATE = '9999-12-31' THEN NULL-->
         WHEN D.DO_DATE like '9999%' THEN NULL
         ELSE DATE_FORMAT(D.DO_DATE, '%Y-%m-%d')
         END
@@ -186,11 +215,20 @@
         FROM DODATES D
         WHERE D.TASK_ID = T.TASK_ID),
         ''
-        ) AS DO_DATES
+        ) AS DO_DATES,
+        CASE
+            WHEN #{do_date} IS NOT NULL THEN
+            (SELECT TASK_DONE
+            FROM DODATES
+            WHERE TASK_ID = #{task_id}
+            AND DO_DATE = #{do_date})
+            ELSE NULL
+            END AS TASK_DONE,
+        '' AS UPPER_TASK
         FROM
         TASK T
         WHERE
-        T.TASK_ID = #{taskId};
+        T.TASK_ID = #{task_id};
     </select>
 
     <select id="findNewId" parameterType="taskhubdto" resultType="int">
@@ -209,6 +247,7 @@
         DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
         CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
         D.DO_DATE,
+        D.TASK_DONE,
         T.TASK_STATUS,
         CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
              ELSE 0
@@ -245,6 +284,14 @@
                         ELSE #{category_id}
                         END-->
         WHERE TASK_ID = #{task_id}
+    </update>
+
+    <update id="updateDoDateTaskDone" parameterType="map">
+        UPDATE DODATES
+        SET
+        TASK_DONE = #{task_done}
+        WHERE TASK_ID = #{task_id}
+          AND DO_DATE = #{do_date}
     </update>
 
     <update id="updateWork" parameterType="taskhubdto">
@@ -366,33 +413,15 @@
         WHERE TASK_ID = #{task_id};
     </update>
 
-    <update id="rearrangeOrder" parameterType="map">
-        <!--WITH OrderedTasks AS (
-        SELECT
-        D.DO_DATE,
-        D.TASK_ID,
-        CASE
-        WHEN @current_do_date = D.DO_DATE THEN @row_number := @row_number + 1
-        ELSE @row_number := 0
-        END AS new_task_order,
-        @current_do_date := D.DO_DATE
-        FROM
-        (SELECT @row_number := -1, @current_do_date := NULL) AS vars,  &#45;&#45; Initialize variables
-        DODATES D
-        WHERE
-        D.DO_DATE IN (
-        SELECT DO_DATE
-        FROM DODATES
+    <update id="assignOtherOrder2" parameterType="map">
+        -- 1. Temporarily set TASK_ORDER for the specified TASK_ID to a placeholder value
+        UPDATE DODATES
+        SET TASK_ORDER = 999999
         WHERE TASK_ID = #{task_id}
-        )
-        AND D.TASK_ID != #{task_id}  &#45;&#45; Exclude the TASK_ID being processed
-        ORDER BY
-        D.DO_DATE, D.TASK_ORDER
-        )
-        UPDATE DODATES D
-        JOIN OrderedTasks OT
-        ON D.DO_DATE = OT.DO_DATE AND D.TASK_ID = OT.TASK_ID
-        SET D.TASK_ORDER = OT.new_task_order;-->
+          AND DO_DATE = #{do_date};
+    </update>
+
+    <update id="rearrangeOrder" parameterType="map">
         -- Step 1: Define the CTE to calculate the new task order
         WITH OrderedTasks AS (
             SELECT
@@ -424,6 +453,41 @@
 
     </update>
 
+    <update id="rearrangeOrder2" parameterType="map">
+        -- Step 1: Define the CTE to calculate the new task order
+        WITH OrderedTasks AS (
+        SELECT
+        D.DO_DATE,
+        D.TASK_ID,
+        CASE
+        WHEN @current_do_date = D.DO_DATE THEN @row_number := @row_number + 1
+        ELSE @row_number := 0
+        END AS new_task_order,
+        @current_do_date := D.DO_DATE
+        FROM
+        (SELECT @row_number := -1, @current_do_date := NULL) AS vars,  -- Initialize variables
+        (SELECT D.*
+        FROM DODATES D
+        JOIN TASK T ON D.TASK_ID = T.TASK_ID
+        WHERE 1=1
+        <include refid="sessionUserId"/>
+        AND D.DO_DATE = #{do_date}  -- Use the provided do_date parameter
+        AND D.TASK_ID != #{task_id}  -- Exclude the specific task_id
+        ORDER BY D.DO_DATE, D.TASK_ORDER
+        ) D
+        )
+        -- Step 2: Update the DODATES table with the new task order values
+        UPDATE DODATES D
+        JOIN OrderedTasks OT ON D.DO_DATE = OT.DO_DATE
+        AND D.TASK_ID = OT.TASK_ID
+        JOIN TASK T ON D.TASK_ID = T.TASK_ID  -- Join with TASK to filter by user_id
+        SET D.TASK_ORDER = OT.new_task_order
+        WHERE 1=1
+        AND D.DO_DATE = #{do_date}  -- Ensure only rows for the provided do_date are updated
+        <include refid="sessionUserId"/>;  -- Ensure only rows for the specified user_id are updated
+
+    </update>
+
     <delete id="deleteTask" parameterType="String">
         DELETE FROM TASK WHERE TASK_ID = #{task_id}
     </delete>
@@ -439,6 +503,95 @@
         <include refid="sessionUserId"/>
         ORDER BY T.CATEGORY_ORDER;
     </select>
+
+    <select id="findAllUsers" resultType="Long">
+        SELECT userId
+        FROM USER
+    </select>
+
+    <select id="findUncompletedUndone" parameterType="Long" resultType="taskhubdto">
+        <!--SELECT DISTINCT D.task_id
+        FROM
+        DODATES D
+        WHERE   D.do_date <![CDATA[<]]> CURDATE()
+        &#45;&#45;	AND D.do_date NOT LIKE '9999%'
+        AND D.TASK_ID IN (SELECT T.TASK_ID
+        FROM
+        TASK T
+        WHERE 1=1
+        <include refid="sessionUserId"/>
+        AND T.TASK_STATUS NOT IN (2, 3) &lt;!&ndash; Complete, Canceled&ndash;&gt;
+        )-->
+
+        SELECT TASK_ID, DDATE AS DO_DATE
+        FROM (
+                SELECT
+                MAX(D.do_date) AS DDATE,
+                D.task_id AS TASK_ID,
+                D.TASK_DONE AS TASK_DONE,
+                D.TASK_ORDER AS TASK_ORDER
+                FROM DODATES D
+                WHERE D.TASK_ID IN (SELECT T.TASK_ID
+                FROM TASK T
+                WHERE 1=1
+                <include refid="sessionUserId"/>
+                AND T.TASK_STATUS NOT IN (2, 3)  -- 2: Completed, 3: Canceled
+                )
+        GROUP BY D.task_id
+        ) AS LatestTask
+        WHERE LatestTask.DDATE <![CDATA[<]]> CURDATE()
+          AND (SELECT DD.TASK_DONE FROM DODATES DD
+                WHERE DD.TASK_ID = LatestTask.TASK_ID
+                  AND DD.DO_DATE = LatestTask.DDATE) != 2 -- 2: Done
+        ORDER BY LatestTask.DDATE, LatestTask.TASK_ORDER
+        ;
+    </select>
+
+    <select id="findUncompletedDone" parameterType="Long" resultType="String">
+        SELECT TASK_ID
+        FROM (
+                SELECT
+                MAX(D.do_date) AS DDATE,
+                D.task_id AS TASK_ID,
+                D.TASK_DONE AS TASK_DONE,
+                D.TASK_ORDER AS TASK_ORDER
+                FROM DODATES D
+                WHERE D.TASK_ID IN (SELECT T.TASK_ID
+                FROM TASK T
+                WHERE 1=1
+                <include refid="sessionUserId"/>
+                AND T.TASK_STATUS NOT IN (2, 3)  -- 2: Completed, 3: Canceled
+                )
+        GROUP BY D.task_id
+        ) AS LatestTask
+        WHERE LatestTask.DDATE <![CDATA[<]]> CURDATE()
+        AND (SELECT DD.TASK_DONE FROM DODATES DD
+              WHERE DD.TASK_ID = LatestTask.TASK_ID
+                AND DD.DO_DATE = LatestTask.DDATE) = 2 -- 2: Done
+        ORDER BY LatestTask.DDATE, LatestTask.TASK_ORDER
+        ;
+    </select>
+
+    <select id="isTaskExecutedToday" parameterType="String" resultType="boolean">
+        SELECT COUNT(*)
+        FROM task_execution_log
+        WHERE 1=1 <!--user_id = #{userId}-->
+        AND execution_date = #{today}
+    </select>
+
+    <insert id="saveExecutionLog" parameterType="map">
+        INSERT INTO task_execution_log (user_id, execution_date)
+        VALUES (#{user_id}, #{today})
+    </insert>
+
+    <select id="isDuplicateOnSameDate" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM DODATES
+        WHERE 1=1
+        AND TASK_ID = #{task_id}
+        AND DO_DATE = #{do_date}
+    </select>
+
 
 </mapper>
 

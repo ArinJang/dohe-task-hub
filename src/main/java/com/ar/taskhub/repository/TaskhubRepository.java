@@ -19,9 +19,6 @@ public class TaskhubRepository {
 //        sql.insert("Taskhub.insertTask", taskhubDTO); //Taskhub -> mapper의 namespace 가리킴
 //    }
 //
-//    public void insertDoDate(TaskhubDTO taskhubDTO) {
-//        sql.insert("Taskhub.insertDoDate", taskhubDTO); //Taskhub -> mapper의 namespace 가리킴
-//    }
 
     public List<TaskhubDTO> findAll(Long user_id) {
         return sql.selectList("Taskhub.findAll", user_id);
@@ -46,8 +43,8 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findWorks", user_id);
     }
 
-    public TaskhubDTO findById(String taskId) {
-        return sql.selectOne("Taskhub.findById", taskId);
+    public TaskhubDTO findById(Map<String, Object> params) {
+        return sql.selectOne("Taskhub.findById", params);
     }
 
     public int findNewId(Long user_id) {
@@ -57,6 +54,11 @@ public class TaskhubRepository {
     public void updateTask(TaskhubDTO taskhubDTO) {
         sql.update("Taskhub.updateTask", taskhubDTO);
     }
+
+    public void updateDoDateTaskDone(Map<String, Object> params) {
+        sql.update("Taskhub.updateDoDateTaskDone", params);
+    }
+
     public void updateTaskDeletingWorkId(Long work_id) {
         sql.update("Taskhub.updateTaskDeletingWorkId", work_id);
     }
@@ -79,6 +81,10 @@ public class TaskhubRepository {
 
     public void deleteDoDatesByTaskId(String taskId) {
         sql.delete("Taskhub.deleteDoDatesByTaskId", taskId);
+    }
+
+    public void deleteDoDatesByTaskId2(Map<String, Object> params) {
+        sql.delete("Taskhub.deleteDoDatesByTaskId2", params);
     }
 
     public List<TaskhubDTO> getCategories(Long user_id) {
@@ -132,8 +138,15 @@ public class TaskhubRepository {
     public void assignOtherOrder(String taskId) {
         sql.update("Taskhub.assignOtherOrder", taskId);
     }
+
+    public void assignOtherOrder2(Map<String, Object> params) {
+        sql.update("Taskhub.assignOtherOrder2", params);
+    }
     public void rearrangeOrder(Map<String, Object> params) {
         sql.update("Taskhub.rearrangeOrder", params);
+    }
+    public void rearrangeOrder2(Map<String, Object> params) {
+        sql.update("Taskhub.rearrangeOrder2", params);
     }
 
     public Map<String, Object> getOldDoDateAndOrder(String taskId) {
@@ -144,4 +157,29 @@ public class TaskhubRepository {
         return sql.selectOne("Taskhub.getMaxIdxOfNewDate", params);
     }
 
+    public List<Long> findAllUsers() {
+        return sql.selectList("Taskhub.findAllUsers");
+    }
+
+    public List<TaskhubDTO> findUncompletedUndone(Long user_id) {
+        return sql.selectList("Taskhub.findUncompletedUndone", user_id);
+    }
+
+    public List<String> findUncompletedDone(Long user_id) {
+        return sql.selectList("Taskhub.findUncompletedDone", user_id);
+    }
+
+    // 오늘 작업을 이미 실행했는지 확인
+    public boolean isTaskExecutedToday(String today) {
+        return sql.selectOne("Taskhub.isTaskExecutedToday", today);
+    }
+
+    // 작업 실행 로그 저장
+    public void saveExecutionLog(Map<String, Object> params) {
+        sql.insert("Taskhub.saveExecutionLog", params);
+    }
+
+    public int isDuplicateOnSameDate(Map<String, Object> params) {
+        return sql.selectOne("Taskhub.isDuplicateOnSameDate", params);
+    }
 }

@@ -59,8 +59,8 @@ body {
 
 .user-info {
     position: absolute; /* Position the user-info section absolutely */
-    bottom: 30px; /* Distance from the bottom of the sidebar */
-    right: 5px; /* Distance from the right of the sidebar */
+    bottom: 15px; /* Distance from the bottom of the sidebar */
+    /*right: 5px;*/
     /*max-width: 50px;*/
     font-size: 12px; /* Make text smaller */
     color: gray; /* Change text color to gray */
@@ -73,10 +73,6 @@ body {
 }
 
 .logout-button {
-    position: absolute; /* Position the user-info section absolutely */
-    bottom: 15px; /* Distance from the bottom of the sidebar */
-    right: 5px; /* Distance from the right of the sidebar */
-    background-color: transparent;
     font-size: 12px; /* Make text smaller */
     color: gray; /* Change text color to gray */
     border: 0px; /* Define border with width, style, and color */
@@ -85,6 +81,7 @@ body {
     font-family: "Inconsolata", monospace;
     font-weight: 500;
     padding: 0 0 0 0;
+    background: transparent;
 }
 
 .logout-button:hover {
@@ -165,7 +162,7 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: #ffffff;
+    background: transparent;
     border: 0px;
     border-radius: 4px;
     cursor: pointer;
@@ -625,8 +622,6 @@ ul {
     transform: scale(0.9); /* Slightly scale down on click */
 }
 
-
-/* Style for the list item */
 .task-item {
     display: flex;
     align-items: center; /* Align items vertically */
@@ -634,7 +629,7 @@ ul {
     margin-bottom: 5px;
     border-bottom: 1px solid #ddd;
 }
-/* Style for the list item */
+
 .day-item {
     display: flex;
     align-items: center; /* Align items vertically */
@@ -650,24 +645,12 @@ ul {
     margin-right: 10px;
 }
 
-.task-container {
-    display: flex;
-    align-items: center; /* Align items vertically */
-}
-
 .task_content {
     font-size: 15px;
     margin-right: 5px;
     cursor: pointer;
 }
-/*.task_content {
-    display: inline-block;
-    width: calc(100% - 40px);
-    vertical-align: middle;
-    padding-right: 10px;
-    position: relative; *//* Add relative positioning *//*
-}
-*/
+
 .hamburger-icon {
     /*display: inline-block;
     position: absolute;
@@ -686,14 +669,22 @@ ul {
 }
 
 .work_name {
-    font-size: 12px;
     color: lightblue; /* Light sky blue color */
     margin-right: 5px;
 }
 
 .due_date {
-    font-size: 12px;
     /*color: lightblue;*/ /* Light sky blue color */
+}
+
+.task_done {
+    color: OrangeRed;
+}
+
+.task_done,
+.work_name,
+.due_date {
+    font-size: 0.8em;
 }
 
 .task-status-completed {

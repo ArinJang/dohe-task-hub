@@ -5,6 +5,7 @@ import com.ar.taskhub.repository.TaskhubRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,14 +30,6 @@ public class TaskhubService {
         newDTO.setUser_id((Long) session.getAttribute("sessionUserId"));
         return newDTO;
     }
-
-//    public void save(TaskhubDTO taskDTO) {
-//        if(taskDTO.getDo_dates() != null) {
-//            taskDTO.setDo_dates("9999-12-31");
-//        }
-//        taskhubRepository.insertTask(taskDTO);
-//        taskhubRepository.insertDoDate(taskDTO);
-//    }
 
     @Transactional
     public void insertTask(String taskContent, String do_dates) {
@@ -126,11 +119,19 @@ public class TaskhubService {
         return date.format(formatter);
     }
 
-    public TaskhubDTO findById(String taskId) {
-        TaskhubDTO dto = taskhubRepository.findById(taskId);
-        System.out.println("DTO found: " + dto); // 로그 추가
-        return dto;
-//        return taskhubRepository.findById(taskId);
+    public TaskhubDTO findById(String taskId, String doDate) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("task_id", taskId);
+//        System.out.println("0 taskId:"+taskId+",doDate:"+doDate+"???"+"null".equals(doDate)+"///"+(doDate==null));
+        if("null".equals(doDate)) doDate = null;
+//        if(doDate == null || doDate.isEmpty()) {
+//            params.put("do_date", "9999-12-31");
+//        } else {
+//            params.put("do_date", doDate);
+//        }
+        params.put("do_date", doDate);
+//        System.out.println("0 taskId:"+taskId+",doDate:"+doDate+"???"+"null".equals(doDate)+"///"+(doDate==null));
+        return taskhubRepository.findById(params);
     }
 
     public int findNewId() {
@@ -138,6 +139,14 @@ public class TaskhubService {
     }
 
     public void updateTask(TaskhubDTO taskDTO) {
+        if(taskDTO.getTask_done() != null) {
+            System.out.println("done수정!! task_id:"+taskDTO.getTask_id()+"/do_date:"+taskDTO.getDo_date()+",task_done"+taskDTO.getTask_done());
+            Map<String, Object> params = new HashMap<>();
+            params.put("task_id", taskDTO.getTask_id());
+            params.put("do_date", taskDTO.getDo_date());
+            params.put("task_done", taskDTO.getTask_done());
+            taskhubRepository.updateDoDateTaskDone(params);
+        }
         taskhubRepository.updateTask(taskDTO);
     }
 
@@ -238,6 +247,88 @@ public class TaskhubService {
     }
 
     @Transactional
+    @Scheduled(cron = "0 0 0 * * *") // 매일 자정에 실행
+//    @Scheduled(cron = "0 53 22 * * ?")
+    public void insertUncompletedTaskToToday() {
+        System.out.println("!!!!!!!!!! insertUncompletedTaskToToday <<<");
+        LocalDate now = LocalDate.now(); // 오늘 날짜 가져오기
+        String today = formatDate(now);
+
+        // 이미 오늘 실행했는지 체크
+        boolean isExecutedToday = taskhubRepository.isTaskExecutedToday(today);
+//        System.out.println("isExecutedToday:  "+isExecutedToday);
+        if (!isExecutedToday) {
+            List<Long> userIds = taskhubRepository.findAllUsers();
+            for(Long user_id : userIds){
+                if(user_id == 1) {
+                    System.out.println("THIS IS USER 1. PASS!!");
+                    continue;
+                }
+                System.out.println("user_id: " + user_id);
+
+                // [case1] 태스크 이동 : complete/cancel이 아니고 Done도 아닌 태스크 -> 최신 두데잇 삭제 후 현재일 두데잇으로 인서트
+                List<TaskhubDTO> taskIdsAndDodate = taskhubRepository.findUncompletedUndone(user_id);
+
+                for (TaskhubDTO idDate : taskIdsAndDodate) {
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("task_id", idDate.getTask_id());
+                    params.put("user_id", user_id);
+                    params.put("do_date", idDate.getDo_date());
+//                    System.out.println("1 Starting assignOtherOrder2...");
+                    taskhubRepository.assignOtherOrder2(params);
+
+//                    System.out.println("2 Starting rearrangeOrder2...");
+                    taskhubRepository.rearrangeOrder2(params); // 해당 taskId와 MAX(dodate) 날짜의 항목을 해당 태스크를 제외한 채 재정렬
+
+//                    System.out.println("3 Starting deleteDoDatesByTaskId2...");
+                    taskhubRepository.deleteDoDatesByTaskId2(params); // 기존 DODATES 삭제
+//                    System.out.println("4 deleteDoDatesByTaskId2 end...");
+
+                    Map<String, Object> params2 = new HashMap<>();
+                    params2.put("do_date", today);
+                    params2.put("user_id", user_id);
+                    int taskOrder = taskhubRepository.getMaxTaskOrder(params2);
+                    System.out.println("             taskIds: " + idDate.getTask_id()+" /taskOrder: " + taskOrder);
+
+                    Map<String, Object> params3 = new HashMap<>();
+                    params3.put("taskId", idDate.getTask_id());
+                    params3.put("do_date", today);
+                    params3.put("taskOrder", taskOrder);
+                    taskhubRepository.insertDoDate(params3);
+                    System.out.println("                          param3::: " + params3);
+                }
+                    System.out.println("case 1 end, case 2 start");
+
+                // [case2] 태스크 복제 : complete/cancel이 아니고 Done인 태스크 -> only 현재일 두데잇으로 인서트
+                List<String> taskIds2 = taskhubRepository.findUncompletedDone(user_id);
+
+                for (String task_id : taskIds2) {
+                    Map<String, Object> params2 = new HashMap<>();
+                    params2.put("do_date", today);
+                    params2.put("user_id", user_id);
+                    int taskOrder = taskhubRepository.getMaxTaskOrder(params2);
+                    System.out.println("             taskIds: " + task_id+" /taskOrder: " + taskOrder);
+
+                    Map<String, Object> params3 = new HashMap<>();
+                    params3.put("taskId", task_id);
+                    params3.put("do_date", today);
+                    params3.put("taskOrder", taskOrder);
+                    taskhubRepository.insertDoDate(params3);
+                    System.out.println("                          param3::: " + params3);
+                }
+
+                // 실행 기록 저장
+                Map<String, Object> params4 = new HashMap<>();
+                params4.put("user_id", user_id);
+                params4.put("today", today);
+                taskhubRepository.saveExecutionLog(params4);
+            }
+        } else {
+            System.out.println("오늘 이미 실행됨");
+        }
+    }
+
+    @Transactional
     public void updateDetailDoDate(TaskhubDTO taskDTO) {
 //        System.out.println("updateDetailDoDate doDates:: "+doDates);
         String[] dateArray;
@@ -295,6 +386,16 @@ public class TaskhubService {
         params.put("newDoDate", newDoDate);
         params.put("user_id", getLoginIdDTO().getUser_id());
         return taskhubRepository.getMaxIdxOfNewDate(params);
+    }
+
+    // 특정 날짜에 동일한 사용자의 중복 작업이 있는지 확인하는 메서드
+    public boolean isDuplicateOnSameDate(String taskId, String doDate) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("task_id", taskId);
+        params.put("do_date", doDate);
+
+        int count = taskhubRepository.isDuplicateOnSameDate(params);
+        return count > 0;
     }
 
 }

@@ -107,9 +107,10 @@ public class TaskhubController {
         return taskhubService.findNewId();
     }
 
-    @GetMapping("/findById/{task_id}")
-    public TaskhubDTO findById(@PathVariable("task_id") String taskId) {
-        return taskhubService.findById(taskId);
+    @GetMapping("/findById/{taskId}")
+    public TaskhubDTO findById(@PathVariable("taskId") String taskId, @RequestParam("doDate") String doDate) {
+//        System.out.println("taskId:"+taskId+",doDate:"+doDate+"///"+"null".equals(doDate));
+        return taskhubService.findById(taskId, doDate);
     }
 
     @PostMapping("/updateTask/{taskId}")
@@ -307,9 +308,16 @@ public class TaskhubController {
         }
     }
 
-    @GetMapping("/categories")
+    @GetMapping("/getCategories")
     public List<TaskhubDTO> getCategories() {
         return taskhubService.getCategories();
     }
 
+    @GetMapping("/isDuplicateOnSameDate/{taskId}")
+    public ResponseEntity<Boolean> chkDuplicateOnSameDate(
+            @PathVariable("taskId") String taskId,
+            @RequestParam("doDate") String doDate) {
+        boolean isDuplicate = taskhubService.isDuplicateOnSameDate(taskId, doDate);
+        return ResponseEntity.ok(isDuplicate);
+    }
 }
