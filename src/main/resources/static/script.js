@@ -504,6 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const taskMemoInput = document.getElementById('taskMemo');
             const taskStatusSelect = document.getElementById('taskStatus');
             const taskDoneSelect = document.getElementById('taskDone');
+            const taskDoDate = document.getElementById('doDate');
 
             taskNameInput.value = task.task_content || '';
             originalValues.taskName = taskNameInput.value; // Store the original value
@@ -533,6 +534,9 @@ document.addEventListener('DOMContentLoaded', function() {
 //            if(task_done !== null && task_done !== '') {
 //            }
 //console.log(">>",task.task_done);
+
+            taskDoDate.innerText = task.do_date || '';  // p 태그의 텍스트를 do_date 값으로 설정
+            console.log(task.do_date);
             taskDoneSelect.value = task.task_done || '';
             originalValues.taskDone = taskDoneSelect.value; // Store the original value
 
@@ -561,11 +565,17 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'workName':
             case 'dueDate':
             case 'taskMemo':
+                currentValue = event.target.value;
+                if (currentValue !== originalValues[id]) {
+                    console.log('doneX currentValue: ',currentValue,' originalValues[id]: ', originalValues[id]);
+                    saveChangesButton.click();
+                }
+                break;
             case 'taskDone':
                 currentValue = event.target.value;
                 if (currentValue !== originalValues[id]) {
-                console.log('currentValue: ',currentValue,' originalValues[id]: ', originalValues[id]);
-                    saveChangesButton.click();
+                    console.log('doneO currentValue: ',currentValue,' originalValues[id]: ', originalValues[id]);
+                    updateDoDateTaskDone();
                 }
                 break;
             case 'taskStatus':
@@ -573,10 +583,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('case taskStatus currentValue:',currentValue,'/originalValues[id]:',originalValues[id]);
                 if (currentValue !== originalValues[id]) {
                     if((originalValues[id] == 4 || originalValues[id] == 5 || originalValues[id] == 6)
-                    && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3)) {
+                        && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3)) {
     //                console.log('456 > 0123');
                         document.querySelector('.do-dates-group').style.display = 'flex';
                         updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue);
+
                     } else if(currentValue == 4) {
                         document.querySelector('.do-dates-group').style.display = 'none';
                         updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
@@ -588,6 +599,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
                     } else {
                         saveChangesButton.click();
+                    }
+                    if(currentValue == 2){
+                        updateDoDateTaskDone('Done');
+                    } else if (originalValues[id] == 2){
+                        updateDoDateTaskDone('Undone');
                     }
                 }
                 break;
@@ -667,6 +683,74 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+
+    function updateDetailDoDateDelete(taskId, doDate) {
+        const datesArray = getDatesString().split(',');  // Convert the datesString back to an array
+//        const lastDate = datesArray[datesArray.length - 1];  // Get the last date
+        console.log('taskId:',taskId,',doDate:',doDate);
+        fetch(`/api/updateDetailDoDateDelete/${taskId}?doDate=${doDate}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            showNotification('Dodate deleted.', 'delete');
+//            sessionStorage.setItem('detailID', taskId);
+            if (!datesArray || datesArray.length === 0) {
+                fetchTaskDetails(); // 태스크 상세정보 갱신
+            } else {
+                fetchTaskDetails(datesArray[datesArray.length - 1]); // 태스크 상세정보 갱신
+            }
+            clickSideBar(selectedSide, false);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    function updateDetailDoDateUpdate(id, oldDate, newDate) {
+        const updateData = {
+            task_id: id,
+            old_do_date: oldDate,
+            new_do_date: newDate
+        };
+        sessionStorage.setItem('detailID', id);
+
+        fetch('/api/updateDetailDoDateUpdate', { // API 호출
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        })
+        .then(response => response.json())
+        .then(data => {
+//            console.log('Success:', data);
+//            if(dates == null || dates == '') {
+//                console.log("showNotification or not?? show!");
+                showNotification('Do dates successfully updated!', 'success');
+//            }
+//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+//            }else{
+//                fetchTasksByDay();
+//            }
+            fetchTaskDetails(newDate); // 태스크 상세정보 갱신
+//            fetchMainTaskList(); // 메인 태스크 리스트 갱신
+            clickSideBar(selectedSide, false);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
     function updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId, newStatus) {
         const updateData = {
             task_id: movedTaskId,
@@ -709,6 +793,11 @@ document.addEventListener('DOMContentLoaded', function() {
             animation: 150,
             filter: '.empty-placeholder', // .empty-placeholder를 제외한 항목만 드래그할 수 있게 함
             handle: '.hamburger-icon', // Only allow dragging by the hamburger icon
+            onStart: function (evt) {
+                // 드래그 시작 시 복사본을 원래 위치에 저장
+                evt.item.dataset.oldIndex = evt.oldIndex;
+                evt.item.dataset.oldParent = evt.from.id;
+            },
             onEnd: async function (evt) {  // onEnd 함수도 비동기로 선언
                 const fromId = evt.from.id;
                 const toId = evt.to.id;
@@ -750,14 +839,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if(fromDay == toDay && oldIndex == newIndex) return;
                 const isDuplicate = await isDuplicateOnSameDate(toDay, movedTaskId);
-                if(isDuplicate) {
+                if(fromDay != toDay && isDuplicate) {
+
                     // 드래그한 아이템을 원래 위치로 되돌리기
-                    evt.from.appendChild(evt.item); // 아이템을 원래 위치로 되돌립니다.
+                    const oldParent = document.getElementById(evt.item.dataset.oldParent);
+                    const oldIndex = evt.item.dataset.oldIndex;
+                    oldParent.insertBefore(evt.item, oldParent.children[oldIndex]);
                     showNotification('Same task exists on the same day', 'error');
                     return;
                 }
                 console.log('fromDay:', fromDay, '/toDay:', toDay,'/oldIndex:',oldIndex, '/newIndex:',newIndex,'/movedTaskId:',movedTaskId);
-                updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId);
+                await updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId);
             }
         });
     }
@@ -880,12 +972,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if(pDoDate !== null && pDoDate !== ''){
             doDate = pDoDate === 'NOTASSIGNED' ? '9999-12-31' : pDoDate;
         }
+        console.log("0fetchTaskDetails: ",taskId);
 
         if (!taskId) {
             clearTaskDetailContent();
             return; // 값이 없으므로 함수를 종료
         }
-        console.log("fetchTaskDetails: ",taskId);
 
         fetch(`/api/findById/${taskId}?doDate=${doDate}`)
 //        fetch(`/api/findById/${taskId}`)
@@ -1270,13 +1362,12 @@ document.addEventListener('DOMContentLoaded', function() {
 //            do_dates: datesString,
 //            task_status: document.querySelector('input[name="status"]:checked').value,
             task_status: document.getElementById('taskStatus').value,
-            task_done: document.getElementById('taskDone').value,
-            do_date: sessionStorage.getItem('detailDoDate'),//........
+//            task_done: document.getElementById('taskDone').value,
+//            do_date: sessionStorage.getItem('detailDoDate'),//........
             task_memo: document.getElementById('taskMemo').value
         };
 
         const idForDetail = sessionStorage.getItem('detailID');
-
         fetch(`/api/updateTask/${idForDetail}`, {
             method: 'POST',
             headers: {
@@ -1303,6 +1394,38 @@ document.addEventListener('DOMContentLoaded', function() {
             // Handle error (e.g., show an error message)
         });
     });
+
+    function updateDoDateTaskDone(param) {
+        var doneValue = '';
+        if(param == 'Done'){
+            doneValue = 2;
+        } else if(param == 'Undone'){
+            doneValue = 1;
+        } else doneValue = document.getElementById('taskDone').value;
+        console.log("!!!!! updateDoDateTaskDone/doneValue: ",doneValue);
+        const taskData = { // Collect form data
+            task_done: doneValue,
+            do_date: sessionStorage.getItem('detailDoDate'),//........
+        };
+
+        const idForDetail = sessionStorage.getItem('detailID');
+        fetch(`/api/updateDoDateTaskDone/${idForDetail}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(taskData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            showNotification('Successfully updated!', 'success');
+            fetchTaskDetails(sessionStorage.getItem('detailDoDate'));
+            clickSideBar(selectedSide, false);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
 
     function saveWork(workId, newName) {
 //        const workId = workId;
@@ -1458,15 +1581,19 @@ document.addEventListener('DOMContentLoaded', function() {
             removeButton.className = 'date-button remove';
             removeButton.textContent = '-';
             removeButton.addEventListener('click', () => {
-                dateInputGroup.remove();
+                console.log("dateRemove! ",sessionStorage.getItem('detailID'),',',originalValue);
+                updateDetailDoDateDelete(sessionStorage.getItem('detailID'), originalValue);
+//                dateInputGroup.remove();
 //                saveTaskData(); // Save changes when removing a date
-                updateDetailDoDate();
+//                updateDetailDoDate();
             });
 
             dateInput.addEventListener('change', (event) => {
                 if (event.target.value !== originalValue) {
+                    console.log("dateAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
+                    updateDetailDoDateUpdate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
 //                    saveTaskData(); // Call your function if the value has changed
-                    updateDetailDoDate();
+//                    updateDetailDoDate();
                 }
             });
             dateInputGroup.appendChild(dateInput);
@@ -1497,15 +1624,19 @@ document.addEventListener('DOMContentLoaded', function() {
         newRemoveButton.className = 'date-button remove';
         newRemoveButton.textContent = '-';
         newRemoveButton.addEventListener('click', () => {
+            console.log("dateRemove! ",sessionStorage.getItem('detailID'),',',originalValue);
+            updateDetailDoDateDelete(sessionStorage.getItem('detailID'), originalValue);
             newDateInputGroup.remove(); // Remove the date group when the remove button is clicked
 //            saveTaskData(); // Save changes when removing a date
-            updateDetailDoDate();
+//            updateDetailDoDate();
         });
 
         newDateInput.addEventListener('change', (event) => {
             if (event.target.value !== originalValue) {
+            console.log("dateAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
+                updateDetailDoDateUpdate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
 //                    saveTaskData(); // Call your function if the value has changed
-                updateDetailDoDate();
+//                updateDetailDoDate();
             }
         });
 

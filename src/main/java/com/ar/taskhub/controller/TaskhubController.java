@@ -133,6 +133,26 @@ public class TaskhubController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/updateDoDateTaskDone/{taskId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateDoDateTaskDone(
+            @PathVariable("taskId") String taskId,
+            @RequestBody TaskhubDTO taskhubDTO) {
+        System.out.println(">>> TaskhubController.updateDoDateTaskDone taskid: " + taskId);
+//        System.out.println("TaskhubDTO: " + taskhubDTO);
+
+        // Set the task ID in the DTO and update the task
+        taskhubDTO.setTask_id(taskId);
+        taskhubService.updateDoDateTaskDone(taskhubDTO);
+
+        // Return a JSON response
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "TaskDone updated successfully.");
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/updateWork/{workId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> updateWork(
@@ -167,6 +187,47 @@ public class TaskhubController {
 
         System.out.println(">>> updateDetailDoDate taskId:" + taskId + " /doDates:" + doDates + " /taskStatus:" + taskStatus);
         taskhubService.updateDetailDoDate(taskhubDTO);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Do dates successfully updated.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/updateDetailDoDateUpdate")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateDetailDoDateUpdate(@RequestBody Map<String, Object> updateData) {
+        String taskId = (String) updateData.get("task_id");
+        String oldDate = convertDate(getStringValue(updateData.get("old_do_date")));
+        String newDate = convertDate(getStringValue(updateData.get("new_do_date")));
+
+        TaskhubDTO taskhubDTO = new TaskhubDTO();
+        taskhubDTO.setTask_id(taskId);
+        taskhubDTO.setNew_do_date(newDate);
+        taskhubDTO.setOld_do_date(oldDate);
+
+        System.out.println(">>> updateDetailDoDateUpdate taskId:" + taskId + " /newDate:" + newDate + " /oldDate:" + oldDate);
+        taskhubService.updateDetailDoDateUpdate(taskhubDTO);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Do dates successfully updated.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/updateDetailDoDateDelete/{taskId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateDetailDoDateDelete(
+            @PathVariable("taskId") String taskId,
+            @RequestParam("doDate") String doDate) {
+        TaskhubDTO taskhubDTO = new TaskhubDTO();
+        taskhubDTO.setTask_id(taskId);
+        taskhubDTO.setDo_date(doDate);
+
+        System.out.println(">>> updateDetailDoDateDelete taskId:" + taskId + " /doDate:" + doDate);
+        taskhubService.updateDetailDoDateDelete(taskhubDTO);
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
@@ -218,7 +279,7 @@ public class TaskhubController {
 
             //if (oldDoDate == null || oldIdx == null || newIdx == null) {
             if (oldDoDate == null || oldDoDate.isEmpty() || oldIdx == null || oldIdx.isEmpty() || newIdx == null || newIdx.isEmpty()) {
-                System.out.println("IF oldDoDate == null || oldIdx == null || newIdx == null ");
+//                System.out.println("IF oldDoDate == null || oldIdx == null || newIdx == null ");
                 Map<String, Object> oldValues = taskhubService.getOldDoDateAndOrder(taskId);
                 newIdx = taskhubService.getMaxIdxOfNewDate(newDoDate);
 
@@ -317,7 +378,8 @@ public class TaskhubController {
     public ResponseEntity<Boolean> chkDuplicateOnSameDate(
             @PathVariable("taskId") String taskId,
             @RequestParam("doDate") String doDate) {
-        boolean isDuplicate = taskhubService.isDuplicateOnSameDate(taskId, doDate);
+        String newDoDate = convertDate(doDate);
+        boolean isDuplicate = taskhubService.isDuplicateOnSameDate(taskId, newDoDate);
         return ResponseEntity.ok(isDuplicate);
     }
 }

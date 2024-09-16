@@ -44,9 +44,9 @@
     <!-- 2. INSERT 실행 -->
     <insert id="insertDoDate">
         INSERT INTO DODATES (TASK_ID, DO_DATE, TASK_ORDER)
-        VALUES (#{taskId}
+        VALUES (#{task_id}
               , #{do_date}
-              , #{taskOrder});
+              , #{task_order});
     </insert>
 
     <select id="findAll" resultType="taskhubdto">
@@ -224,6 +224,11 @@
             AND DO_DATE = #{do_date})
             ELSE NULL
             END AS TASK_DONE,
+        CASE
+        WHEN #{do_date} IS NOT NULL AND #{do_date} NOT LIKE '9999%' THEN
+        CONCAT(SUBSTRING(#{do_date}, 6, 2), '/', SUBSTRING(#{do_date}, 9, 2))  -- MM/DD 형식으로 변환
+        ELSE NULL
+        END AS DO_DATE,
         '' AS UPPER_TASK
         FROM
         TASK T
@@ -486,6 +491,14 @@
         AND D.DO_DATE = #{do_date}  -- Ensure only rows for the provided do_date are updated
         <include refid="sessionUserId"/>;  -- Ensure only rows for the specified user_id are updated
 
+    </update>
+
+    <update id="updateDetailDoDateUpdate" parameterType="map">
+        UPDATE DODATES
+           SET DO_DATE    = #{do_date},
+               TASK_ORDER = #{task_order}
+         WHERE TASK_ID    = #{task_id}
+           AND DO_DATE    = #{old_date}
     </update>
 
     <delete id="deleteTask" parameterType="String">
