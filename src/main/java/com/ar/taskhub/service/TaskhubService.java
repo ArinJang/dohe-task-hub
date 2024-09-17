@@ -317,21 +317,17 @@ public class TaskhubService {
                     taskhubRepository.insertDoDate(params3);
                     System.out.println("                          param3::: " + params3);
                 }
-
-                // 실행 기록 저장
-                Map<String, Object> params4 = new HashMap<>();
-                params4.put("user_id", user_id);
-                params4.put("today", today);
-                taskhubRepository.saveExecutionLog(params4);
             }
+            // 실행 기록 저장
+            taskhubRepository.saveExecutionLog(today);
         } else {
             System.out.println("오늘 이미 실행됨");
         }
     }
 
     @Transactional
-    public void updateDetailDoDate(TaskhubDTO taskDTO) {
-//        System.out.println("updateDetailDoDate doDates:: "+doDates);
+    public void updateDoDate(TaskhubDTO taskDTO) {
+//        System.out.println("updateDoDate doDates:: "+doDates);
         String[] dateArray;
         String taskId = taskDTO.getTask_id();
         String doDates = taskDTO.getDo_dates();
@@ -361,7 +357,7 @@ public class TaskhubService {
             params2.put("do_date", date);
             params2.put("user_id", getLoginIdDTO().getUser_id());
             int taskOrder = taskhubRepository.getMaxTaskOrder(params2);
-//            System.out.println("updateDetailDoDate taskOrder:: "+taskOrder+" / date: "+date);
+//            System.out.println("updateDoDate taskOrder:: "+taskOrder+" / date: "+date);
             // 각 날짜를 DODATES 테이블에 삽입
             Map<String, Object> params3 = new HashMap<>();
             params3.put("task_id", taskId);
@@ -380,7 +376,7 @@ public class TaskhubService {
     }
 
     @Transactional
-    public void updateDetailDoDateUpdate(TaskhubDTO taskDTO) {
+    public void updateDetailDoDate(TaskhubDTO taskDTO) {
         taskhubRepository.assignOtherOrder(taskDTO.getTask_id());
 
         if(taskDTO.getOld_do_date() != null && !taskDTO.getOld_do_date().isEmpty()) {
@@ -402,7 +398,7 @@ public class TaskhubService {
         params3.put("task_order", taskOrder);
         if(taskDTO.getOld_do_date() != null && !taskDTO.getOld_do_date().isEmpty()) {
             params3.put("old_date", taskDTO.getOld_do_date());
-            taskhubRepository.updateDetailDoDateUpdate(params3);
+            taskhubRepository.updateDetailDoDate(params3);
         } else {
             taskhubRepository.insertDoDate(params3);
         }
@@ -410,7 +406,7 @@ public class TaskhubService {
 
 
     @Transactional
-    public void updateDetailDoDateDelete(TaskhubDTO taskDTO) {
+    public void deleteDetailDoDate(TaskhubDTO taskDTO) {
         Map<String, Object> params = new HashMap<>();
         params.put("task_id", taskDTO.getTask_id());
         params.put("user_id", getLoginIdDTO().getUser_id());

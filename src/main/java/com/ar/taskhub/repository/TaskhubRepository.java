@@ -175,15 +175,15 @@ public class TaskhubRepository {
     }
 
     // 작업 실행 로그 저장
-    public void saveExecutionLog(Map<String, Object> params) {
-        sql.insert("Taskhub.saveExecutionLog", params);
+    public void saveExecutionLog(String today) {
+        sql.insert("Taskhub.saveExecutionLog", today);
     }
 
     public int isDuplicateOnSameDate(Map<String, Object> params) {
         return sql.selectOne("Taskhub.isDuplicateOnSameDate", params);
     }
 
-    public void updateDetailDoDateUpdate(Map<String, Object> params) {
-        sql.update("Taskhub.updateDetailDoDateUpdate", params);
+    public void updateDetailDoDate(Map<String, Object> params) {
+        sql.update("Taskhub.updateDetailDoDate", params);
     }
 }

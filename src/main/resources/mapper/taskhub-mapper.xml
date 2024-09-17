@@ -493,7 +493,7 @@
 
     </update>
 
-    <update id="updateDetailDoDateUpdate" parameterType="map">
+    <update id="updateDetailDoDate" parameterType="map">
         UPDATE DODATES
            SET DO_DATE    = #{do_date},
                TASK_ORDER = #{task_order}
@@ -593,8 +593,8 @@
     </select>
 
     <insert id="saveExecutionLog" parameterType="map">
-        INSERT INTO task_execution_log (user_id, execution_date)
-        VALUES (#{user_id}, #{today})
+        INSERT INTO task_execution_log (execution_date)
+        VALUES (#{today})
     </insert>
 
     <select id="isDuplicateOnSameDate" parameterType="map" resultType="int">

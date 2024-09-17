@@ -173,9 +173,9 @@ public class TaskhubController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/updateDetailDoDate")
+    @PostMapping("/updateDoDate")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateDetailDoDate(@RequestBody Map<String, Object> updateData) {
+    public ResponseEntity<Map<String, Object>> updateDoDate(@RequestBody Map<String, Object> updateData) {
         String taskId = (String) updateData.get("task_id");
         String doDates = convertDate(getStringValue(updateData.get("do_dates")));
         String taskStatus = (String) updateData.get("task_status");
@@ -185,8 +185,8 @@ public class TaskhubController {
         taskhubDTO.setDo_dates(doDates);
         taskhubDTO.setTask_status(taskStatus);
 
-        System.out.println(">>> updateDetailDoDate taskId:" + taskId + " /doDates:" + doDates + " /taskStatus:" + taskStatus);
-        taskhubService.updateDetailDoDate(taskhubDTO);
+        System.out.println(">>> updateDoDate taskId:" + taskId + " /doDates:" + doDates + " /taskStatus:" + taskStatus);
+        taskhubService.updateDoDate(taskhubDTO);
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
@@ -195,9 +195,9 @@ public class TaskhubController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/updateDetailDoDateUpdate")
+    @PostMapping("/updateDetailDoDate")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateDetailDoDateUpdate(@RequestBody Map<String, Object> updateData) {
+    public ResponseEntity<Map<String, Object>> updateDetailDoDate(@RequestBody Map<String, Object> updateData) {
         String taskId = (String) updateData.get("task_id");
         String oldDate = convertDate(getStringValue(updateData.get("old_do_date")));
         String newDate = convertDate(getStringValue(updateData.get("new_do_date")));
@@ -207,8 +207,8 @@ public class TaskhubController {
         taskhubDTO.setNew_do_date(newDate);
         taskhubDTO.setOld_do_date(oldDate);
 
-        System.out.println(">>> updateDetailDoDateUpdate taskId:" + taskId + " /newDate:" + newDate + " /oldDate:" + oldDate);
-        taskhubService.updateDetailDoDateUpdate(taskhubDTO);
+        System.out.println(">>> updateDetailDoDate taskId:" + taskId + " /newDate:" + newDate + " /oldDate:" + oldDate);
+        taskhubService.updateDetailDoDate(taskhubDTO);
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
@@ -217,17 +217,17 @@ public class TaskhubController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/updateDetailDoDateDelete/{taskId}")
+    @DeleteMapping("/deleteDetailDoDate/{taskId}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateDetailDoDateDelete(
+    public ResponseEntity<Map<String, Object>> deleteDetailDoDate(
             @PathVariable("taskId") String taskId,
             @RequestParam("doDate") String doDate) {
         TaskhubDTO taskhubDTO = new TaskhubDTO();
         taskhubDTO.setTask_id(taskId);
         taskhubDTO.setDo_date(doDate);
 
-        System.out.println(">>> updateDetailDoDateDelete taskId:" + taskId + " /doDate:" + doDate);
-        taskhubService.updateDetailDoDateDelete(taskhubDTO);
+        System.out.println(">>> deleteDetailDoDate taskId:" + taskId + " /doDate:" + doDate);
+        taskhubService.deleteDetailDoDate(taskhubDTO);
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");

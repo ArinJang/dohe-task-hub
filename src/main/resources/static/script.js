@@ -590,13 +590,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     } else if(currentValue == 4) {
                         document.querySelector('.do-dates-group').style.display = 'none';
-                        updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
+                        updateDoDate(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
                     } else if(currentValue == 5) {
                         document.querySelector('.do-dates-group').style.display = 'none';
-                        updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
+                        updateDoDate(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
                     } else if(currentValue == 6) {
                         document.querySelector('.do-dates-group').style.display = 'none';
-                        updateDetailDoDate(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
+                        updateDoDate(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
                     } else {
                         saveChangesButton.click();
                     }
@@ -639,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function updateDetailDoDate(id, dates, status) {
+    function updateDoDate(id, dates, status) {
 //        console.log("0 id: ",id,'/dates:',dates,'/status:',status);
         const taskId = id ? id : sessionStorage.getItem('detailID');
         const datesString = dates ? dates : getDatesString();
@@ -655,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const datesArray = datesString.split(',');  // Convert the datesString back to an array
         const lastDate = datesArray[datesArray.length - 1];  // Get the last date
 
-        fetch('/api/updateDetailDoDate', { // API 호출
+        fetch('/api/updateDoDate', { // API 호출
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -684,11 +684,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    function updateDetailDoDateDelete(taskId, doDate) {
-        const datesArray = getDatesString().split(',');  // Convert the datesString back to an array
+    function deleteDetailDoDate(taskId, doDate) {
 //        const lastDate = datesArray[datesArray.length - 1];  // Get the last date
         console.log('taskId:',taskId,',doDate:',doDate);
-        fetch(`/api/updateDetailDoDateDelete/${taskId}?doDate=${doDate}`, {
+        fetch(`/api/deleteDetailDoDate/${taskId}?doDate=${doDate}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -702,7 +701,11 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             showNotification('Dodate deleted.', 'delete');
-//            sessionStorage.setItem('detailID', taskId);
+
+            // 날짜 배열을 수동으로 갱신
+            let datesArray = getDatesString().split(',');  // 삭제 전 배열
+            datesArray = datesArray.filter(date => date !== doDate); // 삭제된 날짜를 배열에서 제거
+
             if (!datesArray || datesArray.length === 0) {
                 fetchTaskDetails(); // 태스크 상세정보 갱신
             } else {
@@ -715,7 +718,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function updateDetailDoDateUpdate(id, oldDate, newDate) {
+    function updateDetailDoDate(id, oldDate, newDate) {
         const updateData = {
             task_id: id,
             old_do_date: oldDate,
@@ -723,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         sessionStorage.setItem('detailID', id);
 
-        fetch('/api/updateDetailDoDateUpdate', { // API 호출
+        fetch('/api/updateDetailDoDate', { // API 호출
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1582,18 +1585,18 @@ document.addEventListener('DOMContentLoaded', function() {
             removeButton.textContent = '-';
             removeButton.addEventListener('click', () => {
                 console.log("dateRemove! ",sessionStorage.getItem('detailID'),',',originalValue);
-                updateDetailDoDateDelete(sessionStorage.getItem('detailID'), originalValue);
+                deleteDetailDoDate(sessionStorage.getItem('detailID'), originalValue);
 //                dateInputGroup.remove();
 //                saveTaskData(); // Save changes when removing a date
-//                updateDetailDoDate();
+//                updateDoDate();
             });
 
             dateInput.addEventListener('change', (event) => {
                 if (event.target.value !== originalValue) {
                     console.log("dateAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
-                    updateDetailDoDateUpdate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
+                    updateDetailDoDate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
 //                    saveTaskData(); // Call your function if the value has changed
-//                    updateDetailDoDate();
+//                    updateDoDate();
                 }
             });
             dateInputGroup.appendChild(dateInput);
@@ -1625,18 +1628,18 @@ document.addEventListener('DOMContentLoaded', function() {
         newRemoveButton.textContent = '-';
         newRemoveButton.addEventListener('click', () => {
             console.log("dateRemove! ",sessionStorage.getItem('detailID'),',',originalValue);
-            updateDetailDoDateDelete(sessionStorage.getItem('detailID'), originalValue);
+            deleteDetailDoDate(sessionStorage.getItem('detailID'), originalValue);
             newDateInputGroup.remove(); // Remove the date group when the remove button is clicked
 //            saveTaskData(); // Save changes when removing a date
-//            updateDetailDoDate();
+//            updateDoDate();
         });
 
         newDateInput.addEventListener('change', (event) => {
             if (event.target.value !== originalValue) {
             console.log("dateAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
-                updateDetailDoDateUpdate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
+                updateDetailDoDate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
 //                    saveTaskData(); // Call your function if the value has changed
-//                updateDetailDoDate();
+//                updateDoDate();
             }
         });
 
