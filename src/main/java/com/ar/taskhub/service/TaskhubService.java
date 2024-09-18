@@ -156,13 +156,13 @@ public class TaskhubService {
     @Transactional
     public void deleteTask(String taskId) {
         System.out.println("service delete: "+taskId);
-        System.out.println("Starting assignOtherOrder...");
-        taskhubRepository.assignOtherOrder(taskId);
-        System.out.println("Starting rearrangeOrder...");
+        System.out.println("Starting assignTempOrderById...");
+        taskhubRepository.assignTempOrderById(taskId);
+        System.out.println("Starting rearrangeOrderById...");
         Map<String, Object> params = new HashMap<>();
         params.put("task_id", taskId);
         params.put("user_id", getLoginIdDTO().getUser_id());
-        taskhubRepository.rearrangeOrder(params);
+        taskhubRepository.rearrangeOrderById(params);
         System.out.println("Starting deleteTask...");
         taskhubRepository.deleteTask(taskId);
         System.out.println("delete end...");
@@ -196,47 +196,77 @@ public class TaskhubService {
 
     @Transactional
     public void updateOrderAndDoDate(TaskhubDTO taskDTO) {
+        System.out.println("! updateOrderAndDoDate");
         try {
+            String taskId = taskDTO.getTask_id();
             if(taskDTO.getTask_status() != null) {
                 System.out.println("taskDTO.getTask_status() != null");
                 Map<String, Object> params = new HashMap<>();
                 params.put("task_status", taskDTO.getTask_status());
-                params.put("task_id", taskDTO.getTask_id());
+                params.put("task_id", taskId);
                 taskhubRepository.updateStatus(params);
             }
 
             taskDTO.setUser_id(getLoginIdDTO().getUser_id());
             // case1: 이동하는 날짜그룹 상이
             if(!Objects.equals(taskDTO.getNew_do_date(), taskDTO.getOld_do_date())) {
+                if(Objects.equals(taskDTO.getNew_do_date(), "9999-12-31")){
+                    taskhubRepository.assignTempOrderById(taskId);
+
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("task_id", taskId);
+                    params.put("user_id", getLoginIdDTO().getUser_id());
+                    taskhubRepository.rearrangeOrderById(params); // 해당 taskId가 들어간 모든 dodate들의 항목을 해당 태스크를 제외한 채 재정렬
+                    params.put("do_date", taskDTO.getOld_do_date());
+                    String taskDone = taskhubRepository.isDone(params);
+
+                    taskhubRepository.deleteDoDatesByTaskId(taskId); // 기존 DODATES 삭제
+
+                    // Update new DO_DATE TASK_ORDER
+                    System.out.println(taskDTO.getNew_do_date()+"/"+taskDTO.getNew_order_idx());
+                    taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
+
+                    String taskOrder = taskDTO.getNew_order_idx();
+
+                    Map<String, Object> params3 = new HashMap<>();
+                    params3.put("task_id", taskId);
+                    params3.put("do_date", taskDTO.getNew_do_date());
+                    params3.put("task_order", taskOrder);
+                    params3.put("task_done", taskDone);
+                    System.out.println("!!!"+params3);
+                    taskhubRepository.insertDoDate(params3);
+                    return;
+                }
+
                 // 1. Update old DO_DATE TASK_ORDER
-                System.out.println("Updating different day, old DO_DATE TASK_ORDER...");
-                taskhubRepository.updateOrderAndDoDateInDifferentDate1(taskDTO);
-                System.out.println("Updated different day, old DO_DATE TASK_ORDER.");
+//                System.out.println("Updating different day, old DO_DATE TASK_ORDER...");
+                taskhubRepository.orderMinus1BeforeDeletion(taskDTO);
+//                System.out.println("Updated different day, old DO_DATE TASK_ORDER.");
 
                 // 2. Update new DO_DATE TASK_ORDER
-                System.out.println("Updating different day, new DO_DATE TASK_ORDER...");
-                taskhubRepository.updateOrderAndDoDateInDifferentDate2(taskDTO);
-                System.out.println("Updated different day, new DO_DATE TASK_ORDER.");
+//                System.out.println("Updating different day, new DO_DATE TASK_ORDER...");
+                taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
+//                System.out.println("Updated different day, new DO_DATE TASK_ORDER.");
 
                 // 3. Update TASK_ID with new DO_DATE and TASK_ORDER
-                System.out.println("Updating different day, task_id's date and order...");
+//                System.out.println("Updating different day, task_id's date and order...");
                 taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
-                System.out.println("Updated different day, task_id's date and order.");
+//                System.out.println("Updated different day, task_id's date and order.");
             } else { // case2: 이동하는 날짜그룹 동일
                 // case2-1: Moving Downwards
                 if(Integer.parseInt(taskDTO.getOld_order_idx()) < Integer.parseInt(taskDTO.getNew_order_idx())){
-                    System.out.println("Updating same day, downwards...");
+//                    System.out.println("Updating same day, downwards...");
                     taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
-                    System.out.println("Updated same day, downwards.");
+//                    System.out.println("Updated same day, downwards.");
                 } else { // case2-2: Moving Upwards
-                    System.out.println("Updating same day, upwards...");
+//                    System.out.println("Updating same day, upwards...");
                     taskhubRepository.updateOrderAndDoDateInSameDateUp(taskDTO);
-                    System.out.println("Updated same day, upwards.");
+//                    System.out.println("Updated same day, upwards.");
                 }
                 // Update TASK_ID with new DO_DATE and TASK_ORDER
-                System.out.println("Updating same day, task_id's date and order...");
+//                System.out.println("Updating same day, task_id's date and order...");
                 taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
-                System.out.println("Updated same day, task_id's date and order.");
+//                System.out.println("Updated same day, task_id's date and order.");
             }
 
         } catch (DataAccessException e) {
@@ -275,11 +305,11 @@ public class TaskhubService {
                     params.put("task_id", idDate.getTask_id());
                     params.put("user_id", user_id);
                     params.put("do_date", idDate.getDo_date());
-//                    System.out.println("1 Starting assignOtherOrder2...");
-                    taskhubRepository.assignOtherOrder2(params);
+//                    System.out.println("1 Starting assignTempOrderByIdDate...");
+                    taskhubRepository.assignTempOrderByIdDate(params);
 
-//                    System.out.println("2 Starting rearrangeOrder2...");
-                    taskhubRepository.rearrangeOrder2(params); // 해당 taskId와 MAX(dodate) 날짜의 항목을 해당 태스크를 제외한 채 재정렬
+//                    System.out.println("2 Starting rearrangeOrderByIdDate...");
+                    taskhubRepository.rearrangeOrderByIdDate(params); // 해당 taskId와 MAX(dodate) 날짜의 항목을 해당 태스크를 제외한 채 재정렬
 
 //                    System.out.println("3 Starting deleteDoDatesByTaskId2...");
                     taskhubRepository.deleteDoDatesByTaskId2(params); // 기존 DODATES 삭제
@@ -326,8 +356,8 @@ public class TaskhubService {
     }
 
     @Transactional
-    public void updateDoDate(TaskhubDTO taskDTO) {
-//        System.out.println("updateDoDate doDates:: "+doDates);
+    public void updateDoDates(TaskhubDTO taskDTO) {
+//        System.out.println("updateDoDates doDates:: "+doDates);
         String[] dateArray;
         String taskId = taskDTO.getTask_id();
         String doDates = taskDTO.getDo_dates();
@@ -338,14 +368,14 @@ public class TaskhubService {
         } else {
             dateArray = doDates.split(",");
         }
-        System.out.println("1 Starting assignOtherOrder...");
-        taskhubRepository.assignOtherOrder(taskId);
+        System.out.println("1 Starting assignTempOrderById...");
+        taskhubRepository.assignTempOrderById(taskId);
 
-//        System.out.println("2 Starting rearrangeOrder...");
+//        System.out.println("2 Starting rearrangeOrderById...");
         Map<String, Object> params = new HashMap<>();
         params.put("task_id", taskId);
         params.put("user_id", getLoginIdDTO().getUser_id());
-        taskhubRepository.rearrangeOrder(params); // 해당 taskId가 들어간 모든 dodate들의 항목을 해당 태스크를 제외한 채 재정렬
+        taskhubRepository.rearrangeOrderById(params); // 해당 taskId가 들어간 모든 dodate들의 항목을 해당 태스크를 제외한 채 재정렬
 
 //        System.out.println("3 Starting deleteDoDatesByTaskId...");
         taskhubRepository.deleteDoDatesByTaskId(taskId); // 기존 DODATES 삭제
@@ -357,7 +387,7 @@ public class TaskhubService {
             params2.put("do_date", date);
             params2.put("user_id", getLoginIdDTO().getUser_id());
             int taskOrder = taskhubRepository.getMaxTaskOrder(params2);
-//            System.out.println("updateDoDate taskOrder:: "+taskOrder+" / date: "+date);
+//            System.out.println("updateDoDates taskOrder:: "+taskOrder+" / date: "+date);
             // 각 날짜를 DODATES 테이블에 삽입
             Map<String, Object> params3 = new HashMap<>();
             params3.put("task_id", taskId);
@@ -377,14 +407,21 @@ public class TaskhubService {
 
     @Transactional
     public void updateDetailDoDate(TaskhubDTO taskDTO) {
-        taskhubRepository.assignOtherOrder(taskDTO.getTask_id());
-
+//        System.out.println("updateDetailDoDate dto:"+taskDTO);
         if(taskDTO.getOld_do_date() != null && !taskDTO.getOld_do_date().isEmpty()) {
-            Map<String, Object> params1 = new HashMap<>();
-            params1.put("task_id", taskDTO.getTask_id());
-            params1.put("user_id", getLoginIdDTO().getUser_id());
-            params1.put("do_date", taskDTO.getOld_do_date());
-            taskhubRepository.rearrangeOrder2(params1); // 해당 taskId, dodate의 항목을 해당 태스크를 제외한 채 재정렬
+            Map<String, Object> params = new HashMap<>();
+            params.put("task_id", taskDTO.getTask_id());
+            params.put("user_id", getLoginIdDTO().getUser_id());
+            params.put("do_date", taskDTO.getOld_do_date());
+            System.out.println("updateDetailDoDate params: "+params);
+            taskhubRepository.assignTempOrderByIdDate(params);
+//        taskhubRepository.assignTempOrderById(taskDTO.getTask_id());
+
+//            Map<String, Object> params1 = new HashMap<>();
+//            params1.put("task_id", taskDTO.getTask_id());
+//            params1.put("user_id", getLoginIdDTO().getUser_id());
+//            params1.put("do_date", taskDTO.getOld_do_date());
+            taskhubRepository.rearrangeOrderByIdDate(params); // 해당 taskId, dodate의 항목을 해당 태스크를 제외한 채 재정렬
         }
 
         Map<String, Object> params2 = new HashMap<>();
@@ -407,17 +444,26 @@ public class TaskhubService {
 
     @Transactional
     public void deleteDetailDoDate(TaskhubDTO taskDTO) {
+        if(taskhubRepository.isOnlyDoDate(taskDTO.getTask_id()) <= 1) {
+
+//            Map<String, Object> params = new HashMap<>();
+//            params.put("task_id", taskDTO.getTask_id());
+//            params.put("user_id", getLoginIdDTO().getUser_id());
+//            String taskDone = taskhubRepository.isDone(params);
+
+            taskDTO.setOld_do_date(taskDTO.getDo_date());
+            taskDTO.setNew_do_date("9999-12-31");
+//            System.out.println("cnt:"+taskhubRepository.isOnlyDoDate(taskDTO.getTask_id()));
+            updateDetailDoDate(taskDTO);
+            return;
+        }
         Map<String, Object> params = new HashMap<>();
         params.put("task_id", taskDTO.getTask_id());
         params.put("user_id", getLoginIdDTO().getUser_id());
         params.put("do_date", taskDTO.getDo_date());
-//                    System.out.println("1 Starting assignOtherOrder2...");
-        taskhubRepository.assignOtherOrder2(params);
 
-//                    System.out.println("2 Starting rearrangeOrder2...");
-        taskhubRepository.rearrangeOrder2(params); // 해당 taskId와 MAX(dodate) 날짜의 항목을 해당 태스크를 제외한 채 재정렬
-
-//                    System.out.println("3 Starting deleteDoDatesByTaskId2...");
+        taskhubRepository.assignTempOrderByIdDate(params);
+        taskhubRepository.rearrangeOrderByIdDate(params);
         taskhubRepository.deleteDoDatesByTaskId2(params); // 기존 DODATES 삭제
     }
 

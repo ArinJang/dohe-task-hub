@@ -43,11 +43,18 @@
 
     <!-- 2. INSERT 실행 -->
     <insert id="insertDoDate">
-        INSERT INTO DODATES (TASK_ID, DO_DATE, TASK_ORDER)
-        VALUES (#{task_id}
-              , #{do_date}
-              , #{task_order});
+        INSERT INTO DODATES (TASK_ID, DO_DATE, TASK_ORDER
+                            <if test="task_done != null">
+                                , TASK_DONE
+                            </if>
+                            )
+        VALUES (#{task_id}, #{do_date}, #{task_order}
+                <if test="task_done != null">
+                    , #{task_done}
+                </if>
+                );
     </insert>
+
 
     <select id="findAll" resultType="taskhubdto">
         SELECT
@@ -204,18 +211,18 @@
         DATE_FORMAT(T.DUE_DATE, '%Y-%m-%d') AS DUE_DATE,
         UPPER(DATE_FORMAT(T.DUE_DATE, '%a')) AS day_of_week,
         IFNULL(
-        (SELECT GROUP_CONCAT(
-        CASE
-        WHEN D.DO_DATE like '9999%' THEN NULL
-        ELSE DATE_FORMAT(D.DO_DATE, '%Y-%m-%d')
-        END
-        ORDER BY D.DO_DATE ASC
-        SEPARATOR ','
-        )
-        FROM DODATES D
-        WHERE D.TASK_ID = T.TASK_ID),
-        ''
-        ) AS DO_DATES,
+                (SELECT GROUP_CONCAT(
+                                    CASE
+                                    WHEN D.DO_DATE like '9999%' THEN NULL
+                                    ELSE DATE_FORMAT(D.DO_DATE, '%Y-%m-%d')
+                                    END
+                                    ORDER BY D.DO_DATE ASC
+                                    SEPARATOR ','
+                                    )
+                        FROM DODATES D
+                        WHERE D.TASK_ID = T.TASK_ID),
+                ''
+                ) AS DO_DATES,
         CASE
             WHEN #{do_date} IS NOT NULL THEN
             (SELECT TASK_DONE
@@ -225,10 +232,11 @@
             ELSE NULL
             END AS TASK_DONE,
         CASE
-        WHEN #{do_date} IS NOT NULL AND #{do_date} NOT LIKE '9999%' THEN
-        CONCAT(SUBSTRING(#{do_date}, 6, 2), '/', SUBSTRING(#{do_date}, 9, 2))  -- MM/DD 형식으로 변환
-        ELSE NULL
-        END AS DO_DATE,
+            WHEN #{do_date} IS NOT NULL AND #{do_date} NOT LIKE '9999%' THEN
+            CONCAT(SUBSTRING(#{do_date}, 6, 2), '/', SUBSTRING(#{do_date}, 9, 2))  -- MM/DD 형식으로 변환
+            ELSE NULL
+            END AS DO_DATE,
+        #{do_date} AS ORI_DO_DATE,
         '' AS UPPER_TASK
         FROM
         TASK T
@@ -350,7 +358,7 @@
         AND D.DO_DATE = #{newDoDate};
     </select>
 
-    <update id="updateOrderAndDoDateInDifferentDate1" parameterType="taskhubdto">
+    <update id="orderMinus1BeforeDeletion" parameterType="taskhubdto">
         <!-- [case1: 이동하는 날짜그룹 상이] 1. taskid의 원래 do_date에서 현 task_id가 빠진 채로 다시 인덱싱하여 TASK_ORDER 부여 -->
         UPDATE DODATES D JOIN TASK T
                ON T.TASK_ID = D.TASK_ID
@@ -361,7 +369,7 @@
         AND D.TASK_ORDER <![CDATA[>]]> #{old_order_idx};
     </update>
 
-    <update id="updateOrderAndDoDateInDifferentDate2" parameterType="taskhubdto">
+    <update id="orderPlus1BeforeInsertion" parameterType="taskhubdto">
         <!-- [case1: 이동하는 날짜그룹 상이] 2. taskid가 이동하는 do_date에서 현 task_id가 이동하려는 인덱스 이하의 데이터들의 task_order 1 증가 -->
         UPDATE DODATES D JOIN TASK T
                ON T.TASK_ID = D.TASK_ID
@@ -411,14 +419,14 @@
         AND D.TASK_ORDER <![CDATA[<]]> #{old_order_idx};
     </update>
 
-    <update id="assignOtherOrder" parameterType="String">
+    <update id="assignTempOrderById" parameterType="String">
         -- 1. Temporarily set TASK_ORDER for the specified TASK_ID to a placeholder value
         UPDATE DODATES
         SET TASK_ORDER = 999999
         WHERE TASK_ID = #{task_id};
     </update>
 
-    <update id="assignOtherOrder2" parameterType="map">
+    <update id="assignTempOrderByIdDate" parameterType="map">
         -- 1. Temporarily set TASK_ORDER for the specified TASK_ID to a placeholder value
         UPDATE DODATES
         SET TASK_ORDER = 999999
@@ -426,7 +434,7 @@
           AND DO_DATE = #{do_date};
     </update>
 
-    <update id="rearrangeOrder" parameterType="map">
+    <update id="rearrangeOrderById" parameterType="map">
         -- Step 1: Define the CTE to calculate the new task order
         WITH OrderedTasks AS (
             SELECT
@@ -458,7 +466,7 @@
 
     </update>
 
-    <update id="rearrangeOrder2" parameterType="map">
+    <update id="rearrangeOrderByIdDate" parameterType="map">
         -- Step 1: Define the CTE to calculate the new task order
         WITH OrderedTasks AS (
         SELECT
@@ -599,6 +607,21 @@
 
     <select id="isDuplicateOnSameDate" parameterType="map" resultType="int">
         SELECT COUNT(*)
+        FROM DODATES
+        WHERE 1=1
+        AND TASK_ID = #{task_id}
+        AND DO_DATE = #{do_date}
+    </select>
+
+    <select id="isOnlyDoDate" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM DODATES
+        WHERE 1=1
+        AND TASK_ID = #{task_id}
+    </select>
+
+    <select id="isDone" parameterType="map" resultType="String">
+        SELECT TASK_DONE
         FROM DODATES
         WHERE 1=1
         AND TASK_ID = #{task_id}

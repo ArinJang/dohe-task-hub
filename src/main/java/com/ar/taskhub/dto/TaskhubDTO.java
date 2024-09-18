@@ -43,6 +43,7 @@ public class TaskhubDTO {
     private String sun;
 
     private String do_date;
+    private String ori_do_date;
     private String task_done;
 
 }

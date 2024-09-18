@@ -77,11 +77,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loginModal.style.display = 'block'; // 로그아웃 상태: 모달 표시
         logoutButton.style.display = 'none';  // 로그아웃 상태: 로그아웃 버튼 숨김
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//        document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
-//        document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
-//        document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+        document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+        document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //        console.log("2 XX Logged in user:", sessionUserName);
     }
@@ -535,8 +535,9 @@ document.addEventListener('DOMContentLoaded', function() {
 //            }
 //console.log(">>",task.task_done);
 
+            taskDoDate.value = task.ori_do_date || '';
             taskDoDate.innerText = task.do_date || '';  // p 태그의 텍스트를 do_date 값으로 설정
-            console.log(task.do_date);
+//            console.log(task.do_date,",",task.ori_do_date);
             taskDoneSelect.value = task.task_done || '';
             originalValues.taskDone = taskDoneSelect.value; // Store the original value
 
@@ -590,13 +591,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     } else if(currentValue == 4) {
                         document.querySelector('.do-dates-group').style.display = 'none';
-                        updateDoDate(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
+                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
                     } else if(currentValue == 5) {
                         document.querySelector('.do-dates-group').style.display = 'none';
-                        updateDoDate(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
+                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
                     } else if(currentValue == 6) {
                         document.querySelector('.do-dates-group').style.display = 'none';
-                        updateDoDate(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
+                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
                     } else {
                         saveChangesButton.click();
                     }
@@ -639,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function updateDoDate(id, dates, status) {
+    function updateDoDates(id, dates, status) {
 //        console.log("0 id: ",id,'/dates:',dates,'/status:',status);
         const taskId = id ? id : sessionStorage.getItem('detailID');
         const datesString = dates ? dates : getDatesString();
@@ -655,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const datesArray = datesString.split(',');  // Convert the datesString back to an array
         const lastDate = datesArray[datesArray.length - 1];  // Get the last date
 
-        fetch('/api/updateDoDate', { // API 호출
+        fetch('/api/updateDoDates', { // API 호출
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -685,6 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     function deleteDetailDoDate(taskId, doDate) {
+        const datesArray = getDatesString().split(',');  // Convert the datesString back to an array
 //        const lastDate = datesArray[datesArray.length - 1];  // Get the last date
         console.log('taskId:',taskId,',doDate:',doDate);
         fetch(`/api/deleteDetailDoDate/${taskId}?doDate=${doDate}`, {
@@ -701,11 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             showNotification('Dodate deleted.', 'delete');
-
-            // 날짜 배열을 수동으로 갱신
-            let datesArray = getDatesString().split(',');  // 삭제 전 배열
-            datesArray = datesArray.filter(date => date !== doDate); // 삭제된 날짜를 배열에서 제거
-
+//            sessionStorage.setItem('detailID', taskId);
             if (!datesArray || datesArray.length === 0) {
                 fetchTaskDetails(); // 태스크 상세정보 갱신
             } else {
@@ -1405,10 +1403,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if(param == 'Undone'){
             doneValue = 1;
         } else doneValue = document.getElementById('taskDone').value;
-        console.log("!!!!! updateDoDateTaskDone/doneValue: ",doneValue);
+        console.log("! doneValue: ",doneValue,",",document.getElementById('doDate').value);
         const taskData = { // Collect form data
             task_done: doneValue,
-            do_date: sessionStorage.getItem('detailDoDate'),//........
+            do_date: document.getElementById('doDate').value//........
         };
 
         const idForDetail = sessionStorage.getItem('detailID');
@@ -1574,6 +1572,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dateInputGroup.className = 'date-group';
 
             const dateInput = document.createElement('input');
+            dateInput.required = true;  // Required 속성 추가
             dateInput.type = 'date';
             dateInput.value = date; // Assuming the date is in YYYY-MM-DD format
             dateInput.id = `doDates_${index}`; // Unique ID
@@ -1586,17 +1585,17 @@ document.addEventListener('DOMContentLoaded', function() {
             removeButton.addEventListener('click', () => {
                 console.log("dateRemove! ",sessionStorage.getItem('detailID'),',',originalValue);
                 deleteDetailDoDate(sessionStorage.getItem('detailID'), originalValue);
-//                dateInputGroup.remove();
+                dateInputGroup.remove();
 //                saveTaskData(); // Save changes when removing a date
-//                updateDoDate();
+//                updateDoDates();
             });
 
             dateInput.addEventListener('change', (event) => {
                 if (event.target.value !== originalValue) {
-                    console.log("dateAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
+                    console.log("dateChange! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
                     updateDetailDoDate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
 //                    saveTaskData(); // Call your function if the value has changed
-//                    updateDoDate();
+//                    updateDoDates();
                 }
             });
             dateInputGroup.appendChild(dateInput);
@@ -1616,6 +1615,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Create a new date input element
         const newDateInput = document.createElement('input');
+        newDateInput.required = true;  // Required 속성 추가
         newDateInput.type = 'date';
         newDateInput.id = `doDates_${index}`; // Set a unique ID for the new date input
 
@@ -1631,15 +1631,20 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteDetailDoDate(sessionStorage.getItem('detailID'), originalValue);
             newDateInputGroup.remove(); // Remove the date group when the remove button is clicked
 //            saveTaskData(); // Save changes when removing a date
-//            updateDoDate();
+//            updateDoDates();
         });
 
         newDateInput.addEventListener('change', (event) => {
+                    console.log(event.target.value,"/");
             if (event.target.value !== originalValue) {
-            console.log("dateAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
+                if(document.getElementById('doDate').value.startsWith('9999')){
+                    originalValue = document.getElementById('doDate').value;
+//                    console.log('9999');
+                }
+                console.log("dateAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
                 updateDetailDoDate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
 //                    saveTaskData(); // Call your function if the value has changed
-//                updateDoDate();
+//                updateDoDates();
             }
         });
 

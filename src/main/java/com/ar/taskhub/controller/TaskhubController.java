@@ -173,9 +173,9 @@ public class TaskhubController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/updateDoDate")
+    @PostMapping("/updateDoDates")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateDoDate(@RequestBody Map<String, Object> updateData) {
+    public ResponseEntity<Map<String, Object>> updateDoDates(@RequestBody Map<String, Object> updateData) {
         String taskId = (String) updateData.get("task_id");
         String doDates = convertDate(getStringValue(updateData.get("do_dates")));
         String taskStatus = (String) updateData.get("task_status");
@@ -185,8 +185,8 @@ public class TaskhubController {
         taskhubDTO.setDo_dates(doDates);
         taskhubDTO.setTask_status(taskStatus);
 
-        System.out.println(">>> updateDoDate taskId:" + taskId + " /doDates:" + doDates + " /taskStatus:" + taskStatus);
-        taskhubService.updateDoDate(taskhubDTO);
+        System.out.println(">>> updateDoDates taskId:" + taskId + " /doDates:" + doDates + " /taskStatus:" + taskStatus);
+        taskhubService.updateDoDates(taskhubDTO);
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
@@ -274,8 +274,8 @@ public class TaskhubController {
             String newIdx = getStringValue(updateData.get("new_idx"));
             String taskStatus = (String) updateData.get("task_status");
 
-            System.out.println("0 updateOrderAndDoDate task_id: " + taskId + " / taskStatus: " + taskStatus);
-            System.out.println("0 do_date: " + oldDoDate + "->" + newDoDate + " // idx: " + oldIdx + "->" + newIdx);
+//            System.out.println("0 updateOrderAndDoDate task_id: " + taskId + " / taskStatus: " + taskStatus);
+//            System.out.println("0 do_date: " + oldDoDate + "->" + newDoDate + " // idx: " + oldIdx + "->" + newIdx);
 
             //if (oldDoDate == null || oldIdx == null || newIdx == null) {
             if (oldDoDate == null || oldDoDate.isEmpty() || oldIdx == null || oldIdx.isEmpty() || newIdx == null || newIdx.isEmpty()) {
@@ -303,8 +303,8 @@ public class TaskhubController {
             taskhubDTO.setOld_order_idx(oldIdx);
             taskhubDTO.setNew_order_idx(newIdx);
             taskhubDTO.setTask_status(taskStatus);
-            System.out.println("1 updateOrderAndDoDate task_id: " + taskhubDTO.getTask_id() + "/taskStatus: " + taskStatus);
-            System.out.println("1 do_date: " + taskhubDTO.getOld_do_date() + "->" + taskhubDTO.getNew_do_date() + " // idx: " + taskhubDTO.getOld_order_idx() + "->" + taskhubDTO.getNew_order_idx());
+//            System.out.println("1 updateOrderAndDoDate task_id: " + taskhubDTO.getTask_id() + "/taskStatus: " + taskStatus);
+//            System.out.println("1 do_date: " + taskhubDTO.getOld_do_date() + "->" + taskhubDTO.getNew_do_date() + " // idx: " + taskhubDTO.getOld_order_idx() + "->" + taskhubDTO.getNew_order_idx());
 
             taskhubService.updateOrderAndDoDate(taskhubDTO);
 

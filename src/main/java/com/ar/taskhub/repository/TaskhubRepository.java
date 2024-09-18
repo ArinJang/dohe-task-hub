@@ -99,12 +99,13 @@ public class TaskhubRepository {
 //        sql.update("Taskhub.updateOrderAndDoDate0", taskhubDTO);
 //    }
 
-    public void updateOrderAndDoDateInDifferentDate1(TaskhubDTO taskhubDTO) {
-        sql.update("Taskhub.updateOrderAndDoDateInDifferentDate1", taskhubDTO);
+    public void orderMinus1BeforeDeletion(TaskhubDTO taskhubDTO) {
+        sql.update("Taskhub.orderMinus1BeforeDeletion", taskhubDTO);
     }
 
-    public void updateOrderAndDoDateInDifferentDate2(TaskhubDTO taskhubDTO) {
-        sql.update("Taskhub.updateOrderAndDoDateInDifferentDate2", taskhubDTO);
+    public void orderPlus1BeforeInsertion(TaskhubDTO taskhubDTO) {
+        System.out.println("orderPlus1BeforeInsertion "+taskhubDTO);
+        sql.update("Taskhub.orderPlus1BeforeInsertion", taskhubDTO);
     }
 
     public void updateOrderAndDoDateOfTask(TaskhubDTO taskhubDTO) {
@@ -132,21 +133,22 @@ public class TaskhubRepository {
     }
 
     public void insertDoDate(Map<String, Object> params) {
+        System.out.println("insertDoDate: "+params);
         sql.insert("Taskhub.insertDoDate", params);
     }
 
-    public void assignOtherOrder(String taskId) {
-        sql.update("Taskhub.assignOtherOrder", taskId);
+    public void assignTempOrderById(String taskId) {
+        sql.update("Taskhub.assignTempOrderById", taskId);
     }
 
-    public void assignOtherOrder2(Map<String, Object> params) {
-        sql.update("Taskhub.assignOtherOrder2", params);
+    public void assignTempOrderByIdDate(Map<String, Object> params) {
+        sql.update("Taskhub.assignTempOrderByIdDate", params);
     }
-    public void rearrangeOrder(Map<String, Object> params) {
-        sql.update("Taskhub.rearrangeOrder", params);
+    public void rearrangeOrderById(Map<String, Object> params) {
+        sql.update("Taskhub.rearrangeOrderById", params);
     }
-    public void rearrangeOrder2(Map<String, Object> params) {
-        sql.update("Taskhub.rearrangeOrder2", params);
+    public void rearrangeOrderByIdDate(Map<String, Object> params) {
+        sql.update("Taskhub.rearrangeOrderByIdDate", params);
     }
 
     public Map<String, Object> getOldDoDateAndOrder(String taskId) {
@@ -183,7 +185,15 @@ public class TaskhubRepository {
         return sql.selectOne("Taskhub.isDuplicateOnSameDate", params);
     }
 
+    public int isOnlyDoDate(String taskId) {
+        return sql.selectOne("Taskhub.isOnlyDoDate", taskId);
+    }
+
     public void updateDetailDoDate(Map<String, Object> params) {
         sql.update("Taskhub.updateDetailDoDate", params);
+    }
+
+    public String isDone(Map<String, Object> params) {
+        return sql.selectOne("Taskhub.isDone", params);
     }
 }
