@@ -46,4 +46,12 @@ public class TaskhubDTO {
     private String ori_do_date;
     private String task_done;
 
+
+    private String sub_tasks;
+    private String sub_tasks_content;
+    private String sub_task;
+    private String parent_task_id;
+    private String parent_task_content;
+    private String is_sub;
+
 }

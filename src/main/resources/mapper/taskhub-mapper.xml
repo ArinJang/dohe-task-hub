@@ -12,8 +12,9 @@
         CALL InsertTaskAndDoDates(
         #{task_content},
         #{do_dates},
-        #{task_order},
-        #{user_id}
+        <!--#{task_order},-->
+        #{user_id},
+        #{parent_task_id}
         )
     </select>
 
@@ -55,7 +56,6 @@
                 );
     </insert>
 
-
     <select id="findAll" resultType="taskhubdto">
         SELECT
             T.TASK_ID,
@@ -72,6 +72,10 @@
             D.TASK_ORDER,
             D.TASK_DONE,
             T.TASK_STATUS,
+            CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+                 (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+                 ELSE '0'
+                 END AS PARENT_TASK_CONTENT,
             CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
                  ELSE 0
                  END AS IS_OVERDUE
@@ -84,6 +88,16 @@
         AND T.TASK_STATUS NOT IN (4, 5, 6)
         ORDER BY
         D.TASK_ORDER;
+    </select>
+
+    <select id="findTaskContent" parameterType="Long" resultType="taskhubdto">
+        SELECT
+        T.TASK_CONTENT,
+        T.TASK_STATUS
+        FROM TASK T
+        WHERE 1=1
+        AND T.TASK_ID = #{task_id}
+        ORDER BY T.TASK_ID;
     </select>
 
     <select id="findByDoDates" parameterType="taskhubdto" resultType="taskhubdto">
@@ -147,6 +161,10 @@
         CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
         D.TASK_DONE,
         T.TASK_STATUS,
+        CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+        (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+        ELSE '0'
+        END AS PARENT_TASK_CONTENT,
         COALESCE(CONCAT('(', (SELECT WORK_NAME FROM WORK WHERE WORK_ID = T.WORK_ID), ')'), '') AS WORK_NAME,
         UPPER(DATE_FORMAT(D.DO_DATE, '%a')) AS day_of_week,
         CASE    WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE()
@@ -201,7 +219,11 @@
         T.TASK_CONTENT,
         T.TASK_STATUS,
         T.TASK_ORDER,
-        T.TASK_MEMO,
+        <!--T.TASK_MEMO,-->
+        CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+             (SELECT P.TASK_MEMO FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+             ELSE T.TASK_MEMO
+             END AS TASK_MEMO,
         T.ASSIGNEE_ID,
         T.CATEGORY_ID AS CATEGORY_NAME,
         T.WORK_ID AS WORK_ID,
@@ -223,6 +245,14 @@
                         WHERE D.TASK_ID = T.TASK_ID),
                 ''
                 ) AS DO_DATES,
+        IFNULL(
+                (SELECT GROUP_CONCAT(TASK_ID ORDER BY TASK_ID ASC
+                                     SEPARATOR ',')
+                FROM TASK
+                WHERE PARENT_TASK = #{task_id}),
+                ''
+                ) AS SUB_TASKS,
+        IFNULL(PARENT_TASK, 0) AS PARENT_TASK_ID,
         CASE
             WHEN #{do_date} IS NOT NULL THEN
             (SELECT TASK_DONE
@@ -244,6 +274,12 @@
         T.TASK_ID = #{task_id};
     </select>
 
+    <select id="findLatestDoDateById" parameterType="Long" resultType="String">
+        SELECT MAX(DO_DATE) AS DO_DATE
+          FROM DODATES
+         WHERE TASK_ID = #{task_id};
+    </select>
+
     <select id="findNewId" parameterType="taskhubdto" resultType="int">
         SELECT MAX(T.TASK_ID) FROM TASK T
         WHERE 1=1
@@ -262,6 +298,10 @@
         D.DO_DATE,
         D.TASK_DONE,
         T.TASK_STATUS,
+        CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+        (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+        ELSE '0'
+        END AS PARENT_TASK_CONTENT,
         CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
              ELSE 0
              END AS IS_OVERDUE
@@ -278,7 +318,7 @@
         D.TASK_ORDER;
     </select>
 
-    <update id="updateTask" parameterType="taskhubdto">
+    <!--<update id="updateTask" parameterType="taskhubdto">
         UPDATE TASK
             SET
             TASK_CONTENT = #{task_content},
@@ -291,13 +331,36 @@
             WORK_ID = CASE
                         WHEN #{work_id} IS NULL OR #{work_id} = '' THEN NULL
                         ELSE #{work_id}
-                        END<!--,
+                        END&lt;!&ndash;,
             CATEGORY_ID = CASE
                         WHEN #{category_id} IS NULL OR #{category_id} = '' THEN NULL
                         ELSE #{category_id}
-                        END-->
+                        END&ndash;&gt;
+        WHERE TASK_ID = #{task_id}
+    </update>-->
+    <update id="updateTask" parameterType="taskhubdto">
+        UPDATE TASK
+        <set>
+            <if test="task_content != null">
+                TASK_CONTENT = #{task_content},
+            </if>
+            <if test="due_date != null and due_date != ''">
+                DUE_DATE = #{due_date},
+            </if>
+            <if test="task_status != null">
+                TASK_STATUS = #{task_status},
+            </if>
+            <if test="task_memo != null">
+                TASK_MEMO = #{task_memo},
+            </if>
+            <if test="work_id != null and work_id != ''">
+                WORK_ID = #{work_id},
+            </if>
+        </set>
         WHERE TASK_ID = #{task_id}
     </update>
+
+
 
     <update id="updateDoDateTaskDone" parameterType="map">
         UPDATE DODATES
@@ -326,6 +389,13 @@
                         ELSE #{category_id}
                         END-->
         WHERE WORK_ID = #{work_id}
+    </update>
+
+    <update id="clearParent" parameterType="Long">
+        UPDATE TASK
+        SET
+        PARENT_TASK = NULL
+        WHERE TASK_ID = #{task_id}
     </update>
 
     <update id="updateTaskDeletingWorkId" parameterType="Long">
@@ -627,7 +697,6 @@
         AND TASK_ID = #{task_id}
         AND DO_DATE = #{do_date}
     </select>
-
 
 </mapper>
 

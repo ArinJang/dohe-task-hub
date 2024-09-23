@@ -41,6 +41,11 @@ public class TaskhubController {
         return taskhubService.findAll();
     }
 
+    @GetMapping("/findTaskContent/{taskId}")
+    public TaskhubDTO findTaskContent(@PathVariable("taskId") String taskId) {
+        return taskhubService.findTaskContent(taskId);
+    }
+
     @PostMapping("/save")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> save(@RequestParam(value = "task_content", required = false) String taskContent,
@@ -52,7 +57,9 @@ public class TaskhubController {
 
         if ("TASK+".equals(action)) {
 //            workName = null;
-            taskhubService.insertTask(taskContent, do_dates);
+            taskhubService.insertTask(taskContent, do_dates
+                    , null
+            );
 
             // Return a JSON response
             Map<String, Object> response = new HashMap<>();
@@ -75,6 +82,18 @@ public class TaskhubController {
         } else {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Invalid action"));
         }
+    }
+
+    @PostMapping("/saveSubTask")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> saveSubTask(@RequestBody TaskhubDTO taskhubDTO) {
+        taskhubService.saveSubTask(taskhubDTO);
+
+        // Return a JSON response
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Task updated successfully.");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/tasks")
@@ -109,7 +128,7 @@ public class TaskhubController {
 
     @GetMapping("/findById/{taskId}")
     public TaskhubDTO findById(@PathVariable("taskId") String taskId, @RequestParam("doDate") String doDate) {
-//        System.out.println("taskId:"+taskId+",doDate:"+doDate+"///"+"null".equals(doDate));
+//        System.out.println("[findById] taskId:"+taskId+",doDate:"+doDate+"///null equals?"+"null".equals(doDate));
         return taskhubService.findById(taskId, doDate);
     }
 
@@ -118,8 +137,8 @@ public class TaskhubController {
     public ResponseEntity<Map<String, Object>> updateTask(
             @PathVariable("taskId") String taskId,
             @RequestBody TaskhubDTO taskhubDTO) {
-        System.out.println(">>> TaskhubController.updateTask taskid: " + taskId);
-//        System.out.println("TaskhubDTO: " + taskhubDTO);
+        System.out.println(">> Controller.updateTask taskid: " + taskId);
+        System.out.println(">> Controller.updateTask TaskhubDTO: " + taskhubDTO);
 
         // Set the task ID in the DTO and update the task
         taskhubDTO.setTask_id(taskId);
@@ -164,6 +183,21 @@ public class TaskhubController {
         // Set the task ID in the DTO and update the task
         taskhubDTO.setWork_id(workId);
         taskhubService.updateWork(taskhubDTO);
+
+        // Return a JSON response
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Task updated successfully.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/clearParent/{taskId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> clearParent(
+            @PathVariable("taskId") String taskId) {
+        System.out.println(">>> TaskhubController.clearParent taskId: " + taskId);
+        taskhubService.clearParent(taskId);
 
         // Return a JSON response
         Map<String, Object> response = new HashMap<>();

@@ -24,12 +24,9 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findAll", user_id);
     }
 
-//    public List<TaskhubDTO> findByDays(String mon, String sun) {
-//        Map<String, String> monSun = new HashMap<>();
-//        monSun.put("mon", mon);
-//        monSun.put("sun", sun);
-//        return sql.selectList("Taskhub.findByDays", monSun);
-//    }
+    public TaskhubDTO findTaskContent(Long task_id) {
+        return sql.selectOne("Taskhub.findTaskContent", task_id);
+    }
 
     public List<TaskhubDTO> findByDoDates(TaskhubDTO taskhubDTO) {
         return sql.selectList("Taskhub.findByDoDates", taskhubDTO);
@@ -45,6 +42,10 @@ public class TaskhubRepository {
 
     public TaskhubDTO findById(Map<String, Object> params) {
         return sql.selectOne("Taskhub.findById", params);
+    }
+
+    public String findLatestDoDateById(Long task_id) {
+        return sql.selectOne("Taskhub.findLatestDoDateById", task_id);
     }
 
     public int findNewId(Long user_id) {
@@ -65,6 +66,10 @@ public class TaskhubRepository {
 
     public void updateWork(TaskhubDTO taskhubDTO) {
         sql.update("Taskhub.updateWork", taskhubDTO);
+    }
+
+    public void clearParent(Long task_id) {
+        sql.update("Taskhub.clearParent", task_id);
     }
 
     public void updateStatus(Map<String, Object> params) {

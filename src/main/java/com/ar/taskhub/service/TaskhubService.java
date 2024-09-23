@@ -32,7 +32,9 @@ public class TaskhubService {
     }
 
     @Transactional
-    public void insertTask(String taskContent, String do_dates) {
+    public void insertTask(String taskContent, String do_dates
+            , String parent_task_id
+    ) {
         TaskhubDTO taskDTO = getLoginIdDTO();  // DTO는 요청마다 새로 생성
         if(taskContent != null) taskDTO.setTask_content(taskContent);
         if(do_dates == null || do_dates.isEmpty()) {
@@ -40,7 +42,8 @@ public class TaskhubService {
         } else {
             taskDTO.setDo_dates(do_dates);
         }
-        taskDTO.setTask_order(String.valueOf(1));
+        taskDTO.setParent_task_id(parent_task_id);
+//        taskDTO.setTask_order(String.valueOf(1));
         taskhubRepository.callInsertTaskAndDoDates(taskDTO);
     }
 
@@ -56,6 +59,13 @@ public class TaskhubService {
         List<TaskhubDTO> dto = taskhubRepository.findAll(user_id);
 //        System.out.println("dto:::"+dto);
         return dto;
+    }
+
+    public TaskhubDTO findTaskContent(String task_id){
+//        System.out.println("findTaskContent:::: "+task_id);
+//        TaskhubDTO dto = taskhubRepository.findTaskContent(Long.valueOf(task_id));
+//        System.out.println("dto:::"+dto);
+        return taskhubRepository.findTaskContent(Long.valueOf(task_id));
     }
 
     public List<TaskhubDTO> findByDoDates(String baseDate) {
@@ -111,8 +121,10 @@ public class TaskhubService {
     public TaskhubDTO findById(String taskId, String doDate) {
         Map<String, Object> params = new HashMap<>();
         params.put("task_id", taskId);
-//        System.out.println("0 taskId:"+taskId+",doDate:"+doDate+"???"+"null".equals(doDate)+"///"+(doDate==null));
-        if("null".equals(doDate)) doDate = null;
+        if (doDate == null || doDate.isEmpty() || "undefined".equals(doDate) || "null".equals(doDate)) {
+            doDate = taskhubRepository.findLatestDoDateById(Long.valueOf(taskId));
+        System.out.println("doDate findLatestDoDateById :"+doDate);
+        }
 //        if(doDate == null || doDate.isEmpty()) {
 //            params.put("do_date", "9999-12-31");
 //        } else {
@@ -140,6 +152,11 @@ public class TaskhubService {
         taskhubRepository.updateTask(taskDTO);
     }
 
+    public void saveSubTask(TaskhubDTO taskDTO) {
+        System.out.println("sub task!! task_content:"+taskDTO.getTask_content()+"/parent_task_id:"+taskDTO.getParent_task_id());
+        insertTask(taskDTO.getTask_content(), taskDTO.getDo_date(), taskDTO.getParent_task_id());
+    }
+
     public void updateDoDateTaskDone(TaskhubDTO taskDTO) {
         System.out.println("only done modify!! task_id:"+taskDTO.getTask_id()+"/do_date:"+taskDTO.getDo_date()+",task_done:"+taskDTO.getTask_done());
         Map<String, Object> params = new HashMap<>();
@@ -151,6 +168,10 @@ public class TaskhubService {
 
     public void updateWork(TaskhubDTO taskDTO) {
         taskhubRepository.updateWork(taskDTO);
+    }
+
+    public void clearParent(String taskId) {
+        taskhubRepository.clearParent(Long.valueOf(taskId));
     }
 
     @Transactional
@@ -407,7 +428,7 @@ public class TaskhubService {
 
     @Transactional
     public void updateDetailDoDate(TaskhubDTO taskDTO) {
-//        System.out.println("updateDetailDoDate dto:"+taskDTO);
+        System.out.println("updateDetailDoDate dto:"+taskDTO);
         if(taskDTO.getOld_do_date() != null && !taskDTO.getOld_do_date().isEmpty()) {
             Map<String, Object> params = new HashMap<>();
             params.put("task_id", taskDTO.getTask_id());

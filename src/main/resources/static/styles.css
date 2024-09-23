@@ -196,7 +196,8 @@ body {
     cursor: pointer;
     color: #87CEEB;
 }
-.work-delete-btn {
+.work-delete-btn,
+#clearParent {
     visibility: hidden;
     margin-left: 5px;
     /*position: absolute;
@@ -208,9 +209,9 @@ body {
     color: #f44336;
 }
 
-/* .custom-day-font이 hover될 때 .work-edit-btn 색상 변경 */
 .work-title:hover .work-edit-btn,
-.work-title:hover .work-delete-btn {
+.work-title:hover .work-delete-btn,
+.main-task:hover #clearParent {
     visibility: visible;
     /*color: black;*/
 }
@@ -220,7 +221,8 @@ body {
     font-weight: bold;
 }
 
-.work-delete-btn:hover {
+.work-delete-btn:hover,
+#clearParent:hover {
     color: #d32f2f;
     font-weight: bold;
 }
@@ -272,7 +274,7 @@ body {
     text-align: center; /* Center text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Inline block for alignment */
-    font-size: 15px; /* Font size */
+    font-size: 15px;
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
 }
@@ -356,10 +358,10 @@ ul {
     /*margin-left: 10px; *//* Adjust to space out label and input *//*
     padding: 10px;
     font-size: 16px;*/
-        /*flex: 1;*/ /* Takes available space */
-    margin-right: 5px; /* Space between input and button */
-    padding: 5px 10px 8px 10px; /* Padding inside inputs */
-    font-size: 15px; /* Font size */
+        /*flex: 1;*/
+    margin-right: 5px;
+    padding: 5px 10px 8px 10px;
+    font-size: 15px;
 }
 
 /*.task-detail-content button {
@@ -384,7 +386,7 @@ ul {
     text-align: center; /* Center text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Inline block for alignment */
-    font-size: 15px; /* Font size */
+    font-size: 15px;
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
 }
@@ -401,7 +403,7 @@ ul {
     text-align: center; /* Center text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Inline block for alignment */
-    font-size: 15px; /* Font size */
+    font-size: 15px;
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
     margin-right: 10px; /* Space between buttons */
@@ -419,7 +421,7 @@ ul {
     text-align: center; /* Center text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Inline block for alignment */
-    font-size: 15px; /* Font size */
+    font-size: 15px;
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
 }
@@ -436,7 +438,7 @@ ul {
     text-align: center; /* Center text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Inline block for alignment */
-    font-size: 15px; /* Font size */
+    font-size: 15px;
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
 }
@@ -449,7 +451,7 @@ ul {
     text-align: center; /* Center text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Inline block for alignment */
-    font-size: 15px; /* Font size */
+    font-size: 15px;
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
 }
@@ -467,7 +469,7 @@ ul {
     text-align: center; /* Center text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Inline block for alignment */
-    font-size: 15px; /* Font size */
+    font-size: 15px;
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
 }
@@ -480,7 +482,7 @@ ul {
 .input-group {
     display: flex;
     align-items: flex-start; /* Align items vertically centered */
-    margin-top: 8px; /* Space between each group */
+    margin-top: 5px; /* Space between each group */
 }
 
 /* Style labels for horizontal alignment */
@@ -496,8 +498,8 @@ ul {
 .input-group input,
 .input-group select {
     flex: 1; /* Allow inputs/selects to take up remaining space */
-    padding: 5px 10px 8px 10px; /* Padding inside inputs */
-    font-size: 15px; /* Font size */
+    padding: 5px 10px 8px 10px;
+    font-size: 15px;
     border: 1px solid #ccc; /* Border for inputs/selects */
     border-radius: 4px; /* Rounded corners */
 }
@@ -512,7 +514,7 @@ ul {
 .status-select-group label {
     display: flex;
     align-items: center; /* Align radio button and text vertically */
-    font-size: 15px; /* Font size */
+    font-size: 15px;
 }
 
 .date-group {
@@ -522,25 +524,33 @@ ul {
 }
 
 .date-group input[type="date"] {
-    flex: 1; /* Takes available space */
-    margin-right: 5px; /* Space between input and button */
-    padding: 5px 10px 8px 10px; /* Padding inside inputs */
-    font-size: 15px; /* Font size */
+    flex: 1;
+    margin-right: 5px;
+    padding: 5px 10px 8px 10px;
+    font-size: 15px;
 }
 
 #doDatesContainer input[type="date"] {
-    flex: 1; /* Takes available space */
-    margin-right: 5px; /* Space between input and button */
-    padding: 5px 10px 8px 10px; /* Padding inside inputs */
-    font-size: 15px; /* Font size */
+    flex: 1;
+    margin-right: 5px;
+    padding: 5px 10px 8px 10px;
+    font-size: 15px;
+    margin-bottom: 3px;
+}
+
+#doDatesContainer input[type="text"] {
+    flex: 1;
+    margin-right: 5px;
+    padding: 5px 10px 8px 10px;
+    font-size: 15px;
     margin-bottom: 3px;
 }
 
 #dueDate {
-    flex: 1; /* Takes available space */
-    margin-right: 5px; /* Space between input and button */
-    padding: 5px 10px 8px 10px; /* Padding inside inputs */
-    font-size: 15px; /* Font size */
+    flex: 1;
+    margin-right: 5px;
+    padding: 5px 10px 8px 10px;
+    font-size: 15px;
 }
 
 .date-group .date-button {
@@ -597,7 +607,8 @@ ul {
     /*margin-top: 10px;*/
 }
 
-#addDateButton {
+#addDateButton,
+#addSubTaskButton {
     background: #FFFFFF; /* A vibrant green color */
     color: #404040;
     border: none;
@@ -614,11 +625,13 @@ ul {
     transition: background 0.3s, transform 0.2s; /* Smooth transition effects */
 }
 
-#addDateButton:hover {
+#addDateButton:hover,
+#addSubTaskButton:hover {
     background: #6bc76f; /* Lighter green on hover */
 }
 
-#addDateButton:active {
+#addDateButton:active,
+#addSubTaskButton:active {
     transform: scale(0.9); /* Slightly scale down on click */
 }
 
@@ -651,6 +664,13 @@ ul {
     cursor: pointer;
 }
 
+.parent_task_content {
+    font-size: 15px;
+    margin-right: 5px;
+    color: #87CEEB;
+    cursor: pointer;
+}
+
 .hamburger-icon {
     /*display: inline-block;
     position: absolute;
@@ -669,7 +689,7 @@ ul {
 }
 
 .work_name {
-    color: lightblue; /* Light sky blue color */
+    color: #87CEEB; /* Light sky blue color */
     margin-right: 5px;
 }
 
@@ -895,4 +915,26 @@ button#addUser:hover, button#developerAccount:hover {
 #overdue .task_content,
 #overdue .work_name {
     color: OrangeRed;
+}
+
+#subTasksContainer,
+#mainTask,
+#clearParent {
+    padding: 6px 0px 0px 0px;
+    cursor: pointer;
+}
+
+.sub-tasks-group {
+    display: block;
+}
+
+#subTasksContainer input {
+    /*flex:1;*/
+    width: 100%; /* 부모 컨테이너의 전체 너비를 차지 */
+    box-sizing: border-box; /* 패딩과 테두리를 너비 안에 포함시킴 */
+    margin-right: 20px;
+    padding: 5px 10px 8px 10px;
+}
+.hidden {
+    display: none; /* 숨김 */
 }

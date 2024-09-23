@@ -127,14 +127,23 @@
                                     <option value="3">Waiting(default??)</option>
                                 </select>
                             </div>
-                            <!--<div class="input-group">
-                                <label>Parent Task:</label>
-                                <select id="parentTask" name="done">
-                                    <option value="" disabled selected class="select-placeholder">Click a parent task to make it a sub-task</option>
-                                    <option value="1">Ask Tracey for guest</option>
-                                    <option value="2">+Fireflies 탈퇴방법 찾기</option>
-                                </select>
-                            </div>-->
+<!--/////////////////////////////////////////////////?/////////////////-->
+                            <div class="input-group sub-tasks-group" >
+                                <label for="subTasks">Sub Tasks: <button type="button" id="addSubTaskButton">+</button></label>
+                                <div id="subTasksContainer">
+                                    <input type="text" id="subTasks">
+                                </div>
+                            </div>
+                            <div class="input-group main-task hidden" >
+                                <label for="mainTask">Main task: </label>
+                                <span type="text" id="mainTask"></span>
+                                <span type="button" id="clearParent">✖</span>
+                            </div>
+                            <script>
+                                document.getElementById('clearParent').addEventListener('click', function() {
+                                    document.getElementById('clearParentTaskModal').style.display = 'block';
+                                });
+                            </script>
 
                             <div class="input-group">
                                 <label for="taskMemo">Memo:</label>
@@ -167,6 +176,14 @@
             <p id="deleteMessage">Delete this work?<br>Tasks will be set to null.</p>
             <button id="confirmDeleteButtonWork" class="confirmDel" data-work-id="">Delete</button>
             <button id="cancelDeleteButtonWork" class="cancelDel">Cancel</button>
+        </div>
+    </div>
+    <div id="clearParentTaskModal" class="modal">
+        <div class="modal-content">
+            <h2>Sub to Main</h2>
+            <p>Clear its main task and make this a main task?</p>
+            <button id="confirmClearParent" class="confirmDel" data-main-id="">Clear</button>
+            <button id="cancelClearParent" class="cancelDel">Cancel</button>
         </div>
     </div>
 
