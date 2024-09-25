@@ -924,6 +924,10 @@ button#addUser:hover, button#developerAccount:hover {
     cursor: pointer;
 }
 
+#mainTask {
+    font-weight: bold;
+}
+
 .sub-tasks-group {
     display: block;
 }
@@ -937,4 +941,7 @@ button#addUser:hover, button#developerAccount:hover {
 }
 .hidden {
     display: none; /* 숨김 */
+}
+.new-sub-input {
+    margin-top: 5px;
 }

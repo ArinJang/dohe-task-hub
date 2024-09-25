@@ -25,6 +25,7 @@ public class TaskhubDTO {
     private String create_date;
     private String task_memo;
     private String assignee_id;
+    private String assignee_name;
     private String work_id;
     private String writer_id;
     private String user_name;

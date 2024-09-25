@@ -111,6 +111,11 @@ public class TaskhubController {
         return taskhubService.findWorks();
     }
 
+    @GetMapping("/users")
+    public List<TaskhubDTO> getUsers() {
+        return taskhubService.findUsers();
+    }
+
     @GetMapping("/findByStatus/{taskStatus}")
     public List<TaskhubDTO> getTasksByStatus(@PathVariable("taskStatus") String taskStatus) {
         return taskhubService.findByStatus(taskStatus);

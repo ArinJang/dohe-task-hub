@@ -192,6 +192,10 @@
                 DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
                 CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
                 T.TASK_STATUS,
+                CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+                (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+                ELSE '0'
+                END AS PARENT_TASK_CONTENT,
                 CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
                      ELSE 0
                      END AS IS_OVERDUE
@@ -213,6 +217,15 @@
         ORDER BY W.WORK_ID;
     </select>
 
+    <select id="findUsers" parameterType="Long" resultType="taskhubdto">
+        SELECT userId AS ASSIGNEE_ID,
+               userName AS ASSIGNEE_NAME
+          FROM USER
+         WHERE 1=1
+           AND userId != #{user_id}
+         ORDER BY userId;
+    </select>
+
     <select id="findById" parameterType="map" resultType="taskhubdto">
         SELECT
         T.TASK_ID,
@@ -225,6 +238,10 @@
              ELSE T.TASK_MEMO
              END AS TASK_MEMO,
         T.ASSIGNEE_ID,
+        CASE WHEN T.TASK_STATUS = 5 AND T.ASSIGNEE_ID IS NOT NULL THEN
+             (SELECT userName FROM USER WHERE userId = T.ASSIGNEE_ID)
+             ELSE NULL
+             END AS ASSIGNEE_NAME,
         T.CATEGORY_ID AS CATEGORY_NAME,
         T.WORK_ID AS WORK_ID,
         (SELECT W.WORK_NAME FROM WORK W WHERE W.WORK_ID = T.WORK_ID) AS WORK_NAME,
@@ -355,6 +372,9 @@
             </if>
             <if test="work_id != null and work_id != ''">
                 WORK_ID = #{work_id},
+            </if>
+            <if test="assignee_id != null">
+                ASSIGNEE_ID = #{assignee_id},
             </if>
         </set>
         WHERE TASK_ID = #{task_id}

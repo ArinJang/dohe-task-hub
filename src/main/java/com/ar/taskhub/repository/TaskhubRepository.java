@@ -40,6 +40,10 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findWorks", user_id);
     }
 
+    public List<TaskhubDTO> findUsers(Long user_id) {
+        return sql.selectList("Taskhub.findUsers", user_id);
+    }
+
     public TaskhubDTO findById(Map<String, Object> params) {
         return sql.selectOne("Taskhub.findById", params);
     }

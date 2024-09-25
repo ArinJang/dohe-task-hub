@@ -102,7 +102,7 @@
                             <div class="input-group do-dates-group">
                                 <label for="doDates">Do Dates: <button type="button" id="addDateButton">+</button></label>
                                 <div id="doDatesContainer">
-                                    <input type="date" id="doDates">
+                                    <input type="date" id="doDates" style="display: none;">
                                 </div>
                             </div>
                             <div class="input-group">
@@ -118,6 +118,11 @@
                                     <option value="6">Plan</option>
                                 </select>
                             </div>
+                            <div class="input-group delegation" style="display: none;">
+                                <label for="userDelegated">Delegated to:</label>
+                                <select id="userDelegated">
+                                </select>
+                            </div>
                             <div class="input-group done-group">
                                 <label>Done(<span id="doDate"></span>):</label>
                                 <select id="taskDone" name="done">
@@ -127,11 +132,10 @@
                                     <option value="3">Waiting(default??)</option>
                                 </select>
                             </div>
-<!--/////////////////////////////////////////////////?/////////////////-->
                             <div class="input-group sub-tasks-group" >
                                 <label for="subTasks">Sub Tasks: <button type="button" id="addSubTaskButton">+</button></label>
                                 <div id="subTasksContainer">
-                                    <input type="text" id="subTasks">
+                                    <input type="text" id="subTasks" style="display: none;">
                                 </div>
                             </div>
                             <div class="input-group main-task hidden" >
@@ -165,7 +169,7 @@
     <div id="deleteConfirmationModal" class="modal">
         <div class="modal-content">
             <h2>Deletion</h2>
-            <p>Are you sure you want to delete this task?</p>
+            <p>Delete this task?</p>
             <button id="confirmDeleteButton" class="confirmDel">Delete</button>
             <button id="cancelDeleteButton" class="cancelDel">Cancel</button>
         </div>
@@ -181,7 +185,7 @@
     <div id="clearParentTaskModal" class="modal">
         <div class="modal-content">
             <h2>Sub to Main</h2>
-            <p>Clear its main task and make this a main task?</p>
+            <p>Clear its main task<br>and make this the main one?</p>
             <button id="confirmClearParent" class="confirmDel" data-main-id="">Clear</button>
             <button id="cancelClearParent" class="cancelDel">Cancel</button>
         </div>

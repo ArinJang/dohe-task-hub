@@ -77,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sessionUserName !== null && sessionUserName !== '' && sessionUserName !== 'null') {
         loginModal.style.display = 'none';  // 로그인 상태: 모달 숨김
         logoutButton.style.display = 'inline';  // 로그인 상태: 로그아웃 버튼 표시
-//        console.log("1 OO Logged in user:", sessionUserName);
     } else {
         loginModal.style.display = 'block'; // 로그아웃 상태: 모달 표시
         logoutButton.style.display = 'none';  // 로그아웃 상태: 로그아웃 버튼 숨김
@@ -87,8 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
 //            document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
 //            document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
 //    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//        console.log("2 XX Logged in user:", sessionUserName);
     }
 
     document.getElementById('addUser').addEventListener('click', function() {
@@ -98,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addUserModal.style.display = 'none';
     });
     document.getElementById('addUserForm').onsubmit = function(event) {
-//        event.preventDefault(); // Prevent default form submission
+        event.preventDefault(); // Prevent default form submission
         addUserModal.style.display = 'none';
     }
 
@@ -496,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
         dueDate: '',
         taskMemo: '',
         taskStatus: '',
+        userDelegated: '',
         taskDone: ''
     };
 
@@ -508,6 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const dueDateInput = document.getElementById('dueDate');
             const taskMemoInput = document.getElementById('taskMemo');
             const taskStatusSelect = document.getElementById('taskStatus');
+            const userDelegatedSelect = document.getElementById('userDelegated');
             const taskDoneSelect = document.getElementById('taskDone');
             const taskDoDate = document.getElementById('doDate');
             const mainTaskSpan = document.getElementById('mainTask');
@@ -539,7 +538,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     sessionStorage.setItem('mainID', '0');
                                 }
                             };
-
                             // 기존 이벤트 리스너를 제거 후 새로 등록
                             mainTaskSpan.removeEventListener('click', handleClick); // 기존 리스너 제거
                             if (!mainTaskSpan.dataset.clickHandlerRegistered) {
@@ -590,9 +588,9 @@ document.addEventListener('DOMContentLoaded', function() {
             taskStatusSelect.value = task.task_status || '';
             originalValues.taskStatus = taskStatusSelect.value; // Store the original value
 
-//            if(task_done !== null && task_done !== '') {
-//            }
-//console.log(">>",task.task_done);
+//            console.log("::",task.assignee_id,",",task.assignee_name);
+            userDelegatedSelect.value = task.assignee_id;
+            originalValues.userDelegated = userDelegatedSelect.value; // Store the original value
 
             taskDoDate.value = task.ori_do_date || '';
             taskDoDate.innerText = task.do_date || '';  // p 태그의 텍스트를 do_date 값으로 설정
@@ -606,6 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dueDateInput.addEventListener('change', handleDetailChange);
             taskMemoInput.addEventListener('change', handleDetailChange);
             taskStatusSelect.addEventListener('change', handleDetailChange);
+            userDelegatedSelect.addEventListener('change', handleDetailChange);
             taskDoneSelect.addEventListener('change', handleDetailChange);
     //        statusRadios.forEach(radio => {
     //            radio.addEventListener('change', handleRadioChange);
@@ -672,7 +671,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (originalValues[id] == 2){
                         updateDoDateTaskDone('Undone');
                     }
+//                    if(currentValue != 5) {
+//
+//                    }
                 }
+                break;
+            case 'userDelegated':
+//                currentValue = event.target.value;
+                delegationChange();
                 break;
         }
     }
@@ -689,8 +695,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const taskId = listItem.getAttribute('data-task-id');
             sessionStorage.setItem('detailID', taskId);
             sessionStorage.setItem('detailDoDate', listItem.getAttribute('data-task-dodate'));
-//            fromDay = fromId === 'taskList' ? 'NOTASSIGNED' : (fromId ? dayDateMap.get(fromId.replace('Tasks', '')) : 'NOTASSIGNED');
-//            console.log('taskList detailID: '+sessionStorage.getItem('detailID'));
             fetchTaskDetails(listItem.getAttribute('data-task-dodate'));
         }
     });
@@ -736,11 +740,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("showNotification or not?? show!");
                 showNotification('Do dates successfully updated!', 'success');
             }
-//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//            }else{
-//                fetchTasksByDay();
-//            }
             fetchTaskDetails(lastDate); // 태스크 상세정보 갱신
 //            fetchMainTaskList(); // 메인 태스크 리스트 갱신
             clickSideBar(selectedSide, false);
@@ -768,12 +767,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             showNotification('Dodate deleted.', 'delete');
-//            sessionStorage.setItem('detailID', taskId);
             const datesArray = getDatesString().split(',');  // Convert the datesString back to an array
             if (!datesArray || datesArray.length === 0 ||datesArray[0] == '') {
-////            console.log("::::",datesArray);
-//                console.log("::::",sessionStorage.getItem('detailDoDate'));
-//                sessionStorage.setItem('detailDoDate', '9999-12-31');
                 fetchTaskDetails(); // 태스크 상세정보 갱신
             } else {
                 fetchTaskDetails(datesArray[datesArray.length - 1]); // 태스크 상세정보 갱신
@@ -791,9 +786,6 @@ document.addEventListener('DOMContentLoaded', function() {
             old_do_date: oldDate,
             new_do_date: newDate
         };
-//        if(oldDate == null || oldDate == '') {
-//            oldDate = '9999-12-31';
-//        }
         const isDuplicate = await isDuplicateOnSameDate(newDate, id);
         if(isDuplicate) {
             showNotification('Same task exists on the same day', 'error');
@@ -811,16 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-//            console.log('Success:', data);
-//            if(dates == null || dates == '') {
-//                console.log("showNotification or not?? show!");
-                showNotification('Do dates successfully updated!', 'success');
-//            }
-//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//            }else{
-//                fetchTasksByDay();
-//            }
+            showNotification('Do dates successfully updated!', 'success');
             fetchTaskDetails(newDate); // 태스크 상세정보 갱신
             sessionStorage.setItem('detailDoDate', newDate);
 //            fetchMainTaskList(); // 메인 태스크 리스트 갱신
@@ -1036,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'completed':
                 fetchStatus(statusMap[selectedSide]);
                 break;
+            case 'delegation':
             case 'work':
                 fetchTasksByWork();
                 putWorksToSelect();
@@ -1080,6 +1064,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.querySelector('.do-dates-group').style.display = 'none';
                         } else {
                             document.querySelector('.do-dates-group').style.display = 'flex';
+                        }
+                        if(data.task_status == 5){
+                            putUsersToSelect();
+                        } else {
+                            document.querySelector('.input-group.delegation').style.display = 'none';
                         }
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
@@ -1251,32 +1240,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchStatus(pstat) {
 //    console.log('fetchStatus(pstat)> ',pstat);
-    const taskStatus = pstat;
-    taskList.innerHTML = ''; // Clear current list
-    fetch(`/api/findByStatus/${taskStatus}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.length > 0) {
-                data.forEach(task => {
-                    var taskItem;
-                    if(pstat == 2) {
-                        taskItem = createTaskItem(task, false, true);
-                    } else {
-                        taskItem = createTaskItem(task, true, true);
-                    }
-                    if(task.is_overdue == '1'){
-                        taskItem.id = 'overdue';
-                    }
-                    taskList.appendChild(taskItem);
-                });
-            } else {
-                taskList.appendChild(addPlaceholderForEmptyList());
-            }
+        const taskStatus = pstat;
+        taskList.innerHTML = ''; // Clear current list
+        fetch(`/api/findByStatus/${taskStatus}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    data.forEach(task => {
+                        var taskItem;
+                        if(pstat == 2) {
+                            taskItem = createTaskItem(task, false, true);
+                        } else {
+                            taskItem = createTaskItem(task, true, true);
+                        }
+                        if(task.is_overdue == '1'){
+                            taskItem.id = 'overdue';
+                        }
+                        taskList.appendChild(taskItem);
+                    });
+                } else {
+                    taskList.appendChild(addPlaceholderForEmptyList());
+                }
 
-            orderInCertainStatus = taskStatus;
-            initSortable(taskList);
-        })
-        .catch(error => console.error('Error fetching tasks:', error));
+                orderInCertainStatus = taskStatus;
+                initSortable(taskList);
+            })
+            .catch(error => console.error('Error fetching tasks:', error));
     }
 
     // 요일 제목 만듦
@@ -1412,7 +1401,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function saveSubTask(subTaskContent) {
         const taskData = { // Collect form data
             task_content: subTaskContent,
-            do_date: sessionStorage.getItem('detailDoDate'),
+            do_date: '9999-12-31',
             parent_task_id: sessionStorage.getItem('detailID')
         };
         fetch(`/api/saveSubTask`, {
@@ -1459,10 +1448,10 @@ document.addEventListener('DOMContentLoaded', function() {
             due_date: document.getElementById('dueDate').value,
 //            do_dates: datesString,
 //            task_status: document.querySelector('input[name="status"]:checked').value,
-            task_status: document.getElementById('taskStatus').value,
+            task_status: document.getElementById('taskStatus').value
 //            task_done: document.getElementById('taskDone').value,
 //            do_date: sessionStorage.getItem('detailDoDate'),//........
-            task_memo: document.getElementById('taskMemo').value
+//            task_memo: document.getElementById('taskMemo').value
         };
 
         const idForDetail = sessionStorage.getItem('detailID');
@@ -1513,6 +1502,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 sessionStorage.setItem('detailID', subTaskMemoUpdateSubId);
                 subTaskMemoUpdateSubId = false;
             }
+            fetchTaskDetails(sessionStorage.getItem('detailDoDate'));
+            clickSideBar(selectedSide, false);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            // Handle error (e.g., show an error message)
+        });
+    }
+
+    function delegationChange() {
+        const taskData = {
+            assignee_id: document.getElementById('userDelegated').value
+        };
+
+        const idForDetail = sessionStorage.getItem('detailID');
+        fetch(`/api/updateTask/${idForDetail}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(taskData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            showNotification('Successfully updated!', 'success');
+//            sessionStorage.setItem('detailID', subTaskMemoUpdateSubId);
             fetchTaskDetails(sessionStorage.getItem('detailDoDate'));
             clickSideBar(selectedSide, false);
         })
@@ -1790,8 +1805,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("dateRemove! ",sessionStorage.getItem('detailID'),',',originalValue);
             deleteDetailDoDate(sessionStorage.getItem('detailID'), originalValue);
             newDateInputGroup.remove(); // Remove the date group when the remove button is clicked
-//            saveTaskData(); // Save changes when removing a date
-//            updateDoDates();
         });
 
         newDateInput.addEventListener('change', (event) => {
@@ -1803,8 +1816,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 console.log("dateAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
                 updateDetailDoDate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
-//                    saveTaskData(); // Call your function if the value has changed
-//                updateDoDates();
             }
         });
 
@@ -1821,7 +1832,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listener to the add date button
     addDateButton.addEventListener('click', addDateInputGroup);
 
-    //  SUBTASK ///////////////////////////////////////////////////////////////////////////////////////
+    //  SUBTASK
     let isTaskPopulated = false;  // 중복 호출 방지를 위한 플래그
     const populateSubTasks = async (tasks) => {
         if (isTaskPopulated) return;
@@ -1864,39 +1875,24 @@ document.addEventListener('DOMContentLoaded', function() {
         isTaskPopulated = false;
     };
 
-
     const addSubTaskGroup = () => {
         // Get the current number of date input groups
         const index = document.querySelectorAll('#subTasksContainer .new-sub-task').length;
 
-        // Create a new div element for the subtask group
         const newSubTaskGroup = document.createElement('div');
-        newSubTaskGroup.className = 'new-sub-task';
+        newSubTaskGroup.className = 'new-sub-input';
+        newSubTaskGroup.classList.add('new-sub-task');
 
-        // Create a new subtask input element
         const newTaskInput = document.createElement('input');
         newTaskInput.required = true;  // Required 속성 추가
         newTaskInput.type = 'text';
         newTaskInput.id = `subTasks_${index}`; // Set a unique ID for the new date input
 
-//        let originalValue = newTaskInput.value;
-
         newTaskInput.addEventListener('change', (event) => {
-//                    console.log(event.target.value,"/");
-//            if (event.target.value !== originalValue) {
-//                console.log("subtaskAdd! ",sessionStorage.getItem('detailID'),',',originalValue,">>",event.target.value);
-//                updateDetailDoDate(sessionStorage.getItem('detailID'), originalValue, event.target.value);
-                saveSubTask(event.target.value); // Call your function if the value has changed
-//                updateDoDates();
-//            }
+                saveSubTask(event.target.value);
         });
 
-        // Append the subtask input and remove button to the subtask group
         newSubTaskGroup.appendChild(newTaskInput);
-//        newSubTaskGroup.appendChild(newRemoveButton);
-
-        // Append the new subtask group to the container
-        const subTasksContainer = document.getElementById('subTasksContainer');
         subTasksContainer.appendChild(newSubTaskGroup);
         addSubTaskButton.disabled = true;
     };
@@ -1907,7 +1903,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let datesSet = new Set();
 
         if (replacementDate) {
-            // If a replacement date is provided, add it to the set
             datesSet.add(replacementDate);
         } else {
             // Otherwise, get the dates from the inputs as usual
@@ -2063,11 +2058,6 @@ document.addEventListener('DOMContentLoaded', function() {
         li.className = 'task-item';
         li.setAttribute('data-task-id', task.task_id);
 
-//        const checkbox = document.createElement('input');
-//        checkbox.type = 'checkbox';
-//        checkbox.checked = task.status === 'Completed';
-//        checkbox.className = 'task-checkbox';
-
         const taskContainer = document.createElement('a'); // Use <a> to wrap all content
         taskContainer.className = 'task_content';
 
@@ -2136,7 +2126,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function putWorksToSelect() {
-        console.log('putWorksToSelect');
+//        console.log('putWorksToSelect');
         fetch('/api/works')
             .then(response => {
                 if (!response.ok) {
@@ -2146,14 +2136,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 const selectElement = document.getElementById('workName');
-
-                // Clear existing options except for the placeholder
                 selectElement.innerHTML = '<option value="" selected class="select-placeholder">Select a work</option>';
 
-                /*const option = document.createElement('option');
-                option.value = null;
-                option.textContent = 'clear';
-                selectElement.appendChild(option);*/
                 data.forEach(work => {
                     const option = document.createElement('option');
                     option.value = work.work_id;
@@ -2162,6 +2146,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             })
             .catch(error => console.error('Error fetching works:', error));
+    }
+
+    function putUsersToSelect() {
+//        console.log('putWorksToSelect');
+        document.querySelector('.input-group.delegation').style.display = 'flex';
+        fetch('/api/users')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const selectElement = document.getElementById('userDelegated');
+                selectElement.innerHTML = '<option value="" selected class="select-placeholder">Select a person</option>';
+
+                data.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.assignee_id;
+                    option.textContent = user.assignee_name;
+                    selectElement.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching users:', error));
     }
 
     function addPlaceholderForEmptyList() {

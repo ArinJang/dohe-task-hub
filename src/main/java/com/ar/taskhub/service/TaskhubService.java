@@ -32,9 +32,7 @@ public class TaskhubService {
     }
 
     @Transactional
-    public void insertTask(String taskContent, String do_dates
-            , String parent_task_id
-    ) {
+    public void insertTask(String taskContent, String do_dates, String parent_task_id) {
         TaskhubDTO taskDTO = getLoginIdDTO();  // DTO는 요청마다 새로 생성
         if(taskContent != null) taskDTO.setTask_content(taskContent);
         if(do_dates == null || do_dates.isEmpty()) {
@@ -43,7 +41,6 @@ public class TaskhubService {
             taskDTO.setDo_dates(do_dates);
         }
         taskDTO.setParent_task_id(parent_task_id);
-//        taskDTO.setTask_order(String.valueOf(1));
         taskhubRepository.callInsertTaskAndDoDates(taskDTO);
     }
 
@@ -103,6 +100,10 @@ public class TaskhubService {
         return taskhubRepository.findWorks(getLoginIdDTO().getUser_id());
     }
 
+    public List<TaskhubDTO> findUsers() {
+        return taskhubRepository.findUsers(getLoginIdDTO().getUser_id());
+    }
+
     // 현재 날짜를 기준으로 해당 주의 월요일 날짜를 구하는 메소드
     public static LocalDate getMonday(LocalDate date) {
         return date.with(DayOfWeek.MONDAY);
@@ -140,14 +141,6 @@ public class TaskhubService {
     }
 
     public void updateTask(TaskhubDTO taskDTO) {
-//        if(taskDTO.getTask_done() != null) {
-//            System.out.println("0 done modify!! task_id:"+taskDTO.getTask_id()+"/do_date:"+taskDTO.getDo_date()+",task_done:"+taskDTO.getTask_done());
-//            Map<String, Object> params = new HashMap<>();
-//            params.put("task_id", taskDTO.getTask_id());
-//            params.put("do_date", taskDTO.getDo_date());
-//            params.put("task_done", taskDTO.getTask_done());
-//            taskhubRepository.updateDoDateTaskDone(params);
-//        }
         System.out.println("task modify, not done!! task_id:"+taskDTO.getTask_id()+"/do_date:"+taskDTO.getDo_date()+",task_done:"+taskDTO.getTask_done());
         taskhubRepository.updateTask(taskDTO);
     }

@@ -9,9 +9,9 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://dohe-task-hub.cv2g6cygedq9.eu-west-2.rds.amazonaws.com:3306/dohe_task_hub?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://task-hub-db.cv2g6cygedq9.eu-west-2.rds.amazonaws.com:11996/dohe_task_hub?serverTimezone=Europe/London&characterEncoding=UTF-8
     username: admin
-    password: adminadmin
+    password: ehgpxotmzmgjqmdkagh*89
 
   # spring data jpa 설정
   jpa:
