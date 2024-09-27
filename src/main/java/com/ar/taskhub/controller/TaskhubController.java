@@ -41,6 +41,11 @@ public class TaskhubController {
         return taskhubService.findAll();
     }
 
+    @GetMapping("/findAssignedToMe")
+    public List<TaskhubDTO> findAssignedToMe() {
+        return taskhubService.findAssignedToMe();
+    }
+
     @GetMapping("/findTaskContent/{taskId}")
     public TaskhubDTO findTaskContent(@PathVariable("taskId") String taskId) {
         return taskhubService.findTaskContent(taskId);

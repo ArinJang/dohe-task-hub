@@ -63,6 +63,8 @@
                             <input type="submit" id="addWorkButton" value="WORK+" name="action">
                         </div>
                     </form>
+                    <ul id="assignedToMeList">
+                    </ul>
                     <ul id="taskList">
     <!--                    <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">-->
     <!--                        <input type="checkbox">-->
@@ -124,7 +126,7 @@
                                 </select>
                             </div>
                             <div class="input-group done-group">
-                                <label>Done(<span id="doDate"></span>):</label>
+                                <label for="taskDone">Done(<span id="doDate"></span>):</label>
                                 <select id="taskDone" name="done">
                                     <option value="" disabled selected class="select-placeholder">Check if it's done</option>
                                     <option value="1">Default</option>
@@ -242,16 +244,17 @@
                     <input type="password" id="newpassword" name="password" required>
                 </div>
                 <div class="login-form-group">
-                    <label for="password" class="addUserLabel">Confirm Password:</label>
+                    <label for="confirmpassword" class="addUserLabel">Confirm password:</label>
                     <input type="password" id="confirmpassword" required>
                 </div>
                 <div class="login-form-group">
-                    <label for="username" class="addUserLabel">Admin approval password:</label>
+                    <label for="adminpassword" class="addUserLabel">Admin approval password:</label>
                     <input type="text" id="adminpassword" required placeholder="t _ _ _ _">
                 </div>
                 <div class="login-button-group">
-                    <button type="submit" id="addUserSubmit" disabled>Add this user</button>
+                    <button type="submit" id="addUserSubmit">Add this user</button>
                 </div>
+                <div id="errorMessage" style="color: red; display: none; margin-top: 10px;"></div>
             </form>
         </div>
     </div>

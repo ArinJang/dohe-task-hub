@@ -90,6 +90,40 @@
         D.TASK_ORDER;
     </select>
 
+    <select id="findAssignedToMe" parameterType="Long" resultType="taskhubdto">
+        SELECT
+            T.TASK_ID,
+            T.TASK_CONTENT,
+            T.USER_ID,
+            COALESCE(CONCAT('(', W.WORK_NAME, ')'), '') AS WORK_NAME,
+            DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+            CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
+            <!--CASE
+            WHEN D.DO_DATE = '9999-12-31' THEN NULL
+            ELSE D.DO_DATE
+            END AS DO_DATE,-->
+            D.DO_DATE,
+            D.TASK_ORDER,
+            D.TASK_DONE,
+            T.TASK_STATUS,
+            CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+            (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+            ELSE '0'
+            END AS PARENT_TASK_CONTENT,
+            CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
+            ELSE 0
+            END AS IS_OVERDUE
+        <!--,
+            CASE WHEN T.ASSIGNEE_ID IS NULL OR T.ASSIGNEE_ID = '' OR T.USER_ID = #{user_id} THEN 0
+            ELSE 1 END AS IS_ASSIGNED_TO_ME-->
+        FROM TASK T RIGHT JOIN DODATES D
+        ON T.task_id = D.task_id
+        LEFT JOIN WORK W ON T.WORK_ID = W.WORK_ID
+        WHERE T.ASSIGNEE_ID = #{user_id}
+          AND T.TASK_STATUS = 5
+        ORDER BY D.TASK_ORDER;
+    </select>
+
     <select id="findTaskContent" parameterType="Long" resultType="taskhubdto">
         SELECT
         T.TASK_CONTENT,
@@ -284,6 +318,9 @@
             ELSE NULL
             END AS DO_DATE,
         #{do_date} AS ORI_DO_DATE,
+        CASE WHEN T.ASSIGNEE_ID IS NULL OR T.ASSIGNEE_ID = '' THEN 0
+             WHEN T.ASSIGNEE_ID != #{user_id} THEN 0
+             ELSE 1 END AS IS_ASSIGNED_TO_ME,
         '' AS UPPER_TASK
         FROM
         TASK T

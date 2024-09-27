@@ -24,6 +24,10 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findAll", user_id);
     }
 
+    public List<TaskhubDTO> findAssignedToMe(Long user_id) {
+        return sql.selectList("Taskhub.findAssignedToMe", user_id);
+    }
+
     public TaskhubDTO findTaskContent(Long task_id) {
         return sql.selectOne("Taskhub.findTaskContent", task_id);
     }

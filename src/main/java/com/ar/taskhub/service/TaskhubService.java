@@ -53,7 +53,13 @@ public class TaskhubService {
     public List<TaskhubDTO> findAll(){
 //        System.out.println("service findAll(Long defaultId)? "+getLoginIdDTO().getUser_id());
         Long user_id = getLoginIdDTO().getUser_id() == null ? 2 : getLoginIdDTO().getUser_id();
-        List<TaskhubDTO> dto = taskhubRepository.findAll(user_id);
+        return taskhubRepository.findAll(user_id);
+    }
+
+    public List<TaskhubDTO> findAssignedToMe(){
+//        System.out.println("service findAssignedToMe(Long defaultId)? "+getLoginIdDTO().getUser_id());
+        Long user_id = getLoginIdDTO().getUser_id() == null ? 2 : getLoginIdDTO().getUser_id();
+        List<TaskhubDTO> dto = taskhubRepository.findAssignedToMe(user_id);
 //        System.out.println("dto:::"+dto);
         return dto;
     }
@@ -132,6 +138,7 @@ public class TaskhubService {
 //            params.put("do_date", doDate);
 //        }
         params.put("do_date", doDate);
+        params.put("user_id", getLoginIdDTO().getUser_id());
 //        System.out.println("0 taskId:"+taskId+",doDate:"+doDate+"???"+"null".equals(doDate)+"///"+(doDate==null));
         return taskhubRepository.findById(params);
     }

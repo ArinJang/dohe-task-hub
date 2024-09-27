@@ -22,10 +22,11 @@ public class UserController {
 //    }
 
     @PostMapping("/user/save")
-    public void save(@ModelAttribute UserDTO userDTO) {
+    public String save(@ModelAttribute UserDTO userDTO) {
         System.out.println("UserController.save");
         System.out.println("userDTO = " + userDTO);
         userService.save(userDTO);
+        return "redirect:/";
 //        return "index";
     }
 

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addTaskButton = document.getElementById('addTaskButton');
     const taskList = document.getElementById('taskList');
     const dayList = document.getElementById('dayList');
+    const assignedToMeList = document.getElementById('assignedToMeList');
     const daysList = document.querySelector('.days-list');
     const taskDetail = document.getElementById('taskDetail');
     const taskForm = document.getElementById('taskForm');
@@ -81,11 +82,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loginModal.style.display = 'block'; // 로그아웃 상태: 모달 표시
         logoutButton.style.display = 'none';  // 로그아웃 상태: 로그아웃 버튼 숨김
 
-//    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//            document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
-//            document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
-//            document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
-//    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+            document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+            document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     document.getElementById('addUser').addEventListener('click', function() {
@@ -94,10 +95,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.close').addEventListener('click', () => {
         addUserModal.style.display = 'none';
     });
-    document.getElementById('addUserForm').onsubmit = function(event) {
-        event.preventDefault(); // Prevent default form submission
-        addUserModal.style.display = 'none';
-    }
+//    document.getElementById('addUserForm').onsubmit = function(event) {
+////        event.preventDefault(); // Prevent default form submission
+////        addUserModal.style.display = 'none';
+//    }
 
     const statusMap = { // "side의 data-side" : "status"
 //        'notstarted': 0,
@@ -473,6 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchTasksByDateRange(); // Call this first
 //        renderDayTitlesList(); // Ensure days list is rendered first
         putWorksToSelect();
+        putUsersToSelect();
         const today = new Date();
         currentMonth = today.getMonth();
         currentYear = today.getFullYear();
@@ -580,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let subTasksArray = task.sub_tasks ? task.sub_tasks.split(',') : [];
             if (subTasksArray.length > 0) {
-                populateSubTasks(subTasksArray);
+                populateSubTasks(subTasksArray, task.is_assigned_to_me == '1');
             } else {
                 subTasksContainer.innerHTML = ''; // Clear existing sub-tasks
             }
@@ -588,13 +590,11 @@ document.addEventListener('DOMContentLoaded', function() {
             taskStatusSelect.value = task.task_status || '';
             originalValues.taskStatus = taskStatusSelect.value; // Store the original value
 
-//            console.log("::",task.assignee_id,",",task.assignee_name);
             userDelegatedSelect.value = task.assignee_id;
             originalValues.userDelegated = userDelegatedSelect.value; // Store the original value
 
             taskDoDate.value = task.ori_do_date || '';
             taskDoDate.innerText = task.do_date || '';  // p 태그의 텍스트를 do_date 값으로 설정
-//            console.log(task.do_date,",",task.ori_do_date);
             taskDoneSelect.value = task.task_done || '';
             originalValues.taskDone = taskDoneSelect.value; // Store the original value
 
@@ -606,9 +606,12 @@ document.addEventListener('DOMContentLoaded', function() {
             taskStatusSelect.addEventListener('change', handleDetailChange);
             userDelegatedSelect.addEventListener('change', handleDetailChange);
             taskDoneSelect.addEventListener('change', handleDetailChange);
-    //        statusRadios.forEach(radio => {
-    //            radio.addEventListener('change', handleRadioChange);
-    //        });
+
+            if(task.is_assigned_to_me == '1'){
+                disableTaskDetailFields();
+            } else {
+                enableTaskDetailFields();
+            }
         } else {
             console.error('Invalid task object:', task);
         }
@@ -682,12 +685,76 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
         }
     }
+    function toggleTaskDetailFields(enable) {
+        // 각 필드의 ID 목록 정의
+        const fieldIds = [
+            'taskName', 'categoryName', 'workName', 'dueDate', 'taskStatus',
+            'userDelegated', 'doDate', 'mainTask'
+        ];
+        const subTaskGroups = document.querySelectorAll('.new-sub-task');
+
+        // 필드 활성화/비활성화 설정
+        fieldIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.disabled = !enable;
+        });
+
+        // sub-task 그룹 활성화/비활성화 설정 및 레이블 색상 조정
+        subTaskGroups.forEach(group => {
+            group.style.pointerEvents = enable ? 'auto' : 'none';
+            group.classList.toggle('disabled-label', !enable);
+        });
+
+        // 레이블 스타일 변경 (taskMemo와 taskDone 제외)
+        const labels = document.querySelectorAll('.input-group label');
+        labels.forEach(label => {
+            const labelFor = label.getAttribute('for');
+            if (labelFor !== 'taskMemo' && labelFor !== 'taskDone') {
+                label.classList.toggle('disabled-label', !enable);
+            }
+        });
+
+        // span 요소들에 대해서도 class 변경 처리
+        const spans1 = document.querySelectorAll('.input-group span');
+        const spans2 = document.querySelectorAll('.new-sub-task span');
+
+        spans1.forEach(span => {
+            span.classList.toggle('disabled-label', !enable);
+        });
+        spans2.forEach(span => {
+            span.classList.toggle('disabled-label', !enable);
+        });
+        addSubTaskButton.style.display = enable ? 'block' : 'none';
+        deleteConfirmationButton.style.display = enable ? 'block' : 'none';
+
+        // Sub-task와 Main-task 클릭 가능 여부 설정
+        document.querySelector('.main-task').style.pointerEvents = enable ? 'auto' : 'none';
+        document.querySelector('.sub-tasks-group').style.pointerEvents = enable ? 'auto' : 'none';
+    }
+
+    function disableTaskDetailFields() {
+        toggleTaskDetailFields(false);
+    }
+
+    function enableTaskDetailFields() {
+        toggleTaskDetailFields(true);
+    }
 
     function toggleTaskCompletion(index) {
         tasks[index].completed = !tasks[index].completed;
         renderTaskList();
         daysOfWeek.forEach(day => renderDayTasksList(day));
     }
+
+    assignedToMeList.addEventListener('click', function(event) {
+        const listItem = event.target.closest('li.task-item');
+        if (listItem) {
+            const taskId = listItem.getAttribute('data-task-id');
+            sessionStorage.setItem('detailID', taskId);
+            sessionStorage.setItem('detailDoDate', listItem.getAttribute('data-task-dodate'));
+            fetchTaskDetails(listItem.getAttribute('data-task-dodate'));
+        }
+    });
 
     taskList.addEventListener('click', function(event) {
         const listItem = event.target.closest('li.task-item');
@@ -987,12 +1054,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchMainTaskList() {
-        const taskList = document.getElementById('taskList'); // Ensure taskList is correctly referenced
-        if (!taskList) {
-            console.error('No element found with ID: taskList');
-            return;
-        }
         taskList.innerHTML = ''; // Clear existing tasks
+        assignedToMeList.innerHTML = ''; // Clear existing tasks
+        createTaskItem.innerHTML = ''; // Clear existing tasks
+        assignedToMeList.style.display = 'none';
 
         switch (selectedSide) {
             case 'week':
@@ -1010,6 +1075,30 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                         }
                         initSortable(taskList); // Use 'NOTASSIGNED' or any placeholder if needed
+                    })
+                    .catch(error => console.error('Error fetching tasks:', error));
+
+                fetch('/api/findAssignedToMe')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            assignedToMeList.style.display = 'none';
+                            return;
+                        } else {
+                            assignedToMeList.style.display = 'block';
+                            const li = document.createElement('li');
+                            li.innerHTML = '<strong>[[ </string><strong class="custom-day-font">Delegated to me</strong><strong> ]]</strong>';
+                            assignedToMeList.appendChild(li);
+                            data.forEach(task => {
+                                const taskItem = createTaskItem(task, false, true);
+                                if(task.is_overdue == '1'){
+                                    taskItem.id = 'overdue';
+                                }
+                                    taskItem.id = 'assigned';
+                                assignedToMeList.appendChild(taskItem);
+                            });
+                        }
+//                        initSortable(assignedToMeList); // Use 'NOTASSIGNED' or any placeholder if needed
                     })
                     .catch(error => console.error('Error fetching tasks:', error));
                 break;
@@ -1066,7 +1155,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.querySelector('.do-dates-group').style.display = 'flex';
                         }
                         if(data.task_status == 5){
-                            putUsersToSelect();
+                            document.querySelector('.input-group.delegation').style.display = 'flex';
+//                            putUsersToSelect();
                         } else {
                             document.querySelector('.input-group.delegation').style.display = 'none';
                         }
@@ -1834,10 +1924,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     //  SUBTASK
     let isTaskPopulated = false;  // 중복 호출 방지를 위한 플래그
-    const populateSubTasks = async (tasks) => {
+    const populateSubTasks = async (tasks, is_assigned_to_me) => {
         if (isTaskPopulated) return;
         isTaskPopulated = true;
-
         subTasksContainer.innerHTML = ''; // Clear existing sub-tasks
 
         for (let [index, taskId] of tasks.entries()) {
@@ -1848,16 +1937,19 @@ document.addEventListener('DOMContentLoaded', function() {
 //                console.log(taskId); // Task ID should now appear in correct order
 
                 if (task && task.task_content) {
-                    const newSubTaskGroup = document.createElement('div');
-                    newSubTaskGroup.className = 'new-sub-task';
+                    const subTaskGroup = document.createElement('div');
+                    subTaskGroup.className = 'new-sub-task';
                     const subtaskSpan = document.createElement('span');
                     subtaskSpan.type = 'text';
                     subtaskSpan.innerText = '- ' + task.task_content;
                     subtaskSpan.id = `subTasks_${index}`; // Unique ID
                     subtaskSpan.dataset.taskId = taskId; // Store task_id in data attribute
 
-                    newSubTaskGroup.appendChild(subtaskSpan);
-                    subTasksContainer.appendChild(newSubTaskGroup);
+                    subTaskGroup.appendChild(subtaskSpan);
+                    subTasksContainer.appendChild(subTaskGroup);
+
+                    if(is_assigned_to_me) disableTaskDetailFields();
+                    else enableTaskDetailFields();
 
                     subtaskSpan.addEventListener('click', () => {
                         console.log('Clicked on subtask with ID:', taskId);
@@ -2149,7 +2241,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function putUsersToSelect() {
-//        console.log('putWorksToSelect');
         document.querySelector('.input-group.delegation').style.display = 'flex';
         fetch('/api/users')
             .then(response => {
@@ -2180,4 +2271,42 @@ document.addEventListener('DOMContentLoaded', function() {
         emptyPlaceholder.style.cursor = 'default';
         return emptyPlaceholder;
     }
+
+    function validateForm(event) {
+        event.preventDefault(); // 기본 폼 제출 방지
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', validateForm);
+    function validateForm(event) {
+        event.preventDefault(); // 기본 폼 제출 방지
+        const newPassword = document.getElementById('newpassword').value;
+        const confirmPassword = document.getElementById('confirmpassword').value;
+        const adminPassword = document.getElementById('adminpassword').value;
+        const errorMessageDiv = document.getElementById('errorMessage');
+
+        // 이전 오류 메시지 지우기
+        errorMessageDiv.textContent = '';
+        errorMessageDiv.style.display = "none";
+
+        console.log('validateForm: ',newPassword !== confirmPassword,adminPassword !== "terry");
+
+        // 비밀번호 일치 여부 확인
+        if (newPassword !== confirmPassword) {
+            errorMessageDiv.textContent = "Passwords do not match.";
+            errorMessageDiv.style.display = "block";
+            return false; // 폼 제출 방지
+        }
+
+        // 관리자 비밀번호 확인
+        if (adminPassword !== "terry") {
+            errorMessageDiv.textContent = "Incorrect admin approval password.";
+            errorMessageDiv.style.display = "block";
+            return false; // 폼 제출 방지
+        }
+
+        showNotification('User added', 'success');
+        // 모든 검증 통과 시 폼 제출
+        document.getElementById('addUserForm').submit();
+    }
+
 });
