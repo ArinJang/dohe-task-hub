@@ -89,6 +89,29 @@ public class TaskhubController {
         }
     }
 
+    @PostMapping("/insertCategory")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> insertCategory(@RequestBody Map<String, String> categoryData) {
+        String newCategoryName = categoryData.get("category_name");
+
+        if (newCategoryName == null || newCategoryName.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Category name cannot be empty."));
+        }
+
+        try {
+            taskhubService.insertCategory(newCategoryName);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Category added successfully.");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error while inserting category", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("status", "error", "message", "Failed to add category."));
+        }
+    }
+
     @PostMapping("/saveSubTask")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> saveSubTask(@RequestBody TaskhubDTO taskhubDTO) {
@@ -104,6 +127,11 @@ public class TaskhubController {
     @GetMapping("/tasks")
     public List<TaskhubDTO> getTasksByDateRange(@RequestParam(value = "baseDate", required = false) String baseDate) {
         return taskhubService.findByDoDates(baseDate);
+    }
+
+    @GetMapping("/tasksByCategory")
+    public List<TaskhubDTO> getTasksByCategory(@RequestParam(value = "categoryId", required = false) String categoryId) {
+        return taskhubService.findByCategory(categoryId);
     }
 
     @GetMapping("/tasksByWork")
@@ -193,6 +221,26 @@ public class TaskhubController {
         // Set the task ID in the DTO and update the task
         taskhubDTO.setWork_id(workId);
         taskhubService.updateWork(taskhubDTO);
+
+        // Return a JSON response
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Task updated successfully.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/updateCategory/{categoryId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateCategory(
+            @PathVariable("categoryId") String categoryId,
+            @RequestBody TaskhubDTO taskhubDTO) {
+        System.out.println(">>> TaskhubController.updateCategory categoryId: " + categoryId);
+//        System.out.println("TaskhubDTO: " + taskhubDTO);
+
+        // Set the task ID in the DTO and update the task
+        taskhubDTO.setCategory_id(Integer.valueOf(categoryId));
+        taskhubService.updateCategory(taskhubDTO);
 
         // Return a JSON response
         Map<String, Object> response = new HashMap<>();
@@ -409,6 +457,28 @@ public class TaskhubController {
             Map<String, Object> response = new HashMap<>();
             response.put("status", "error");
             response.put("message", "Failed to delete work. Work might not exist.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @DeleteMapping("/deleteCategory/{categoryId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteCategory(@PathVariable("categoryId") String categoryId) {
+        System.out.println(">>> TaskhubController.deleteCategory Category ID: " + categoryId);
+        try {
+            // Call the service layer to delete the task
+            taskhubService.deleteCategory(categoryId);
+
+            // Return a JSON response
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Category deleted successfully.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Handle error (e.g., task not found)
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Failed to delete category. Category might not exist.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

@@ -160,10 +160,10 @@ body {
 .nav-item .delete-btn {
     display: none; /* Initially hidden */
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 0px; /* 하단에 위치 고정 */
     background: transparent;
-    border: 0px;
+    border: 1px;
+    border-color: white;
     border-radius: 4px;
     cursor: pointer;
     padding: 5px;
@@ -171,13 +171,15 @@ body {
 }
 
 .nav-item .edit-btn {
-    right: 50px; /* Adjusted for better spacing */
-    color: #007bff;
+    right: 15px;
+    bottom: 0px;
+    color: #87CEEB;
 }
 
 .nav-item .delete-btn {
-    right: 10px; /* Adjusted for better spacing */
-    color: #dc3545;
+    right: 0px;
+    bottom: 0px;
+    color: #f44336;
 }
 
 .nav-item:hover .edit-btn,
@@ -216,13 +218,15 @@ body {
     /*color: black;*/
 }
 
-.work-edit-btn:hover {
+.work-edit-btn:hover,
+.edit-btn:hover {
     color: #4bb1db;
     font-weight: bold;
 }
 
 .work-delete-btn:hover,
-#clearParent:hover {
+#clearParent:hover,
+.delete-btn:hover {
     color: #d32f2f;
     font-weight: bold;
 }

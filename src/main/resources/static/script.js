@@ -82,11 +82,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loginModal.style.display = 'block'; // 로그아웃 상태: 모달 표시
         logoutButton.style.display = 'none';  // 로그아웃 상태: 로그아웃 버튼 숨김
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
-            document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
-            document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//            document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+//            document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+//            document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
+//    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     document.getElementById('addUser').addEventListener('click', function() {
@@ -95,14 +95,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.close').addEventListener('click', () => {
         addUserModal.style.display = 'none';
     });
-//    document.getElementById('addUserForm').onsubmit = function(event) {
-////        event.preventDefault(); // Prevent default form submission
-////        addUserModal.style.display = 'none';
-//    }
 
     const statusMap = { // "side의 data-side" : "status"
-//        'notstarted': 0,
-//        'inprogress': 1,
+//        'default': 1,
         'completed': 2,
 //        'canceled': 3,
         'onhold': 4,
@@ -236,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function createNavItem(catName, categoryOrDelegation) {
+    function createNavItem(catName, categoryId, categoryOrDelegation) {
         const navItem = document.createElement('div');
         navItem.textContent = catName;
         navItem.className = 'nav-item';
@@ -244,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const editBtn = document.createElement('div');
         editBtn.textContent = '✎';
         editBtn.className = 'edit-btn';
-        editBtn.addEventListener('click', function(event) {
+        editBtn.addEventListener('click', async function(event) {
             event.stopPropagation();
             // Determine the message based on the category
             let promptMessage;
@@ -257,19 +252,51 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const newName = prompt(promptMessage, catName);
             if (newName) {
-                categories[categoryOrDelegation][categories[categoryOrDelegation].indexOf(catName)] = newName;
-                updateNavigationBar(categoryOrDelegation);
+                try {
+                    const categoryData = {
+                        category_name: newName
+                    };
+                    const response = await fetch(`/api/updateCategory/${categoryId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(categoryData)
+                    });
+
+                    const data = await response.json();
+                    showNotification('Category successfully updated!', 'success');
+                    await populateCategories();
+                    await updateNavigationBar('work');
+                } catch (error) {
+                    console.error('Error:', error);
+                }
             }
         });
 
         const deleteBtn = document.createElement('div');
         deleteBtn.textContent = '✖';
         deleteBtn.className = 'delete-btn';
-        deleteBtn.addEventListener('click', function(event) {
+        deleteBtn.addEventListener('click', async function(event) {
             event.stopPropagation();
             if (confirm(`Delete ${catName}?`)) {
-                categories[categoryOrDelegation] = categories[categoryOrDelegation].filter(i => i !== catName);
-                updateNavigationBar(categoryOrDelegation);
+//                categories[categoryOrDelegation] = categories[categoryOrDelegation].filter(i => i !== catName);
+//                updateNavigationBar(categoryOrDelegation);
+                try {
+                    const response = await fetch(`/api/deleteCategory/${categoryId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    showNotification('Category deleted.', 'delete');
+                    await populateCategories();
+                    await updateNavigationBar('work');
+                } catch (error) {
+                    console.error('Error:', error);
+                }
             }
         });
 
@@ -292,17 +319,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const allButton = document.createElement('div');
             allButton.textContent = 'All';
             allButton.className = 'nav-item';
+            setActiveNavItem(allButton);
             allButton.addEventListener('click', function() {
+                setActiveNavItem(allButton);
                 // Handle "All" button click
             });
             navigationBar.appendChild(allButton);
 
-            const items = categoriesList;
-            items.forEach(item => {
-                const navItem = createNavItem(item.category_name, category);
+            categoriesList.forEach(item => {
+                const navItem = createNavItem(item.category_name, item.category_id, category);
                 navItem.addEventListener('click', function() {
                     setActiveNavItem(navItem);
-                    updateContent(category, item.category_name);
+//                    updateContent(category, item.category_name);
                 });
                 navigationBar.appendChild(navItem);
             });
@@ -310,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const addButton = document.createElement('div');
             addButton.textContent = '+';
             addButton.className = 'nav-item';
-            addButton.addEventListener('click', function() {
+            addButton.addEventListener('click', async function() {
                 let promptMessage;
                 if (category === 'work') {
                     promptMessage = 'Enter a new category:';
@@ -322,9 +350,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newItemName = prompt(promptMessage);
 
                 if (newItemName) {
-                    // dbdbdbdb
-                    // categories[category].push(newItemName);
-                    // updateNavigationBar(category);
+                    try {
+                        const response = await fetch('/api/insertCategory', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json' // JSON 형식으로 설정
+                            },
+                            body: JSON.stringify({ category_name: newItemName }), // JSON.stringify 사용
+                        });
+                        await response.json();
+                        showNotification('Category successfully saved!', 'success');
+                        console.log('Before populateCategories:', categoriesList);
+                        await populateCategories();
+                        console.log('After populateCategories:', categoriesList);
+                        updateNavigationBar('work'); // Now update the navigation bar with the new list
+//                        clickSideBar('work', true);
+                    } catch (error) {
+                        console.error('Error:', error);
+                    }
                 }
             });
             navigationBar.appendChild(addButton);
@@ -594,7 +637,7 @@ document.addEventListener('DOMContentLoaded', function() {
             originalValues.userDelegated = userDelegatedSelect.value; // Store the original value
 
             taskDoDate.value = task.ori_do_date || '';
-            taskDoDate.innerText = task.do_date || '';  // p 태그의 텍스트를 do_date 값으로 설정
+            taskDoDate.innerText = task.do_date ? '(' + task.do_date + ')' : '';  // p 태그의 텍스트를 do_date 값으로 설정
             taskDoneSelect.value = task.task_done || '';
             originalValues.taskDone = taskDoneSelect.value; // Store the original value
 
@@ -1803,30 +1846,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function populateCategories() {
-        fetch('/api/getCategories')
-            .then(response => response.json())
-            .then(categories => {
-                categoriesList = categories; // 전역 변수에 저장
-                const categorySelect = document.getElementById('categoryName');
-                categorySelect.innerHTML = ''; // Clear any existing options
+    async function populateCategories() {
+        try {
+            const response = await fetch('/api/getCategories');
+            const categories = await response.json();
+            categoriesList = categories; // 전역 변수에 저장
 
-                // Create and append default option
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                /*defaultOption.textContent = 'Select a category';*/
-                categorySelect.appendChild(defaultOption);
+            const categorySelect = document.getElementById('categoryName');
+            categorySelect.innerHTML = '';
 
-                // Create and append each category option
-                categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.category_id;
-                    option.textContent = category.category_name;
-                    categorySelect.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error fetching categories:', error));
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            categorySelect.appendChild(defaultOption);
+
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.category_id;
+                option.textContent = category.category_name;
+                categorySelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
     }
+
 
     const populateDoDates = (dates) => {
         const doDatesContainer = document.getElementById('doDatesContainer');
@@ -2284,21 +2327,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const adminPassword = document.getElementById('adminpassword').value;
         const errorMessageDiv = document.getElementById('errorMessage');
 
-        // 이전 오류 메시지 지우기
         errorMessageDiv.textContent = '';
         errorMessageDiv.style.display = "none";
 
         console.log('validateForm: ',newPassword !== confirmPassword,adminPassword !== "terry");
 
-        // 비밀번호 일치 여부 확인
-        if (newPassword !== confirmPassword) {
+        if (newPassword !== confirmPassword) { // 비밀번호 일치 여부 확인
             errorMessageDiv.textContent = "Passwords do not match.";
             errorMessageDiv.style.display = "block";
             return false; // 폼 제출 방지
         }
 
-        // 관리자 비밀번호 확인
-        if (adminPassword !== "terry") {
+        if (adminPassword !== "terry") { // 관리자 비밀번호 확인
             errorMessageDiv.textContent = "Incorrect admin approval password.";
             errorMessageDiv.style.display = "block";
             return false; // 폼 제출 방지

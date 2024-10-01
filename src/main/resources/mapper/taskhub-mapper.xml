@@ -24,6 +24,12 @@
               , #{user_id});
     </insert>
 
+    <insert id="insertCategory">
+        INSERT INTO CATEGORY (CATEGORY_NAME, USER_ID)
+        VALUES (#{category_name}
+        , #{user_id});
+    </insert>
+
     <delete id="deleteDoDatesByTaskId" parameterType="string">
         DELETE FROM DODATES WHERE TASK_ID = #{taskId}
     </delete>
@@ -214,6 +220,30 @@
         ORDER BY D.TASK_ORDER,
                  T.TASK_STATUS,
                  D.TASK_ID DESC
+    </select>
+
+    <select id="findByCategory" parameterType="String" resultType="taskhubdto">
+        SELECT
+            T.TASK_ID,
+            T.TASK_CONTENT,
+            CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
+            T.TASK_STATUS,
+            CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+            (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+            ELSE '0'
+            END AS PARENT_TASK_CONTENT,
+            COALESCE(CONCAT('(', (SELECT WORK_NAME FROM WORK WHERE WORK_ID = T.WORK_ID), ')'), '') AS WORK_NAME,
+            CASE    WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE()
+            AND T.TASK_STATUS NOT IN (2, 3) THEN 1
+            ELSE 0
+            END                         AS IS_OVERDUE,
+        FROM TASK T RIGHT JOIN CATEGORY C
+            ON T.category_id = C.category_id
+        WHERE 1 = 1
+          AND T.WORK_ID IN (SELECT WORK_ID FROM WORK WHERE CATEGORY_ID IS NULL)
+        ORDER BY T.TASK_ORDER,
+        T.TASK_STATUS
+        <!-- 추가 필요!!!!!!!!!! -->
     </select>
 
     <select id="findByWork" parameterType="Long" resultType="taskhubdto">
@@ -448,6 +478,13 @@
         WHERE WORK_ID = #{work_id}
     </update>
 
+    <update id="updateCategory" parameterType="taskhubdto">
+        UPDATE CATEGORY
+        SET
+        CATEGORY_NAME = #{category_name}
+        WHERE CATEGORY_ID = #{category_id}
+    </update>
+
     <update id="clearParent" parameterType="Long">
         UPDATE TASK
         SET
@@ -644,12 +681,16 @@
         DELETE FROM WORK WHERE WORK_ID = #{work_id} AND USER_ID = #{user_id}
     </delete>
 
+    <delete id="deleteCategory" parameterType="map">
+        DELETE FROM CATEGORY WHERE CATEGORY_ID = #{category_id} AND USER_ID = #{user_id}
+    </delete>
+
     <select id="getCategories" resultType="taskhubdto">
         SELECT T.CATEGORY_ID, T.CATEGORY_NAME, T.CATEGORY_ORDER, T.USER_ID
         FROM CATEGORY T
         WHERE 1=1
         <include refid="sessionUserId"/>
-        ORDER BY T.CATEGORY_ORDER;
+        ORDER BY T.CATEGORY_ID;
     </select>
 
     <select id="findAllUsers" resultType="Long">
