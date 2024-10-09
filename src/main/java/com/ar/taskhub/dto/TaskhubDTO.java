@@ -31,7 +31,7 @@ public class TaskhubDTO {
     private String user_name;
     private String work_name;
     private String work_memo;
-    private String work_date;
+    private String work_status;
     private String is_overdue;
     private String is_assigned_to_me;
 

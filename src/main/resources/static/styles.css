@@ -162,12 +162,12 @@ body {
     position: absolute;
     bottom: 0px; /* 하단에 위치 고정 */
     background: transparent;
-    border: 1px;
-    border-color: white;
+    border: 0px;
     border-radius: 4px;
     cursor: pointer;
     padding: 5px;
     font-size: 18px;
+    text-shadow: -1px 0px white, 0px 1px white, 1px 0px white, 0px -1px white;
 }
 
 .nav-item .edit-btn {
@@ -209,6 +209,9 @@ body {
     border: 0px;
     cursor: pointer;
     color: #f44336;
+}
+.work-title {
+    cursor: pointer;
 }
 
 .work-title:hover .work-edit-btn,
@@ -933,10 +936,11 @@ button#addUser:hover, button#developerAccount:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 미세한 그림자 효과 */
     list-style-type: none; /* 기본 목록 스타일 제거 */
 }
-
 .disabled-label {
-    color: 	#BEBEBE; /* 회색으로 설정 */
+     color: #b0b0b0; /* 비활성화된 레이블 색상 */
+     cursor: not-allowed; /* 커서를 변경하여 비활성화된 느낌 강조 */
 }
+
 
 #subTasksContainer,
 #mainTask,

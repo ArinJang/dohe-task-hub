@@ -62,9 +62,7 @@ public class TaskhubController {
 
         if ("TASK+".equals(action)) {
 //            workName = null;
-            taskhubService.insertTask(taskContent, do_dates
-                    , null
-            );
+            taskhubService.insertTask(taskContent, do_dates,null);
 
             // Return a JSON response
             Map<String, Object> response = new HashMap<>();
@@ -135,8 +133,21 @@ public class TaskhubController {
     }
 
     @GetMapping("/tasksByWork")
-    public List<TaskhubDTO> getTasksByWork() {
-        return taskhubService.findByWork();
+    public List<TaskhubDTO> getAllTasks() {
+        System.out.println("Fetching all tasks");
+        return taskhubService.findByWork(null);
+    }
+
+    @GetMapping("/tasksByWork/{categoryId}")
+    public List<TaskhubDTO> getTasksByWork(@PathVariable("categoryId") String categoryId) {
+        System.out.println("findByWork cat id: " + categoryId);
+        return taskhubService.findByWork(categoryId);
+    }
+
+    @GetMapping("/completedTasksByWork")
+    public List<TaskhubDTO> getCompletedTasksByWork() {
+        System.out.println("Fetching findCompletedTasksByWork");
+        return taskhubService.findCompletedTasksByWork();
     }
 
     @GetMapping("/works")
@@ -170,13 +181,19 @@ public class TaskhubController {
         return taskhubService.findById(taskId, doDate);
     }
 
+    @GetMapping("/findWorkById/{workId}")
+    public TaskhubDTO findWorkById(@PathVariable("workId") String workId) {
+//        System.out.println("[findWorkById] workId:"+workId+",doDate:"+doDate+"///null equals?"+"null".equals(doDate));
+        return taskhubService.findWorkById(workId);
+    }
+
     @PostMapping("/updateTask/{taskId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> updateTask(
             @PathVariable("taskId") String taskId,
             @RequestBody TaskhubDTO taskhubDTO) {
         System.out.println(">> Controller.updateTask taskid: " + taskId);
-        System.out.println(">> Controller.updateTask TaskhubDTO: " + taskhubDTO);
+//        System.out.println(">> Controller.updateTask TaskhubDTO: " + taskhubDTO);
 
         // Set the task ID in the DTO and update the task
         taskhubDTO.setTask_id(taskId);
@@ -365,6 +382,7 @@ public class TaskhubController {
             String oldIdx = getStringValue(updateData.get("old_idx"));
             String newIdx = getStringValue(updateData.get("new_idx"));
             String taskStatus = (String) updateData.get("task_status");
+            String taskDone = (String) updateData.get("task_done");
 
 //            System.out.println("0 updateOrderAndDoDate task_id: " + taskId + " / taskStatus: " + taskStatus);
 //            System.out.println("0 do_date: " + oldDoDate + "->" + newDoDate + " // idx: " + oldIdx + "->" + newIdx);
@@ -395,7 +413,8 @@ public class TaskhubController {
             taskhubDTO.setOld_order_idx(oldIdx);
             taskhubDTO.setNew_order_idx(newIdx);
             taskhubDTO.setTask_status(taskStatus);
-//            System.out.println("1 updateOrderAndDoDate task_id: " + taskhubDTO.getTask_id() + "/taskStatus: " + taskStatus);
+            taskhubDTO.setTask_done(taskDone);
+            System.out.println("updateOrderAndDoDate task_done: " + taskhubDTO.getTask_done());
 //            System.out.println("1 do_date: " + taskhubDTO.getOld_do_date() + "->" + taskhubDTO.getNew_do_date() + " // idx: " + taskhubDTO.getOld_order_idx() + "->" + taskhubDTO.getNew_order_idx());
 
             taskhubService.updateOrderAndDoDate(taskhubDTO);
@@ -495,5 +514,12 @@ public class TaskhubController {
         String newDoDate = convertDate(doDate);
         boolean isDuplicate = taskhubService.isDuplicateOnSameDate(taskId, newDoDate);
         return ResponseEntity.ok(isDuplicate);
+    }
+
+    @GetMapping("/isEveryTaskCompleted/{workId}")
+    public ResponseEntity<Boolean> isEveryTaskCompleted(
+            @PathVariable("workId") String workId) {
+        boolean isCompleted = taskhubService.isEveryTaskCompleted(Long.valueOf(workId));
+        return ResponseEntity.ok(isCompleted);
     }
 }

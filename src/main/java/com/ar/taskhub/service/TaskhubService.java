@@ -40,6 +40,7 @@ public class TaskhubService {
         } else {
             taskDTO.setDo_dates(do_dates);
         }
+        if(taskDTO.getUser_id() == 1) taskDTO.setCategory_id(31); // terry 계정일 경우, category 기본값 "DOHE"로 설정
         taskDTO.setParent_task_id(parent_task_id);
         taskhubRepository.callInsertTaskAndDoDates(taskDTO);
     }
@@ -47,6 +48,7 @@ public class TaskhubService {
     public void insertWork(String workName) {
         TaskhubDTO taskDTO = getLoginIdDTO();
         if(workName != null) taskDTO.setWork_name(workName);
+        if(taskDTO.getUser_id() == 1) taskDTO.setCategory_id(31); // terry 계정일 경우, category 기본값 "DOHE"로 설정
         taskhubRepository.insertWork(taskDTO);
     }
 
@@ -102,8 +104,16 @@ public class TaskhubService {
         return taskhubRepository.findByCategory(categoryId);
     }
 
-    public List<TaskhubDTO> findByWork() {
-        return taskhubRepository.findByWork(getLoginIdDTO().getUser_id());
+    public List<TaskhubDTO> findByWork(String categoryId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("user_id", getLoginIdDTO().getUser_id());
+        params.put("category_id", categoryId);
+        System.out.println("Service findByWork:"+params.get("category_id"));
+        return taskhubRepository.findByWork(params);
+    }
+
+    public List<TaskhubDTO> findCompletedTasksByWork() {
+        return taskhubRepository.findCompletedTasksByWork(getLoginIdDTO().getUser_id());
     }
 
     public List<TaskhubDTO> findWorks() {
@@ -140,6 +150,19 @@ public class TaskhubService {
         params.put("user_id", getLoginIdDTO().getUser_id());
 //        System.out.println("0 taskId:"+taskId+",doDate:"+doDate+"???"+"null".equals(doDate)+"///"+(doDate==null));
         return taskhubRepository.findById(params);
+    }
+
+    public TaskhubDTO findWorkById(String workId) {
+//        Map<String, Object> params = new HashMap<>();
+//        params.put("task_id", workId);
+//        if (doDate == null || doDate.isEmpty() || "undefined".equals(doDate) || "null".equals(doDate)) {
+//            doDate = taskhubRepository.findLatestDoDateById(Long.valueOf(taskId));
+//            System.out.println("doDate findLatestDoDateById :" + doDate);
+//        }
+//        params.put("do_date", doDate);
+//        params.put("user_id", getLoginIdDTO().getUser_id());
+////        System.out.println("0 workId:"+workId+",doDate:"+doDate+"???"+"null".equals(doDate)+"///"+(doDate==null));
+        return taskhubRepository.findWorkById(Long.valueOf(workId));
     }
 
     public int findNewId() {
@@ -448,7 +471,6 @@ public class TaskhubService {
         }
     }
 
-
     @Transactional
     public void deleteDetailDoDate(TaskhubDTO taskDTO) {
         if(taskhubRepository.isOnlyDoDate(taskDTO.getTask_id()) <= 1) {
@@ -467,7 +489,6 @@ public class TaskhubService {
         taskhubRepository.rearrangeOrderByIdDate(params);
         taskhubRepository.deleteDoDatesByTaskId2(params); // 기존 DODATES 삭제
     }
-
 
     public Map<String, Object> getOldDoDateAndOrder(String taskId) {
         return taskhubRepository.getOldDoDateAndOrder(taskId);
@@ -491,4 +512,8 @@ public class TaskhubService {
         return count > 0;
     }
 
+    public boolean isEveryTaskCompleted(Long workId) {
+        int count = taskhubRepository.isEveryTaskCompleted(workId);
+        return count == 0;
+    }
 }

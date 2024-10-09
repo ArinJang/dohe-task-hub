@@ -40,8 +40,12 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findByCategory", categoryId);
     }
 
-    public List<TaskhubDTO> findByWork(Long user_id) {
-        return sql.selectList("Taskhub.findByWork", user_id);
+    public List<TaskhubDTO> findByWork(Map<String, Object> params) {
+        return sql.selectList("Taskhub.findByWork", params);
+    }
+
+    public List<TaskhubDTO> findCompletedTasksByWork(Long user_id) {
+        return sql.selectList("Taskhub.findCompletedTasksByWork", user_id);
     }
 
     public List<TaskhubDTO> findWorks(Long user_id) {
@@ -54,6 +58,10 @@ public class TaskhubRepository {
 
     public TaskhubDTO findById(Map<String, Object> params) {
         return sql.selectOne("Taskhub.findById", params);
+    }
+
+    public TaskhubDTO findWorkById(Long work_id) {
+        return sql.selectOne("Taskhub.findWorkById", work_id);
     }
 
     public String findLatestDoDateById(Long task_id) {
@@ -224,5 +232,9 @@ public class TaskhubRepository {
 
     public String isDone(Map<String, Object> params) {
         return sql.selectOne("Taskhub.isDone", params);
+    }
+
+    public int isEveryTaskCompleted(Long workId) {
+        return sql.selectOne("Taskhub.isEveryTaskCompleted", workId);
     }
 }

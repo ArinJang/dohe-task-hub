@@ -14,14 +14,16 @@
         #{do_dates},
         <!--#{task_order},-->
         #{user_id},
-        #{parent_task_id}
+        #{parent_task_id},
+        #{category_id}
         )
     </select>
 
     <insert id="insertWork">
-        INSERT INTO WORK (WORK_NAME, USER_ID)
+        INSERT INTO WORK (WORK_NAME, USER_ID, CATEGORY_ID)
         VALUES (#{work_name}
-              , #{user_id});
+              , #{user_id}
+              , #{category_id});
     </insert>
 
     <insert id="insertCategory">
@@ -222,7 +224,7 @@
                  D.TASK_ID DESC
     </select>
 
-    <select id="findByCategory" parameterType="String" resultType="taskhubdto">
+    <!--<select id="findByCategory" parameterType="String" resultType="taskhubdto">
         SELECT
             T.TASK_ID,
             T.TASK_CONTENT,
@@ -243,16 +245,16 @@
           AND T.WORK_ID IN (SELECT WORK_ID FROM WORK WHERE CATEGORY_ID IS NULL)
         ORDER BY T.TASK_ORDER,
         T.TASK_STATUS
-        <!-- 추가 필요!!!!!!!!!! -->
-    </select>
+        &lt;!&ndash; 추가 필요!!!!!!!!!! &ndash;&gt;
+    </select>-->
 
-    <select id="findByWork" parameterType="Long" resultType="taskhubdto">
-        SELECT
+    <select id="findByWork" parameterType="map" resultType="taskhubdto">
+        <!--SELECT
                 T.TASK_ID,
                 T.TASK_CONTENT,
                 T.USER_ID,
-                W.WORK_ID,
-                W.WORK_NAME,
+                IFNULL(W.WORK_ID, 999999) AS WORK_ID,
+                IFNULL(W.WORK_NAME, '(work not assigned)') AS WORK_NAME,
                 DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
                 CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
                 T.TASK_STATUS,
@@ -263,12 +265,126 @@
                 CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
                      ELSE 0
                      END AS IS_OVERDUE
-          FROM TASK T RIGHT JOIN WORK W ON T.WORK_ID = W.WORK_ID
+          FROM TASK T LEFT JOIN WORK W ON T.WORK_ID = W.WORK_ID
          WHERE 1=1
-           <!--<include refid="sessionUserId"/>-->
-           AND W.USER_ID = #{user_id}
-           <!--AND T.WORK_ID IS NOT NULL-->
-         ORDER BY W.WORK_ID, T.TASK_ORDER;
+           &lt;!&ndash;<include refid="sessionUserId"/>&ndash;&gt;
+           AND T.USER_ID = #{user_id}
+           &lt;!&ndash;AND T.WORK_ID IS NOT NULL&ndash;&gt;
+        <if test="category_id == null">
+           &lt;!&ndash;AND (W.WORK_ID IS NOT NULL)&ndash;&gt;
+        </if>
+        <if test="category_id != null">
+           AND (W.CATEGORY_ID = #{category_id} OR T.CATEGORY_ID = #{category_id})
+        </if>
+         ORDER BY
+                CASE WHEN W.WORK_ID IS NULL THEN 1 ELSE 0 END, &#45;&#45; NULL인 경우 맨 끝으로
+                W.WORK_ID, T.TASK_ORDER;-->
+
+
+        SELECT
+        T.TASK_ID,
+        T.TASK_CONTENT,
+        T.USER_ID,
+        COALESCE(W.WORK_ID, 999999) AS WORK_ID, -- NULL인 WORK_ID는 999999로 대체
+        COALESCE(W.WORK_NAME, '(work not assigned)') AS WORK_NAME,
+        DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+        CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
+        T.TASK_STATUS,
+        CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+        (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+        ELSE '0'
+        END AS PARENT_TASK_CONTENT,
+        CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
+        ELSE 0
+        END AS IS_OVERDUE
+        FROM
+        -- LEFT JOIN을 이용하여 TASK와 WORK를 결합
+        TASK T LEFT JOIN WORK W ON T.WORK_ID = W.WORK_ID
+        WHERE 1=1
+        AND T.USER_ID = #{user_id}
+        AND W.WORK_STATUS = 1
+        <if test="category_id == null">
+            AND T.WORK_ID IS NOT NULL
+        </if>
+        <if test="category_id != null">
+            AND (W.CATEGORY_ID = #{category_id} OR T.CATEGORY_ID = #{category_id})
+        </if>
+
+        UNION
+
+        SELECT
+        NULL AS TASK_ID,  -- TASK가 없으므로 NULL
+        NULL AS TASK_CONTENT,
+        W.USER_ID,  -- WORK의 USER_ID 사용
+        W.WORK_ID,
+        W.WORK_NAME,
+        NULL AS CREATE_DATE,
+        NULL AS DUE_DATE,
+        NULL AS TASK_STATUS,
+        '0' AS PARENT_TASK_CONTENT,
+        0 AS IS_OVERDUE
+        FROM
+        -- RIGHT JOIN을 이용하여 TASK가 없는 WORK도 가져옴
+        WORK W LEFT JOIN TASK T ON W.WORK_ID = T.WORK_ID
+        WHERE T.TASK_ID IS NULL -- TASK가 없는 WORK만 선택
+        AND W.USER_ID = #{user_id}
+        AND W.WORK_STATUS = 1
+        <if test="category_id != null">
+            AND (W.CATEGORY_ID = #{category_id} OR T.CATEGORY_ID = #{category_id})
+        </if>
+
+        ORDER BY
+        CASE WHEN WORK_ID = 999999 THEN 1 ELSE 0 END,  -- NULL인 경우 맨 끝으로 정렬
+        WORK_ID, CREATE_DATE;
+    </select>
+
+    <select id="findCompletedTasksByWork" parameterType="Long" resultType="taskhubdto">
+        SELECT
+        T.TASK_ID,
+        T.TASK_CONTENT,
+        T.USER_ID,
+        COALESCE(W.WORK_ID, 999999) AS WORK_ID, -- NULL인 WORK_ID는 999999로 대체
+        COALESCE(W.WORK_NAME, '(work not assigned)') AS WORK_NAME,
+        DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+        W.LAST_MODIFIED,
+        CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
+        T.TASK_STATUS,
+        CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+        (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+        ELSE '0'
+        END AS PARENT_TASK_CONTENT,
+        CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
+        ELSE 0
+        END AS IS_OVERDUE
+        FROM
+        -- LEFT JOIN을 이용하여 TASK와 WORK를 결합
+        TASK T LEFT JOIN WORK W ON T.WORK_ID = W.WORK_ID
+        WHERE 1=1
+        AND T.USER_ID = #{user_id}
+        AND T.WORK_ID IS NOT NULL
+        AND W.WORK_STATUS = 2
+        UNION
+
+        SELECT
+        NULL AS TASK_ID,  -- TASK가 없으므로 NULL
+        NULL AS TASK_CONTENT,
+        W.USER_ID,  -- WORK의 USER_ID 사용
+        W.WORK_ID,
+        W.WORK_NAME,
+        NULL AS CREATE_DATE,
+        W.LAST_MODIFIED,
+        NULL AS DUE_DATE,
+        NULL AS TASK_STATUS,
+        '0' AS PARENT_TASK_CONTENT,
+        0 AS IS_OVERDUE
+        FROM
+        -- RIGHT JOIN을 이용하여 TASK가 없는 WORK도 가져옴
+        WORK W LEFT JOIN TASK T ON W.WORK_ID = T.WORK_ID
+        WHERE T.TASK_ID IS NULL -- TASK가 없는 WORK만 선택
+        AND W.USER_ID = #{user_id}
+        AND W.WORK_STATUS = 2
+
+        ORDER BY LAST_MODIFIED
     </select>
 
     <select id="findWorks" parameterType="Long" resultType="taskhubdto">
@@ -306,7 +422,8 @@
              (SELECT userName FROM USER WHERE userId = T.ASSIGNEE_ID)
              ELSE NULL
              END AS ASSIGNEE_NAME,
-        T.CATEGORY_ID AS CATEGORY_NAME,
+        T.CATEGORY_ID AS CATEGORY_ID,
+<!--        (SELECT CATEGORY_NAME FROM CATEGORY WHERE CATEGORY_ID = T.CATEGORY_ID) AS CATEGORY_NAME,-->
         T.WORK_ID AS WORK_ID,
         (SELECT W.WORK_NAME FROM WORK W WHERE W.WORK_ID = T.WORK_ID) AS WORK_NAME,
         T.USER_ID,
@@ -358,6 +475,14 @@
         T.TASK_ID = #{task_id};
     </select>
 
+    <select id="findWorkById" parameterType="Long" resultType="taskhubdto">
+        SELECT WORK_ID, WORK_NAME, CATEGORY_ID, USER_ID, LAST_MODIFIED, WORK_STATUS
+        FROM
+        WORK
+        WHERE
+        WORK_ID = #{work_id};
+    </select>
+
     <select id="findLatestDoDateById" parameterType="Long" resultType="String">
         SELECT MAX(DO_DATE) AS DO_DATE
           FROM DODATES
@@ -394,11 +519,17 @@
         WHERE
         1=1
         <include refid="sessionUserId"/>
-        AND (
-        (#{task_status} = 2 AND T.TASK_STATUS = #{task_status})
-        OR (#{task_status} != 2 AND T.TASK_STATUS = #{task_status} AND D.DO_DATE LIKE '9999-01-%')
-        )
+        <if test="task_status == 2">
+            AND T.TASK_STATUS = #{task_status}
+        </if>
+        <if test="task_status != 2">
+            AND T.TASK_STATUS = #{task_status}
+            AND D.DO_DATE LIKE '9999-01-%'
+        </if>
         ORDER BY
+        <if test="task_status == 2">
+            T.LAST_MODIFIED DESC,
+        </if>
         D.TASK_ORDER;
     </select>
 
@@ -440,14 +571,15 @@
             <if test="work_id != null and work_id != ''">
                 WORK_ID = #{work_id},
             </if>
+            <if test="category_id != null and category_id != ''">
+                CATEGORY_ID = #{category_id},
+            </if>
             <if test="assignee_id != null">
                 ASSIGNEE_ID = #{assignee_id},
             </if>
         </set>
         WHERE TASK_ID = #{task_id}
     </update>
-
-
 
     <update id="updateDoDateTaskDone" parameterType="map">
         UPDATE DODATES
@@ -459,22 +591,17 @@
 
     <update id="updateWork" parameterType="taskhubdto">
         UPDATE WORK
-        SET
-        WORK_NAME = #{work_name}<!--,
-        DUE_DATE = CASE
-        WHEN #{due_date} IS NULL OR #{due_date} = '' THEN NULL
-        ELSE #{due_date}
-        END,
-        TASK_STATUS = #{task_status},
-        TASK_MEMO   = #{task_memo},
-        WORK_ID = CASE
-        WHEN #{work_id} IS NULL OR #{work_id} = '' THEN NULL
-        ELSE #{work_id}
-        END--><!--,
-            CATEGORY_ID = CASE
-                        WHEN #{category_id} IS NULL OR #{category_id} = '' THEN NULL
-                        ELSE #{category_id}
-                        END-->
+        <set>
+            <if test="work_name != null">
+                WORK_NAME = #{work_name},
+            </if>
+            <if test="category_id != null and category_id != ''">
+                CATEGORY_ID = #{category_id},
+            </if>
+            <if test="work_status != null">
+                WORK_STATUS = #{work_status},
+            </if>
+        </set>
         WHERE WORK_ID = #{work_id}
     </update>
 
@@ -549,6 +676,9 @@
         UPDATE DODATES D JOIN TASK T
                ON T.TASK_ID = D.TASK_ID
         SET
+        <if test="task_done != null and task_done != ''">
+            D.TASK_DONE = #{task_done},
+        </if>
         D.DO_DATE = #{new_do_date},
         D.TASK_ORDER = #{new_order_idx}
         WHERE 1=1
@@ -794,6 +924,14 @@
         WHERE 1=1
         AND TASK_ID = #{task_id}
         AND DO_DATE = #{do_date}
+    </select>
+
+    <select id="isEveryTaskCompleted" parameterType="Long" resultType="int">
+        SELECT COUNT(*)
+        FROM TASK
+        WHERE 1=1
+        AND WORK_ID = #{work_id}
+        AND TASK_STATUS != 2
     </select>
 
 </mapper>

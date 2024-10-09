@@ -29,6 +29,7 @@
                 <li class="side-item" data-side="delegation">DELEGATION</li>
                 <li class="side-item" data-side="plan">PLAN</li>
                 <li class="side-item" data-side="completed">COMPLETED</li>
+                <li class="side-item" data-side="completedW">COMPLETED(work)</li>
             </ul>
 
             <!-- User name section -->
@@ -86,6 +87,10 @@
                                 <label for="taskName">Task:</label>
                                 <input type="text" id="taskName" placeholder="Select a task to view its detail.">
                             </div>
+                            <div class="input-group hidden">
+                                <label for="workName">Work:</label>
+                                <input type="text" id="workNameInput">
+                            </div>
                             <div class="input-group">
                                 <label for="categoryName">Category:</label>
                                 <select id="categoryName">
@@ -108,7 +113,7 @@
                                 </div>
                             </div>
                             <div class="input-group">
-                                <label>Status:</label>
+                                <label for="taskStatus">Status:</label>
                                 <select id="taskStatus" name="status">
                                     <option value="" disabled selected class="select-placeholder">Select a status</option>
                                     <!--<option value="0">Not Started</option>-->
@@ -120,7 +125,16 @@
                                     <option value="6">Plan</option>
                                 </select>
                             </div>
-                            <div class="input-group delegation" style="display: none;">
+                            <div class="input-group hidden">
+                                <label for="workStatus">Status:</label>
+                                <select id="workStatus" name="status">
+                                    <option value="" disabled selected class="select-placeholder">Select a status</option>
+                                    <!--<option value="0">Not Started</option>-->
+                                    <option value="1">Default</option>
+                                    <option value="2">Completed</option>
+                                </select>
+                            </div>
+                            <div class="input-group delegation hidden">
                                 <label for="userDelegated">Delegated to:</label>
                                 <select id="userDelegated">
                                 </select>
