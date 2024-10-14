@@ -116,8 +116,11 @@ public class TaskhubService {
         return taskhubRepository.findCompletedTasksByWork(getLoginIdDTO().getUser_id());
     }
 
-    public List<TaskhubDTO> findWorks() {
-        return taskhubRepository.findWorks(getLoginIdDTO().getUser_id());
+    public List<TaskhubDTO> findWorks(String categoryId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("user_id", getLoginIdDTO().getUser_id());
+        params.put("category_id", categoryId);
+        return taskhubRepository.findWorks(params);
     }
 
     public List<TaskhubDTO> findUsers() {
@@ -170,7 +173,25 @@ public class TaskhubService {
     }
 
     public void updateTask(TaskhubDTO taskDTO) {
-        System.out.println("task modify, not done!! task_id:"+taskDTO.getTask_id()+"/do_date:"+taskDTO.getDo_date()+",task_done:"+taskDTO.getTask_done());
+        if(taskDTO.getWork_id() != null) {
+            List<Long> subTasks = taskhubRepository.findSubTasks(taskDTO.getTask_id());
+            TaskhubDTO subTaskDTO = new TaskhubDTO();
+            subTaskDTO.setWork_id(taskDTO.getWork_id());
+            for(Long subTaskId : subTasks) {
+                System.out.println(",:"+subTaskId);
+                subTaskDTO.setTask_id(String.valueOf(subTaskId));
+                taskhubRepository.updateTask(subTaskDTO);
+            }
+        } else if(taskDTO.getCategory_id() != null) {
+            List<Long> subTasks = taskhubRepository.findSubTasks(taskDTO.getTask_id());
+            TaskhubDTO subTaskDTO = new TaskhubDTO();
+            subTaskDTO.setCategory_id(taskDTO.getCategory_id());
+            for(Long subTaskId : subTasks) {
+                System.out.println(",:"+subTaskId);
+                subTaskDTO.setTask_id(String.valueOf(subTaskId));
+                taskhubRepository.updateTask(subTaskDTO);
+            }
+        }
         taskhubRepository.updateTask(taskDTO);
     }
 
@@ -189,6 +210,16 @@ public class TaskhubService {
     }
 
     public void updateWork(TaskhubDTO taskDTO) {
+        if(taskDTO.getCategory_id() != null) {
+            List<Long> tasksUnderWork = taskhubRepository.findTasksUnderWork(Long.valueOf(taskDTO.getWork_id()));
+            TaskhubDTO tasksUnderWorkDTO = new TaskhubDTO();
+            tasksUnderWorkDTO.setCategory_id(taskDTO.getCategory_id());
+            for(Long taskId : tasksUnderWork) {
+                System.out.println("updateWork:"+taskId);
+                tasksUnderWorkDTO.setTask_id(String.valueOf(taskId));
+                taskhubRepository.updateTask(tasksUnderWorkDTO);
+            }
+        }
         taskhubRepository.updateWork(taskDTO);
     }
 
@@ -255,7 +286,7 @@ public class TaskhubService {
         try {
             String taskId = taskDTO.getTask_id();
             if(taskDTO.getTask_status() != null) {
-                System.out.println("taskDTO.getTask_status() != null");
+//                System.out.println("taskDTO.getTask_status() != null");
                 Map<String, Object> params = new HashMap<>();
                 params.put("task_status", taskDTO.getTask_status());
                 params.put("task_id", taskId);
@@ -278,7 +309,7 @@ public class TaskhubService {
                     taskhubRepository.deleteDoDatesByTaskId(taskId); // 기존 DODATES 삭제
 
                     // Update new DO_DATE TASK_ORDER
-                    System.out.println(taskDTO.getNew_do_date()+"/"+taskDTO.getNew_order_idx());
+//                    System.out.println(taskDTO.getNew_do_date()+"/"+taskDTO.getNew_order_idx());
                     taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
 
                     String taskOrder = taskDTO.getNew_order_idx();
@@ -288,7 +319,7 @@ public class TaskhubService {
                     params3.put("do_date", taskDTO.getNew_do_date());
                     params3.put("task_order", taskOrder);
                     params3.put("task_done", taskDone);
-                    System.out.println("!!!"+params3);
+//                    System.out.println("!!!"+params3);
                     taskhubRepository.insertDoDate(params3);
                     return;
                 }

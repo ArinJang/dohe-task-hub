@@ -150,9 +150,10 @@ public class TaskhubController {
         return taskhubService.findCompletedTasksByWork();
     }
 
-    @GetMapping("/works")
-    public List<TaskhubDTO> getWorks() {
-        return taskhubService.findWorks();
+    @GetMapping("/works/{categoryId}")
+    public List<TaskhubDTO> getWorks(@PathVariable("categoryId") String categoryId) {
+        System.out.println("getWorks cat id: " + categoryId);
+        return taskhubService.findWorks(categoryId);
     }
 
     @GetMapping("/users")

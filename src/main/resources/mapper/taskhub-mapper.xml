@@ -302,7 +302,7 @@
         TASK T LEFT JOIN WORK W ON T.WORK_ID = W.WORK_ID
         WHERE 1=1
         AND T.USER_ID = #{user_id}
-        AND W.WORK_STATUS = 1
+        AND (W.WORK_STATUS != 2 OR W.WORK_STATUS IS NULL)
         <if test="category_id == null">
             AND T.WORK_ID IS NOT NULL
         </if>
@@ -328,7 +328,7 @@
         WORK W LEFT JOIN TASK T ON W.WORK_ID = T.WORK_ID
         WHERE T.TASK_ID IS NULL -- TASK가 없는 WORK만 선택
         AND W.USER_ID = #{user_id}
-        AND W.WORK_STATUS = 1
+        AND (W.WORK_STATUS != 2 OR W.WORK_STATUS IS NULL)
         <if test="category_id != null">
             AND (W.CATEGORY_ID = #{category_id} OR T.CATEGORY_ID = #{category_id})
         </if>
@@ -394,6 +394,9 @@
         FROM WORK W
         WHERE 1=1
         AND W.USER_ID = #{user_id}
+        <if test="category_id != 'null' and category_id != null and category_id != '' and category_id != 'undefined'">
+            AND W.CATEGORY_ID = #{category_id}
+        </if>
         ORDER BY W.WORK_ID;
     </select>
 
@@ -497,35 +500,80 @@
     </select>
 
     <select id="findByStatus" parameterType="taskhubdto" resultType="taskhubdto">
+        <!--<select id="findByStatus" parameterType="taskhubdto" resultType="taskhubdto">
+            SELECT
+            T.TASK_ID,
+            T.TASK_CONTENT,
+            T.USER_ID,
+            COALESCE(CONCAT('(', W.WORK_NAME, ')'), '') AS WORK_NAME,
+            DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+            CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
+            D.DO_DATE,
+            D.TASK_DONE,
+            T.TASK_STATUS,
+            CASE WHEN T.PARENT_TASK IS NOT NULL THEN
+            (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+            ELSE '0'
+            END AS PARENT_TASK_CONTENT,
+            CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
+            ELSE 0
+            END AS IS_OVERDUE
+            FROM TASK T     RIGHT JOIN DODATES D ON T.TASK_ID = D.TASK_ID
+            LEFT JOIN  WORK W    ON T.WORK_ID = W.WORK_ID
+            WHERE
+            1=1
+            <include refid="sessionUserId"/>
+            <if test="task_status == 2">
+                AND T.TASK_STATUS = #{task_status}
+            </if>
+            <if test="task_status != 2">
+                AND T.TASK_STATUS = #{task_status}
+                AND D.DO_DATE LIKE '9999-01-%'
+            </if>
+            ORDER BY
+            <if test="task_status == 2">
+                T.LAST_MODIFIED DESC,
+            </if>
+            D.TASK_ORDER;
+        </select>
+-->
         SELECT
-        T.TASK_ID,
-        T.TASK_CONTENT,
-        T.USER_ID,
-        COALESCE(CONCAT('(', W.WORK_NAME, ')'), '') AS WORK_NAME,
-        DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
-        CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
-        D.DO_DATE,
-        D.TASK_DONE,
-        T.TASK_STATUS,
-        CASE WHEN T.PARENT_TASK IS NOT NULL THEN
-        (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
-        ELSE '0'
-        END AS PARENT_TASK_CONTENT,
-        CASE WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
-             ELSE 0
-             END AS IS_OVERDUE
-        FROM TASK T     RIGHT JOIN DODATES D ON T.TASK_ID = D.TASK_ID
-                        LEFT JOIN  WORK W    ON T.WORK_ID = W.WORK_ID
+            T.TASK_ID,
+            T.TASK_CONTENT,
+            T.USER_ID,
+            COALESCE(CONCAT('(', W.WORK_NAME, ')'), '') AS WORK_NAME,
+            DATE_FORMAT(T.CREATE_DATE, '%Y-%m-%d') AS CREATE_DATE,
+            CONCAT('- ', DATE_FORMAT(T.DUE_DATE, '%m/%d')) AS DUE_DATE,
+            D.DO_DATE,
+            D.TASK_DONE,
+            T.TASK_STATUS,
+            CASE
+            WHEN T.PARENT_TASK IS NOT NULL THEN (SELECT P.TASK_CONTENT FROM TASK P WHERE P.TASK_ID = T.PARENT_TASK)
+            ELSE '0'
+            END AS PARENT_TASK_CONTENT,
+            CASE
+            WHEN T.DUE_DATE <![CDATA[<=]]> CURDATE() AND T.TASK_STATUS NOT IN (2, 3) THEN 1
+            ELSE 0
+            END AS IS_OVERDUE,
+
+            -- task_status가 2인 경우 LAST_MODIFIED의 연-월 값을 반환
+            CASE
+            WHEN T.TASK_STATUS = 2 THEN DATE_FORMAT(T.LAST_MODIFIED, '%Y-%m')
+            ELSE NULL
+            END AS LAST_MODIFIED_MONTH
+
+        FROM TASK T
+        RIGHT JOIN DODATES D ON T.TASK_ID = D.TASK_ID
+        LEFT JOIN WORK W ON T.WORK_ID = W.WORK_ID
         WHERE
         1=1
         <include refid="sessionUserId"/>
-        <if test="task_status == 2">
+
+        -- 필터링 로직
+        <if test="task_status != null">
             AND T.TASK_STATUS = #{task_status}
         </if>
-        <if test="task_status != 2">
-            AND T.TASK_STATUS = #{task_status}
-            AND D.DO_DATE LIKE '9999-01-%'
-        </if>
+
         ORDER BY
         <if test="task_status == 2">
             T.LAST_MODIFIED DESC,
@@ -570,9 +618,17 @@
             </if>
             <if test="work_id != null and work_id != ''">
                 WORK_ID = #{work_id},
+                CATEGORY_ID = (SELECT CATEGORY_ID FROM WORK WHERE WORK_ID = #{work_id}),
+            </if>
+            <if test="work_id == ''">
+                WORK_ID = NULL,
+                CATEGORY_ID = NULL,
             </if>
             <if test="category_id != null and category_id != ''">
                 CATEGORY_ID = #{category_id},
+            </if>
+            <if test="category_id == ''">
+                CATEGORY_ID = NULL,
             </if>
             <if test="assignee_id != null">
                 ASSIGNEE_ID = #{assignee_id},
@@ -934,5 +990,16 @@
         AND TASK_STATUS != 2
     </select>
 
+    <select id="findSubTasks" parameterType="String" resultType="Long">
+        SELECT TASK_ID
+          FROM TASK
+         WHERE PARENT_TASK = #{task_id}
+    </select>
+
+    <select id="findTasksUnderWork" parameterType="Long" resultType="Long">
+        SELECT TASK_ID
+        FROM TASK
+        WHERE WORK_ID = #{work_id}
+    </select>
 </mapper>
 

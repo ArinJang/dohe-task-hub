@@ -312,11 +312,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateNavigationBar(category) {
         navigationBar.innerHTML = '';
-//        if (category === 'work') {
-//            workInputArea.style.display = 'flex';
-//        } else {
-//            workInputArea.style.display = 'none';
-//        }
         if (category === 'week') {
             updateWeekDates();
             taskInputArea.style.display = 'flex';
@@ -380,16 +375,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             navigationBar.appendChild(addButton);
-        } else {
-//            const items = categoriesList;
-//            items.forEach(item => {
-//                const navItem = createNavItem(item, category);
-//                navItem.addEventListener('click', function() {
-//                    setActiveNavItem(navItem);
-//                    updateContent(category, item);
-//                });
-//                navigationBar.appendChild(navItem);
-//            });
         }
     }
 
@@ -448,8 +433,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 hideDone();
                 break;
             case 'completed':
-                hideForm();
-                showDone();
+                document.querySelector('.do-dates-group').style.display = 'none';
+                taskForm.style.display = 'none';
+                daysList.style.display = 'block';
+                hideDone();
                 break;
             case 'completedW':
                 fetchTasksByWork(null, true);
@@ -458,6 +445,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelector('.do-dates-group').style.display = 'none';
                 taskForm.style.display = 'none';
                 daysList.style.display = 'block';
+                hideDone();
+                break;
+            case 'routine':
+//                showForm();
+//                document.querySelector('.do-dates-group').style.display = 'none';
+//                taskForm.style.display = 'none';
+//                daysList.style.display = 'block';
+                  hideForm();
                 hideDone();
                 break;
             default:
@@ -512,8 +507,10 @@ document.addEventListener('DOMContentLoaded', function() {
             updateWeekDates();
         }
 //        sessionStorage.setItem('baseDate', baseDate);
-        fetchTasksByDateRange(); // Call this first
-        renderDayTitlesList(); // Ensure days list is rendered first
+        setSide('week'); // Default category
+        clickSideBar('week', true);
+//        fetchTasksByDateRange(); // Call this first
+//        renderDayTitlesList(); // Ensure days list is rendered first
     });
 
     document.getElementById('next-week').addEventListener('click', function() {
@@ -532,8 +529,10 @@ document.addEventListener('DOMContentLoaded', function() {
             updateWeekDates();
         }
 //        sessionStorage.setItem('baseDate', baseDate);
-        fetchTasksByDateRange(); // Call this first
-        renderDayTitlesList(); // Ensure days list is rendered first
+        setSide('week'); // Default category
+        clickSideBar('week', true);
+//        fetchTasksByDateRange(); // Call this first
+//        renderDayTitlesList(); // Ensure days list is rendered first
     });
 
     function initialize() {
@@ -587,7 +586,8 @@ document.addEventListener('DOMContentLoaded', function() {
             originalValues.taskName = taskNameInput.value; // Store the original value
 
             if(task.parent_task_id != '0') { // 서브태스크인 경우
-//            console.log('sub!!! ',mainTaskId);
+//            console.log('sub!!! ',document.getElementById('categoryName'));
+//                label.classList.toggle('disabled-label', !enable);
                 sessionStorage.setItem('mainID', mainTaskId);
                 subTaskMemoUpdateParentId = task.parent_task_id;
                 document.querySelector('.main-task').style.display = 'flex';
@@ -615,6 +615,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 mainTaskSpan.addEventListener('click', handleClick); // 새로운 리스너 등록
                                 mainTaskSpan.dataset.clickHandlerRegistered = 'true'; // 등록된 상태 저장
                             }
+
+                            // 서브태스크는 category, work 지정 불가.
+                            document.getElementById('categoryName').disabled = true;
+                            document.getElementById('workName').disabled = true;
+                            document.querySelector('label[for="categoryName"]').classList.toggle('disabled-label', true);
+                            document.getElementById('workNameLabel').classList.toggle('disabled-label', true);
                         } else {
                             mainTaskSpan.innerText = '';
                             console.error('Task content not found for taskId:', taskId);
@@ -667,14 +673,14 @@ document.addEventListener('DOMContentLoaded', function() {
             taskDoneSelect.value = task.task_done || '';
             originalValues.taskDone = taskDoneSelect.value; // Store the original value
 
-        categoryNameInput.removeEventListener('change', handleWorkDetailChange);
-        taskNameInput.removeEventListener('change', handleDetailChange);
-        workNameInput.removeEventListener('change', handleDetailChange);
-        dueDateInput.removeEventListener('change', handleDetailChange);
-        taskMemoInput.removeEventListener('change', handleDetailChange);
-        taskStatusSelect.removeEventListener('change', handleDetailChange);
-        userDelegatedSelect.removeEventListener('change', handleDetailChange);
-        taskDoneSelect.removeEventListener('change', handleDetailChange);
+            categoryNameInput.removeEventListener('change', handleWorkDetailChange);
+            taskNameInput.removeEventListener('change', handleDetailChange);
+            workNameInput.removeEventListener('change', handleDetailChange);
+            dueDateInput.removeEventListener('change', handleDetailChange);
+            taskMemoInput.removeEventListener('change', handleDetailChange);
+            taskStatusSelect.removeEventListener('change', handleDetailChange);
+            userDelegatedSelect.removeEventListener('change', handleDetailChange);
+            taskDoneSelect.removeEventListener('change', handleDetailChange);
 
             taskNameInput.addEventListener('change', handleDetailChange);
             categoryNameInput.addEventListener('change', handleDetailChange);
@@ -703,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteButton.onclick = (event) => {
                 event.preventDefault(); // Prevent default form submission
                 deleteConfirmationModal.style.display = 'block';
-                console.log('Temporary delete button click handler for work detail');
+//                console.log('Temporary delete button click handler for work detail');
             };
         } else {
             console.error('Invalid task object:', task);
@@ -803,14 +809,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         switch (id) {
             case 'taskName':
-            case 'categoryName':
             case 'workName': // task detail에서 select로 수정하는 경우
 //            case 'workNameInput': // work detail에서 input으로 수정하는 경우
             case 'dueDate':
                 currentValue = event.target.value;
                 if (currentValue !== originalValues[id]) {
+                    updateTask(id);
 //                    console.log('handleDetailChange~ currentValue: ',currentValue,' originalValues[id]: ', originalValues[id]);
-                    saveChangesButton.click();
+//                    saveChangesButton.click();
+                }
+                break;
+            case 'categoryName':
+                currentValue = event.target.value;
+                if (currentValue !== originalValues[id]) {
+                    if(document.getElementById('workName').value != null && document.getElementById('workName').value != ''){
+                        showNotification('Remove the work first!', 'error');
+                        fetchTaskDetails(sessionStorage.getItem('detailDoDate'));
+                        return;
+                    }
+                    updateTask(id);
                 }
                 break;
             case 'taskMemo':
@@ -836,16 +853,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3)) {
                         document.querySelector('.do-dates-group').style.display = 'flex';
                         if(currentValue == 2){
-                            console.log('1currentValue',currentValue);
                             updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, null, sessionStorage.getItem('detailID'), currentValue, "2");
                         } else {
-                            console.log('2currentValue',currentValue,',',new Date().toISOString().split('T')[0]);
                             updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue, null);
                         }
 
                     } else if((originalValues[id] != 4 && originalValues[id] != 5 && originalValues[id] != 6)
                         && currentValue == 2 && doDatesArray.length === 0){
-                        console.log('3currentValue',currentValue,',',new Date().toISOString().split('T')[0]);
                         updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, null, sessionStorage.getItem('detailID'), currentValue, "2");
                     } else if(currentValue == 4) {
                         document.querySelector('.do-dates-group').style.display = 'none';
@@ -857,14 +871,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.querySelector('.do-dates-group').style.display = 'none';
                         updateDoDates(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
                     } else {
-                        saveChangesButton.click();
+//                        saveChangesButton.click();
+                        updateTask(id);
                     }
                     if (originalValues[id] == 2){
                         updateDoDateTaskDone('Undone',false);
                     }
-//                    if(currentValue != 5) {
-//
-//                    }
                 }
                 break;
             case 'userDelegated':
@@ -1036,9 +1048,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const workListItem = event.target.closest('li.work-item');
         if (workListItem) {
             const workId = workListItem.getAttribute('data-work-id');
-            sessionStorage.setItem('detailWorkID', workId);
-            fetchWorkDetails();
-            return;
+            if (workId.includes('-')) return;
+            else {
+                sessionStorage.setItem('detailWorkID', workId);
+                fetchWorkDetails();
+                return;
+            }
         }
     });
 
@@ -1209,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if(orderInCertainStatus == 2) {
                         showNotification('A completed task cannot be moved!', 'error');
                         console.log('orderInCertainStatus!=null orderInCertainStatus == 2!! return');
-                        fetchStatus(2);
+                        fetchCompletedTasks();
                         return;
                     }
                     console.log('orderInCertainStatus!=null >',orderInCertainStatus);
@@ -1267,7 +1282,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
     function renderDayTasksList(day) {
         const taskListForDay = document.getElementById(`${day}Tasks`);
         if (!taskListForDay) {
@@ -1299,7 +1313,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // tasksByWork[workName]에서 tasks 배열을 가져와 작업을 렌더링
         const tasksForWork = tasksByWork[workName]?.tasks || [];
-
         if (tasksForWork.length > 0) {
             // task_id가 null이 아닌 task들만 필터링
             const filteredTasks = tasksForWork.filter(task => task.task_id !== null);
@@ -1371,8 +1384,10 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'onhold':
             case 'delegation':
             case 'plan':
-            case 'completed':
                 fetchStatus(statusMap[selectedSide]);
+                break;
+            case 'completed':
+                fetchCompletedTasks();
                 break;
 //            case 'completedW':
 //                fetchTasksByWork();
@@ -1383,12 +1398,15 @@ document.addEventListener('DOMContentLoaded', function() {
 //                fetchTasksByWork();
                 putWorksToSelect();
                 break;
+            case 'routine':
+                break;
             default:
                 break;
         }
     }
 
     function fetchTaskDetails(pDoDate) {
+        enableTaskDetailContent();
         addSubTaskButton.disabled = false;
         addDateButton.disabled = false;
         const taskId = sessionStorage.getItem('detailID');
@@ -1414,6 +1432,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (text) {
                     try {
                         const data = JSON.parse(text); // Parse text as JSON
+                        putWorksToSelect(data.category_id, data.work_id);
                         showTaskDetail(data);
                         if(data.task_status == 4 ||data.task_status == 5 ||data.task_status == 6){
                             document.querySelector('.do-dates-group').style.display = 'none';
@@ -1458,17 +1477,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         const data = JSON.parse(text); // Parse text as JSON'
 //                        console.log(data.work_name);
                         showWorkDetail(data);
-//                        if(data.task_status == 4 ||data.task_status == 5 ||data.task_status == 6){
-//                            document.querySelector('.do-dates-group').style.display = 'none';
-//                        } else {
-//                            document.querySelector('.do-dates-group').style.display = 'flex';
-//                        }
-//                        if(data.task_status == 5){
-//                            document.querySelector('.input-group.delegation').style.display = 'flex';
-////                            putUsersToSelect();
-//                        } else {
-//                            document.querySelector('.input-group.delegation').style.display = 'none';
-//                        }
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
                     }
@@ -1481,21 +1489,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function clearTaskDetailContent() {
         const taskDetailContent = document.getElementById('taskDetailContent');
+
+        // input 요소 초기화 및 비활성화
         const inputs = taskDetailContent.querySelectorAll('input[type="text"], input[type="date"], textarea');
         inputs.forEach(input => {
             input.value = ''; // 입력 필드 값 초기화
+            input.disabled = true; // 입력 필드 비활성화
+            input.classList.add('disabled-style'); // CSS 클래스 추가
+            if (input.tagName.toLowerCase() === 'textarea') {
+                input.style.height = '100px'; // textarea 높이 초기화
+            }
         });
 
+        // span 요소 내용 초기화
+        const spans = taskDetailContent.querySelectorAll('span');
+        spans.forEach(span => {
+            span.textContent = ''; // span의 내용 초기화
+            span.classList.add('disabled-style'); // CSS 클래스 추가
+        });
+
+        // 서브 태스크 컨테이너 초기화
+        const subTasksContainer = document.getElementById('subTasksContainer');
+        subTasksContainer.innerHTML = '';
+
+        // select 요소 초기화 및 비활성화
         const selects = taskDetailContent.querySelectorAll('select');
         selects.forEach(select => {
             select.selectedIndex = 0; // 기본 옵션으로 설정
+            select.disabled = true; // select 요소 비활성화
+            select.classList.add('disabled-style'); // CSS 클래스 추가
         });
 
-//        const radios = taskDetailContent.querySelectorAll('input[type="radio"]');
-//        radios.forEach(radio => {
-//            radio.checked = false; // 선택 해제
-//        });
+        // button 요소 비활성화
+        const buttons = taskDetailContent.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.disabled = true; // 버튼 비활성화
+            button.classList.add('disabled-style'); // CSS 클래스 추가
+        });
     }
+    function enableTaskDetailContent() {
+        const taskDetailContent = document.getElementById('taskDetailContent');
+
+        // input 요소 활성화
+        const inputs = taskDetailContent.querySelectorAll('input[type="text"], input[type="date"], textarea');
+        inputs.forEach(input => {
+            input.disabled = false; // 입력 필드 활성화
+            input.classList.remove('disabled-style'); // 비활성화 CSS 클래스 제거
+            if (input.tagName.toLowerCase() === 'textarea') {
+                input.style.height = ''; // textarea 높이 원상 복구
+            }
+        });
+
+        // span 요소 스타일 복구
+        const spans = taskDetailContent.querySelectorAll('span');
+        spans.forEach(span => {
+            span.classList.remove('disabled-style'); // 비활성화 CSS 클래스 제거
+        });
+
+        // select 요소 활성화
+        const selects = taskDetailContent.querySelectorAll('select');
+        selects.forEach(select => {
+            select.disabled = false; // select 요소 활성화
+            select.classList.remove('disabled-style'); // 비활성화 CSS 클래스 제거
+        });
+
+        // button 요소 활성화
+        const buttons = taskDetailContent.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.disabled = false; // 버튼 활성화
+            button.classList.remove('disabled-style'); // 비활성화 CSS 클래스 제거
+        });
+    }
+
 
     function fetchTasksByDateRange() {
         const storedBaseDate = sessionStorage.getItem('baseDate');
@@ -1602,7 +1667,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchTasksByWork(categoryId, completed) {
-    console.log("fetchTasksByWork catId: ",categoryId);
+//    console.log("fetchTasksByWork catId: ",categoryId);
         let url;
         if (categoryId == undefined || categoryId == null) {
             if(completed == undefined || completed == null){
@@ -1643,6 +1708,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
             renderWorkTitlesList();
             Object.keys(tasksByWork).forEach(workName => renderWorkTasksList(workName));
+//                renderWorkTasksList();
+            })
+            .catch(error => console.error('Error fetching tasks:', error));
+    }
+
+    function fetchCompletedTasks() {
+//        taskList.innerHTML = '';
+        fetch('/api/findByStatus/2')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!Array.isArray(data)) {
+                    throw new Error('Fetched data is not an array');
+                }
+
+            tasks = data;
+            // tasksByWork를 work_name을 키로 하고 work_id 및 tasks 배열을 포함하는 구조로 만듦
+            tasksByWork = tasks.reduce((acc, task) => {
+                const month = task.last_modified_month;
+                const workId = task.last_modified_month;
+
+                if (!acc[month]) {
+                    acc[month] = {
+                        work_id: workId,
+                        tasks: []
+                    };
+                }
+                acc[month].tasks.push(task);
+                return acc;
+            }, {});
+
+            renderWorkTitlesList(true);
+            Object.keys(tasksByWork).forEach(month => renderWorkTasksList(month));
 //                renderWorkTasksList();
             })
             .catch(error => console.error('Error fetching tasks:', error));
@@ -1705,7 +1807,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     // 워크 제목 만듦
-    function renderWorkTitlesList() {
+    function renderWorkTitlesList(completed) {
         daysList.innerHTML = '';
 
         Object.keys(tasksByWork).forEach(workName => {
@@ -1722,7 +1824,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Create the strong text element for workName
             const workTitle = document.createElement('p');
-            if(workId == 999999) {
+            if(workId == 999999 || completed) {
                 workTitle.innerHTML = `<strong></strong> <strong class="custom-day-font">${workName}</strong> <strong></strong>`;
             } else {
                 workTitle.className = 'work-title';
@@ -1730,30 +1832,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Create the edit button
-            const editBtn = document.createElement('span');
-            editBtn.textContent = '✎';
-            editBtn.className = 'work-edit-btn';
-            editBtn.addEventListener('click', function(event) {
-                event.stopPropagation();
-                let promptMessage = 'Edit work:';
-                const newName = prompt(promptMessage, workName);
-                if (newName) {
-                    saveWork(workId, newName);
-                }
-            });
-            const deleteBtn = document.createElement('span');
-            deleteBtn.textContent = '✖';
-            deleteBtn.className = 'work-delete-btn';
-            deleteBtn.addEventListener('click', function(event) {
-                event.stopPropagation();
-//                const confirmButton = document.getElementById('confirmDeleteButtonWork');
-                document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-id', workId);
-//                document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-name', workName);
-                document.getElementById('deleteMessage').innerHTML = `Delete this work?<br>Tasks' work will be set to null.`;
-                deleteConfirmationModalWork.style.display = 'block';
-            });
-            workTitle.appendChild(editBtn);
-            workTitle.appendChild(deleteBtn);
+            if(!completed){
+                const editBtn = document.createElement('span');
+                editBtn.textContent = '✎';
+                editBtn.className = 'work-edit-btn';
+                editBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    let promptMessage = 'Edit work:';
+                    const newName = prompt(promptMessage, workName);
+                    if (newName) {
+                        saveWork(workId, newName);
+                    }
+                });
+                const deleteBtn = document.createElement('span');
+                deleteBtn.textContent = '✖';
+                deleteBtn.className = 'work-delete-btn';
+                deleteBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+    //                const confirmButton = document.getElementById('confirmDeleteButtonWork');
+                    document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-id', workId);
+    //                document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-name', workName);
+                    document.getElementById('deleteMessage').innerHTML = `Delete this work?<br>Tasks' work will be set to null.`;
+                    deleteConfirmationModalWork.style.display = 'block';
+                });
+                workTitle.appendChild(editBtn);
+                workTitle.appendChild(deleteBtn);
+            }
             li.appendChild(workTitle);
 //            li.appendChild(editBtn);
 //            li.appendChild(deleteBtn);
@@ -1874,14 +1978,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
 //            console.log('Success:', data);
-            //successModal.style.display = 'block';
             showNotification('Successfully updated!', 'success');
-//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//            }else{
-//                fetchTasksByDay();
-//            }
-//            fetchMainTaskList();
             fetchTaskDetails(sessionStorage.getItem('detailDoDate'));
             clickSideBar(selectedSide, false);
         })
@@ -1891,6 +1988,59 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    function updateTask(dataToChange) {
+        var taskData = {};
+        switch (dataToChange) {
+            case 'taskName':
+                taskData = {task_content: document.getElementById(dataToChange).value}
+                break;
+            case 'categoryName':
+                taskData = {category_id: document.getElementById(dataToChange).value}
+                break;
+            case 'workName':
+                taskData = {work_id: document.getElementById(dataToChange).value}
+                break;
+            case 'dueDate':
+                taskData = {due_date: document.getElementById(dataToChange).value}
+                break;
+            case 'taskStatus':
+                taskData = {task_status: document.getElementById(dataToChange).value}
+                break;
+            default: break;
+        }
+//        const taskData = { // Collect form data
+//            task_content: document.getElementById('taskName').value,
+//            category_id: document.getElementById('categoryName').value,
+//            work_id: document.getElementById('workName').value,
+//            due_date: document.getElementById('dueDate').value,
+////            do_dates: datesString,
+////            task_status: document.querySelector('input[name="status"]:checked').value,
+//            task_status: document.getElementById('taskStatus').value
+////            task_done: document.getElementById('taskDone').value,
+////            do_date: sessionStorage.getItem('detailDoDate'),//........
+////            task_memo: document.getElementById('taskMemo').value
+//        };
+
+        const idForDetail = sessionStorage.getItem('detailID');
+        fetch(`/api/updateTask/${idForDetail}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(taskData)
+        })
+        .then(response => response.json())
+        .then(data => {
+//            console.log('Success:', data);
+            showNotification('Successfully updated!', 'success');
+            fetchTaskDetails(sessionStorage.getItem('detailDoDate'));
+            clickSideBar(selectedSide, false);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            // Handle error (e.g., show an error message)
+        });
+    }
 
     function memoChange() {
         const taskData = {
@@ -2007,7 +2157,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             showNotification('Work updated!', 'success');
             fetchWorkDetails();
-            clickSideBar('work', true);
+            clickSideBar(selectedSide, false);
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -2027,7 +2177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('Deleted:', data);
             showNotification('Work deleted.', 'delete');
-            clickSideBar('work', true);
+            clickSideBar(selectedSide, true);
             deleteConfirmationModalWork.style.display = 'none';
         })
         .catch((error) => {
@@ -2055,16 +2205,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-//    document.getElementById('deleteConfirmationButton').addEventListener('click', (event) => {
-//        event.preventDefault(); // Prevent the form from submitting the default way
-//        deleteConfirmationModal.style.display = 'block';
-//    });
-
-//    document.getElementById('deleteConfirmationButtonWork').addEventListener('click', (event) => {
-//        event.preventDefault(); // Prevent the form from submitting the default way
-//        deleteConfirmationModalWork.style.display = 'block';
-//    });
-
     document.getElementById('confirmDeleteButton').addEventListener('click', () => {
         const curId = sessionStorage.getItem('detailID');
 //        console.log('curId? delete: ',curId);
@@ -2084,13 +2224,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('Task deleted.', 'delete');
 
                 sessionStorage.setItem('detailID', '');
-//                if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//                    fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//                }else{
-//                    fetchTasksByDay();
-//                }
-//                fetchMainTaskList();
-
                 clickSideBar(selectedSide, true);
             })
             .catch((error) => {
@@ -2146,9 +2279,9 @@ document.addEventListener('DOMContentLoaded', function() {
             categorySelect.innerHTML = '';
             categorySelect.innerHTML = '<option value="" selected class="select-placeholder">Select a category</option>';
 
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            categorySelect.appendChild(defaultOption);
+//            const defaultOption = document.createElement('option');
+////            defaultOption.value = '';
+//            categorySelect.appendChild(defaultOption);
 
             categories.forEach(category => {
                 const option = document.createElement('option');
@@ -2385,11 +2518,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 sessionStorage.setItem('nav', clickedCat);
 //                selectedDate = date;
                 sessionStorage.setItem('clickedCat', clickedCat);
-//                document.querySelectorAll('.nav-item').forEach(item => {
-//                    item.classList.remove('active');
-//                });
-//                target.classList.add('active'); // 배경색 변경
-//                fetchTasksByWork();
             }
         }
     }
@@ -2483,14 +2611,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2500);
     }
 
-    // Alternatively, if you need more control, use this:
     function calcHeight(textarea) {
-        textarea.style.height = "auto"; // Reset height to auto to recalculate
-        textarea.style.height = textarea.scrollHeight + "px"; // Set height based on the scrollHeight
+        console.log('calcHeight!');
+        const scrollTop = textarea.scrollTop; // 현재 스크롤 위치 저장
+
+        // 높이 자동 조정
+        textarea.style.height = "auto"; // 높이 재설정
+        textarea.style.height = textarea.scrollHeight + "px"; // 스크롤 높이에 맞춰 설정
+
+        // 스크롤 위치 복구
+        textarea.scrollTop = scrollTop;
     }
 
-    taskMemoContent.addEventListener("input", () => {
-        calcHeight(taskMemoContent);
+    // textarea에서 엔터 키 또는 한 줄이 넘어가는 상황을 감지
+    taskMemoContent.addEventListener("input", (e) => {
+        const currentLineCount = taskMemoContent.value.split("\n").length;
+        const lineHeight = parseFloat(window.getComputedStyle(taskMemoContent).lineHeight);
+        const maxVisibleLines = Math.floor(taskMemoContent.clientHeight / lineHeight);
+
+        // 현재 스크롤 위치 저장
+        const scrollTop = taskMemoContent.scrollTop;
+        if (currentLineCount > maxVisibleLines || e.inputType === 'insertLineBreak') {
+            taskMemoContent.scrollTop = scrollTop;
+            calcHeight(taskMemoContent);
+        }
     });
 
     function createTaskItem(task, hamburgerYN, workYN) {
@@ -2565,9 +2709,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return li;
     }
 
-    function putWorksToSelect() {
+    function putWorksToSelect(categoryId, workId) {
 //        console.log('putWorksToSelect');
-        fetch('/api/works')
+        fetch(`/api/works/${categoryId}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -2582,8 +2726,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     const option = document.createElement('option');
                     option.value = work.work_id;
                     option.textContent = work.work_name;
+
+                    // 특정 workId가 있는 경우, 해당 옵션을 선택 상태로 설정
+                    if (workId != null && workId != '' && work.work_id === workId) {
+                        option.selected = true;
+                    }
                     selectElement.appendChild(option);
                 });
+
+                // workId가 null 또는 빈 문자열일 경우 빈 옵션을 선택 상태로 유지
+                if (workId === null || workId === '') {
+                    selectElement.value = null;  // 기본 빈 옵션 선택
+                }
             })
             .catch(error => console.error('Error fetching works:', error));
     }
@@ -2653,5 +2807,4 @@ document.addEventListener('DOMContentLoaded', function() {
         // 모든 검증 통과 시 폼 제출
         document.getElementById('addUserForm').submit();
     }
-
 });

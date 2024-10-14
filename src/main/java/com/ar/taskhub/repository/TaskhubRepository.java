@@ -48,8 +48,8 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findCompletedTasksByWork", user_id);
     }
 
-    public List<TaskhubDTO> findWorks(Long user_id) {
-        return sql.selectList("Taskhub.findWorks", user_id);
+    public List<TaskhubDTO> findWorks(Map<String, Object> params) {
+        return sql.selectList("Taskhub.findWorks", params);
     }
 
     public List<TaskhubDTO> findUsers(Long user_id) {
@@ -236,5 +236,12 @@ public class TaskhubRepository {
 
     public int isEveryTaskCompleted(Long workId) {
         return sql.selectOne("Taskhub.isEveryTaskCompleted", workId);
+    }
+
+    public List<Long> findSubTasks(String taskId) {
+        return sql.selectList("Taskhub.findSubTasks", taskId);
+    }
+    public List<Long> findTasksUnderWork(Long workId) {
+        return sql.selectList("Taskhub.findTasksUnderWork", workId);
     }
 }

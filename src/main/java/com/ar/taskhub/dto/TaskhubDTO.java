@@ -56,4 +56,7 @@ public class TaskhubDTO {
     private String parent_task_content;
     private String is_sub;
 
+    private String last_modified;
+    private String last_modified_month;
+
 }
