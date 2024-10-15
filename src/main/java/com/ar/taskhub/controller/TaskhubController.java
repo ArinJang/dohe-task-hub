@@ -53,39 +53,40 @@ public class TaskhubController {
 
     @PostMapping("/save")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> save(@RequestParam(value = "task_content", required = false) String taskContent,
+    public ResponseEntity<Map<String, String>> save(@RequestParam(value = "task_content", required = false) String taskContent,
                                                     @RequestParam(value = "work_name", required = false) String workName,
                                                     @RequestParam(value = "do_dates", required = false) String do_dates,
+                                                    @RequestParam(value = "group_content", required = false) String groupContent,
+                                                    @RequestParam(value = "routine_content", required = false) String routineContent,
                                                     @RequestParam("action") String action) {
         System.out.println(">>> TaskhubController.save 2 Action: " + action);
-//        TaskhubDTO taskhubDTO = new TaskhubDTO();
 
-        if ("TASK+".equals(action)) {
-//            workName = null;
-            taskhubService.insertTask(taskContent, do_dates,null);
-
-            // Return a JSON response
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "success");
-            response.put("message", "Task or Work saved successfully.");
-
-            return ResponseEntity.ok(response);
-        } else if ("WORK+".equals(action)) {
-//            taskContent = null;
-//            do_dates = null;
-
+        if ("TASK".equals(action)) {
+            taskhubService.insertTask(taskContent, do_dates, null);
+            return createSuccessResponse("Task or Work saved successfully.");
+        } else if ("WORK".equals(action)) {
             taskhubService.insertWork(workName);
-
-            // Return a JSON response
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "success");
-            response.put("message", "Task or Work saved successfully.");
-
-            return ResponseEntity.ok(response);
+            return createSuccessResponse("Task or Work saved successfully.");
+        } else if ("GROUP".equals(action)) {
+            taskhubService.insertRoutine(groupContent, null);
+            return createSuccessResponse("Group saved successfully.");
+        } else if ("ROUTINE".equals(action)) {
+            try {
+                taskhubService.insertRoutine(routineContent, "group");
+                return createSuccessResponse("Routine saved successfully.");
+            } catch (RuntimeException e) {
+                // 에러 발생 시 간단한 메시지로 응답
+                return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); // 메시지만 포함
+            }
         } else {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Invalid action"));
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid action"));
         }
     }
+
+    private ResponseEntity<Map<String, String>> createSuccessResponse(String message) {
+        return ResponseEntity.ok(Map.of("message", message)); // 성공 메시지만 포함
+    }
+
 
     @PostMapping("/insertCategory")
     @ResponseBody
@@ -188,6 +189,11 @@ public class TaskhubController {
         return taskhubService.findWorkById(workId);
     }
 
+    @GetMapping("/findRoutineById/{routineId}")
+    public TaskhubDTO findRoutineById(@PathVariable("routineId") String routineId) {
+        return taskhubService.findRoutineById(routineId);
+    }
+
     @PostMapping("/updateTask/{taskId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> updateTask(
@@ -259,6 +265,26 @@ public class TaskhubController {
         // Set the task ID in the DTO and update the task
         taskhubDTO.setCategory_id(Integer.valueOf(categoryId));
         taskhubService.updateCategory(taskhubDTO);
+
+        // Return a JSON response
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Task updated successfully.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/updateRoutine/{routineId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateRoutine(
+            @PathVariable("routineId") String routineId,
+            @RequestBody TaskhubDTO taskhubDTO) {
+        System.out.println(">>> TaskhubController.updateRoutine routineId: " + routineId);
+        System.out.println("TaskhubDTO: " + taskhubDTO);
+
+        // Set the task ID in the DTO and update the task
+        taskhubDTO.setRoutine_id(routineId);
+        taskhubService.updateRoutine(taskhubDTO);
 
         // Return a JSON response
         Map<String, Object> response = new HashMap<>();
@@ -522,5 +548,10 @@ public class TaskhubController {
             @PathVariable("workId") String workId) {
         boolean isCompleted = taskhubService.isEveryTaskCompleted(Long.valueOf(workId));
         return ResponseEntity.ok(isCompleted);
+    }
+
+    @GetMapping("/findRoutines")
+    public List<TaskhubDTO> findRoutines() {
+        return taskhubService.findRoutines();
     }
 }

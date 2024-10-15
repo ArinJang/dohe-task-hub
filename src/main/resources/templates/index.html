@@ -58,11 +58,19 @@
                     <form id="taskForm">
                         <div class="task-input">
                             <input type="text" id="taskInput" placeholder="Enter a task" name="task_content">
-                            <input type="submit" id="addTaskButton" value="TASK+" name="action">
+                            <input type="submit" id="addTaskButton" value="TASK" name="action">
                         </div>
                         <div class="work-input">
                             <input type="text" id="workInput" placeholder="Enter a work" name="work_name">
-                            <input type="submit" id="addWorkButton" value="WORK+" name="action">
+                            <input type="submit" id="addWorkButton" value="WORK" name="action">
+                        </div>
+                        <div class="group-input">
+                            <input type="text" id="groupInput" placeholder="Enter a group of routine" name="group_content">
+                            <input type="submit" id="addGroupButton" value="GROUP" name="action">
+                        </div>
+                        <div class="routine-input">
+                            <input type="text" id="routineInput" placeholder="Enter a routine" name="routine_content">
+                            <input type="submit" id="addRoutineButton" value="ROUTINE" name="action">
                         </div>
                     </form>
                     <ul id="assignedToMeList">
@@ -91,6 +99,10 @@
                             <div class="input-group hidden">
                                 <label for="workName">Work:</label>
                                 <input type="text" id="workNameInput">
+                            </div>
+                            <div class="input-group hidden">
+                                <label for="routineContent">Routine:</label>
+                                <input type="text" id="routineContent">
                             </div>
                             <div class="input-group">
                                 <label for="categoryName">Category:</label>
@@ -135,6 +147,81 @@
                                     <option value="2">Completed</option>
                                 </select>
                             </div>
+                            <div class="input-group hidden">
+                                <label for="routineCycle">Repeat every:</label>
+                                <select id="routineCycle" name="cycle">
+                                    <option value="" disabled selected class="select-placeholder">Select a cycle to repeat</option>
+                                    <option value="day">day</option>
+                                    <option value="week">week</option>
+                                    <option value="month">month</option>
+                                    <option value="year">year</option>
+                                </select>
+                            </div>
+                            <div class="input-group hidden" id="routineDayGroup">
+                                <label for="routineDay">Repeat on:</label>
+                                <div id="routineDateSelects">
+                                    <select id="routineMonth" name="month" style="display:none;">
+                                        <option value="" disabled selected class="select-placeholder">Select a month</option>
+                                        <option value="01">January</option>
+                                        <option value="02">February</option>
+                                        <option value="03">March</option>
+                                        <option value="04">April</option>
+                                        <option value="05">May</option>
+                                        <option value="06">June</option>
+                                        <option value="07">July</option>
+                                        <option value="08">August</option>
+                                        <option value="09">September</option>
+                                        <option value="10">October</option>
+                                        <option value="11">November</option>
+                                        <option value="12">December</option>
+                                    </select>
+                                    <select id="routineDay" name="day">
+                                        <option value="" disabled selected class="select-placeholder">Select a day of the week</option>
+                                        <option value="monday">Monday</option>
+                                        <option value="tuesday">Tuesday</option>
+                                        <option value="wednesday">Wednesday</option>
+                                        <option value="thursday">Thursday</option>
+                                        <option value="friday">Friday</option>
+                                        <option value="saturday">Saturday</option>
+                                        <option value="sunday">Sunday</option>
+                                    </select>
+                                    <select id="routineDate" name="date">
+                                        <option value="" disabled selected class="select-placeholder">Select a date</option>
+                                        <option value="01">1</option>
+                                        <option value="02">2</option>
+                                        <option value="03">3</option>
+                                        <option value="04">4</option>
+                                        <option value="05">5</option>
+                                        <option value="06">6</option>
+                                        <option value="07">7</option>
+                                        <option value="08">8</option>
+                                        <option value="09">9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                        <option value="13">13</option>
+                                        <option value="14">14</option>
+                                        <option value="15">15</option>
+                                        <option value="16">16</option>
+                                        <option value="17">17</option>
+                                        <option value="18">18</option>
+                                        <option value="19">19</option>
+                                        <option value="20">20</option>
+                                        <option value="21">21</option>
+                                        <option value="22">22</option>
+                                        <option value="23">23</option>
+                                        <option value="24">24</option>
+                                        <option value="25">25</option>
+                                        <option value="26">26</option>
+                                        <option value="27">27</option>
+                                        <option value="28">28</option>
+                                        <option value="29">29</option>
+                                        <option value="30">30</option>
+                                        <option value="31">31</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div class="input-group delegation hidden">
                                 <label for="userDelegated">Delegated to:</label>
                                 <select id="userDelegated">
@@ -168,8 +255,11 @@
 
                             <div class="input-group">
                                 <label for="taskMemo">Memo:</label>
+                                <input type="text" id="taskMemoInput" style="display: none;">
                             </div>
-                            <textarea id="taskMemo" rows="4" cols="50" placeholder="Enter a memo"></textarea>
+                            <div class="input-group">
+                                <textarea id="taskMemo" rows="4" cols="50" placeholder="Enter a memo"></textarea>
+                            </div>
                             <div class="button-container">
                                 <button id="saveChangesButton">Save</button>
                                 <button id="deleteConfirmationButton">Delete</button>

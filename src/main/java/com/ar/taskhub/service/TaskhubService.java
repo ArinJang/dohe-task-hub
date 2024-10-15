@@ -58,6 +58,20 @@ public class TaskhubService {
         taskhubRepository.insertCategory(taskDTO);
     }
 
+    public void insertRoutine(String routineContent, String group) {
+        TaskhubDTO taskDTO = getLoginIdDTO();
+        if (group != null) { // 입력하려는 데이터가 루틴인 경우(그룹x)
+            String group_id = String.valueOf(taskhubRepository.findFirstGroup(taskDTO.getUser_id()));
+            if(group_id == null) {
+                throw new RuntimeException("No group found. Create a group first!"); // RuntimeException을 사용
+            } else {
+                taskDTO.setRoutine_group(group_id);
+            }
+        }
+        if(routineContent != null) taskDTO.setRoutine_content(routineContent);
+        taskhubRepository.insertRoutine(taskDTO);
+    }
+
     public List<TaskhubDTO> findAll(){
 //        System.out.println("service findAll(Long defaultId)? "+getLoginIdDTO().getUser_id());
         Long user_id = getLoginIdDTO().getUser_id() == null ? 2 : getLoginIdDTO().getUser_id();
@@ -168,6 +182,10 @@ public class TaskhubService {
         return taskhubRepository.findWorkById(Long.valueOf(workId));
     }
 
+    public TaskhubDTO findRoutineById(String routineID) {
+        return taskhubRepository.findRoutineById(Long.valueOf(routineID));
+    }
+
     public int findNewId() {
         return taskhubRepository.findNewId(getLoginIdDTO().getUser_id());
     }
@@ -225,6 +243,19 @@ public class TaskhubService {
 
     public void updateCategory(TaskhubDTO taskDTO) {
         taskhubRepository.updateCategory(taskDTO);
+    }
+
+    public void updateRoutine(TaskhubDTO taskDTO) {
+        if(taskDTO.getRepetition_cycle() != null && !taskDTO.getRepetition_cycle().isEmpty()){
+            taskDTO.setRepetition_day("");
+        }
+        if(taskDTO.getRoutine_day() != null && !taskDTO.getRoutine_day().isEmpty()){
+            taskDTO.setRepetition_day(taskDTO.getRoutine_day());
+        } else if (taskDTO.getRoutine_date() != null && !taskDTO.getRoutine_date().isEmpty()){
+            taskDTO.setRepetition_day(taskDTO.getRoutine_date());
+        }
+        System.out.println("updateRoutine:"+taskDTO);
+        taskhubRepository.updateRoutine(taskDTO);
     }
 
     public void clearParent(String taskId) {
@@ -546,5 +577,9 @@ public class TaskhubService {
     public boolean isEveryTaskCompleted(Long workId) {
         int count = taskhubRepository.isEveryTaskCompleted(workId);
         return count == 0;
+    }
+
+    public List<TaskhubDTO> findRoutines() {
+        return taskhubRepository.findRoutines(getLoginIdDTO().getUser_id());
     }
 }

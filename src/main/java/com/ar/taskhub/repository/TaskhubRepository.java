@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +63,10 @@ public class TaskhubRepository {
         return sql.selectOne("Taskhub.findWorkById", work_id);
     }
 
+    public TaskhubDTO findRoutineById(Long routine_id) {
+        return sql.selectOne("Taskhub.findRoutineById", routine_id);
+    }
+
     public String findLatestDoDateById(Long task_id) {
         return sql.selectOne("Taskhub.findLatestDoDateById", task_id);
     }
@@ -86,6 +89,10 @@ public class TaskhubRepository {
 
     public void updateWork(TaskhubDTO taskhubDTO) {
         sql.update("Taskhub.updateWork", taskhubDTO);
+    }
+
+    public void updateRoutine(TaskhubDTO taskhubDTO) {
+        sql.update("Taskhub.updateRoutine", taskhubDTO);
     }
 
     public void updateCategory(TaskhubDTO taskhubDTO) {
@@ -165,6 +172,10 @@ public class TaskhubRepository {
         sql.insert("Taskhub.insertCategory", taskhubDTO);
     }
 
+
+    public void insertRoutine(TaskhubDTO taskhubDTO) {
+        sql.insert("Taskhub.insertRoutine", taskhubDTO);
+    }
     public int getMaxTaskOrder(Map<String, Object> params) {
         return sql.selectOne("Taskhub.getMaxTaskOrder", params);
     }
@@ -243,5 +254,13 @@ public class TaskhubRepository {
     }
     public List<Long> findTasksUnderWork(Long workId) {
         return sql.selectList("Taskhub.findTasksUnderWork", workId);
+    }
+
+    public Long findFirstGroup(Long user_id) {
+        return sql.selectOne("Taskhub.findFirstGroup", user_id);
+    }
+
+    public List<TaskhubDTO> findRoutines(Long user_id) {
+        return sql.selectList("Taskhub.findRoutines", user_id);
     }
 }

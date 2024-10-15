@@ -213,6 +213,9 @@ body {
 .work-title {
     cursor: pointer;
 }
+.work-title-group {
+    cursor: default;
+}
 
 .work-title:hover .work-edit-btn,
 .work-title:hover .work-delete-btn,
@@ -260,8 +263,19 @@ body {
     margin-bottom: 10px;
 }
 
-#taskInput,
-#workInput {
+.group-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.routine-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#taskInput, #workInput, #groupInput, #routineInput {
     flex: 1;
     padding: 7px 10px 10px 10px;
     font-size: 15px;
@@ -270,8 +284,7 @@ body {
     border-radius: 4px; /* Rounded corners */
 }
 
-#addTaskButton,
-#addWorkButton {
+#addTaskButton, #addWorkButton, #addGroupButton, #addRoutineButton {
     background-color: #87CEEB; /* Sky blue */
     color: white;
     width: 80px;
@@ -285,9 +298,10 @@ body {
     cursor: pointer; /* Pointer cursor on hover */
     border-radius: 5px; /* Rounded corners */
 }
-
-#addTaskButton:hover,
-#addWorkButton:hover {
+#addGroupButton, #addRoutineButton {
+    font-size: 14px;
+}
+#addTaskButton:hover, #addWorkButton:hover, #addGroupButton:hover, #addRoutineButton:hover {
     background-color: #4bb1db;
 }
 
@@ -504,7 +518,8 @@ ul {
 
 /* Style inputs and selects */
 .input-group input,
-.input-group select {
+.input-group select,
+.input-group textarea {
     flex: 1; /* Allow inputs/selects to take up remaining space */
     padding: 5px 10px 8px 10px;
     font-size: 15px;
@@ -976,4 +991,13 @@ button#addUser:hover, button#developerAccount:hover {
 }
 .new-sub-input {
     margin-top: 5px;
+}
+
+#routineDateSelects {
+    display: flex;
+    gap: 10px; /* 월과 일 사이의 간격 조절 */
+}
+
+#routineDateSelects select {
+    width: auto; /* 선택 박스의 크기를 자동으로 조정 */
 }

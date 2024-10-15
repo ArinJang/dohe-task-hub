@@ -59,4 +59,15 @@ public class TaskhubDTO {
     private String last_modified;
     private String last_modified_month;
 
+    private String routine_id;
+    private String routine_content;
+    private String routine_group;
+    private String group_content;
+    private String repetition_cycle;
+    private String repetition_day;
+    private String routine_day;
+    private String routine_month;
+    private String routine_date;
+    private String routine_date_of_month;
+
 }

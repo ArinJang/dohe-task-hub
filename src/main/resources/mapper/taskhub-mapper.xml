@@ -32,6 +32,54 @@
         , #{user_id});
     </insert>
 
+    <insert id="insertRoutine">
+        INSERT INTO ROUTINE (ROUTINE_CONTENT, ROUTINE_GROUP, USER_ID)
+        VALUES (#{routine_content}, #{routine_group}, #{user_id});
+    </insert>
+
+    <select id="findFirstGroup" parameterType="Long" resultType="Long">
+        SELECT
+        R.ROUTINE_ID
+        FROM ROUTINE R
+        WHERE 1=1
+        AND R.USER_ID = #{user_id}
+        AND R.ROUTINE_GROUP IS NULL
+        ORDER BY R.ROUTINE_ID
+        LIMIT 1;  -- 가장 첫 번째 결과만 가져오기
+    </select>
+
+    <select id="findRoutines" parameterType="Long" resultType="taskhubdto">
+        SELECT
+        R.ROUTINE_ID,
+        R.ROUTINE_CONTENT,
+        R.ROUTINE_GROUP,
+        (SELECT ROUTINE_CONTENT FROM ROUTINE WHERE ROUTINE_ID = R.ROUTINE_GROUP) AS GROUP_CONTENT,
+        R.REPETITION_CYCLE,
+        R.REPETITION_DAY,
+        R.CREATE_DATE
+        FROM ROUTINE R
+        WHERE 1=1
+        AND R.USER_ID = #{user_id}
+        AND R.ROUTINE_GROUP IS NOT NULL
+
+        <!--UNION
+
+        SELECT
+        E.ROUTINE_ID,
+        E.ROUTINE_CONTENT,
+        999999 AS ROUTINE_GROUP,
+        '(group not assigned)' AS GROUP_CONTENT,
+        NULL AS REPETITION_CYCLE,
+        NULL AS REPETITION_DAY,
+        NULL AS CREATE_DATE
+        FROM ROUTINE E
+        WHERE 1=1
+        AND E.USER_ID = #{user_id}
+        AND E.ROUTINE_GROUP IS NULL-->
+
+        ORDER BY ROUTINE_ID, CREATE_DATE
+    </select>
+
     <delete id="deleteDoDatesByTaskId" parameterType="string">
         DELETE FROM DODATES WHERE TASK_ID = #{taskId}
     </delete>
@@ -486,6 +534,35 @@
         WORK_ID = #{work_id};
     </select>
 
+    <select id="findRoutineById" parameterType="Long" resultType="taskhubdto">
+        SELECT
+        ROUTINE_ID,
+        ROUTINE_CONTENT,
+        ROUTINE_GROUP,
+        REPETITION_CYCLE,
+            CASE
+            WHEN REPETITION_CYCLE IN ('week', 'day') THEN REPETITION_DAY
+            ELSE NULL
+            END AS ROUTINE_DAY,
+            CASE
+            WHEN REPETITION_CYCLE = 'month' THEN REPETITION_DAY
+            ELSE NULL
+            END AS ROUTINE_DATE,
+            CASE
+            WHEN REPETITION_CYCLE = 'year' THEN SUBSTRING(REPETITION_DAY, 1, 2)
+            ELSE NULL
+            END AS ROUTINE_MONTH,
+            CASE
+            WHEN REPETITION_CYCLE = 'year' THEN SUBSTRING(REPETITION_DAY, 4, 2)
+            ELSE NULL
+            END AS ROUTINE_DATE_OF_MONTH
+        FROM
+        ROUTINE
+        WHERE
+        ROUTINE_ID = #{routine_id};
+
+    </select>
+
     <select id="findLatestDoDateById" parameterType="Long" resultType="String">
         SELECT MAX(DO_DATE) AS DO_DATE
           FROM DODATES
@@ -666,6 +743,29 @@
         SET
         CATEGORY_NAME = #{category_name}
         WHERE CATEGORY_ID = #{category_id}
+    </update>
+
+    <update id="updateRoutine" parameterType="taskhubdto">
+        UPDATE ROUTINE
+        <set>
+            <if test="routine_content != null">
+                ROUTINE_CONTENT = #{routine_content},
+            </if>
+            <if test="repetition_cycle != null and repetition_cycle != ''">
+                REPETITION_CYCLE = #{repetition_cycle},
+            </if>
+            <if test="repetition_cycle == ''">
+                REPETITION_CYCLE = NULL,
+                REPETITION_DAY = NULL,
+            </if>
+            <if test="repetition_day != null and repetition_day != ''">
+                REPETITION_DAY = #{repetition_day},
+            </if>
+            <if test="repetition_day == ''">
+                REPETITION_DAY = NULL,
+            </if>
+        </set>
+        WHERE ROUTINE_ID = #{routine_id}
     </update>
 
     <update id="clearParent" parameterType="Long">

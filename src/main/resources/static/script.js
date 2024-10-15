@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const workInput = document.getElementById('workInput');
     const taskInputArea = document.querySelector('.task-input');
     const workInputArea = document.querySelector('.work-input');
+    const groupInputArea = document.querySelector('.group-input');
+    const routineInputArea = document.querySelector('.routine-input');
     const addTaskButton = document.getElementById('addTaskButton');
     const taskList = document.getElementById('taskList');
     const dayList = document.getElementById('dayList');
@@ -41,6 +43,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var subTaskMemoUpdateParentId = false;
     var subTaskMemoUpdateSubId = false;
     let doDatesArray;
+
+    const routineDate = document.getElementById('routineDate');
+    const routineDay = document.getElementById('routineDay');
+    const routineMonth = document.getElementById('routineMonth');
+    const routineDayGroup = document.getElementById('routineDayGroup');
 
     const loginModal = document.getElementById('loginModal');
     const logoutButton = document.getElementById('logoutButton');
@@ -316,9 +323,13 @@ document.addEventListener('DOMContentLoaded', function() {
             updateWeekDates();
             taskInputArea.style.display = 'flex';
             workInputArea.style.display = 'none';
+            groupInputArea.style.display = 'none';
+            routineInputArea.style.display = 'none';
         } else if (category === 'work') {
             taskInputArea.style.display = 'none';
             workInputArea.style.display = 'flex';
+            groupInputArea.style.display = 'none';
+            routineInputArea.style.display = 'none';
             const allButton = document.createElement('div');
             allButton.textContent = 'All';
             allButton.className = 'nav-item';
@@ -375,6 +386,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             navigationBar.appendChild(addButton);
+        } else if (category === 'routine') {
+            console.log('routine');
+            taskInputArea.style.display = 'none';
+            workInputArea.style.display = 'none';
+            groupInputArea.style.display = 'flex';
+            routineInputArea.style.display = 'flex';
         }
     }
 
@@ -432,6 +449,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 showForm();
                 hideDone();
                 break;
+            case 'routine':
+//                document.querySelector('.do-dates-group').style.display = 'none';
+//                taskForm.style.display = 'none';
+//                daysList.style.display = 'block';
+                fetchRoutines();
+                showForm();
+                hideDone();
+                break;
             case 'completed':
                 document.querySelector('.do-dates-group').style.display = 'none';
                 taskForm.style.display = 'none';
@@ -445,14 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelector('.do-dates-group').style.display = 'none';
                 taskForm.style.display = 'none';
                 daysList.style.display = 'block';
-                hideDone();
-                break;
-            case 'routine':
-//                showForm();
-//                document.querySelector('.do-dates-group').style.display = 'none';
-//                taskForm.style.display = 'none';
-//                daysList.style.display = 'block';
-                  hideForm();
                 hideDone();
                 break;
             default:
@@ -562,12 +579,17 @@ document.addEventListener('DOMContentLoaded', function() {
         taskMemo: '',
         taskStatus: '',
         userDelegated: '',
-        taskDone: ''
+        taskDone: '',
+        routineContent: '',
+        routineCycle: '',
+        routineMonth: '',
+        routineDate: '',
+        routineDay: ''
     };
 
     function showTaskDetail(task) {
 //        console.log('SHOW task detail');
-        toggleWorkOrTaskFields('task');
+        toggleDetailFields('task');
         if (task && typeof task === 'object') {
             // Update the values of the form fields with the task details
             const taskNameInput = document.getElementById('taskName');
@@ -673,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
             taskDoneSelect.value = task.task_done || '';
             originalValues.taskDone = taskDoneSelect.value; // Store the original value
 
-            categoryNameInput.removeEventListener('change', handleWorkDetailChange);
+            categoryNameInput.removeEventListener('change', handleDetailChange);
             taskNameInput.removeEventListener('change', handleDetailChange);
             workNameInput.removeEventListener('change', handleDetailChange);
             dueDateInput.removeEventListener('change', handleDetailChange);
@@ -717,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showWorkDetail(work) {
-        toggleWorkOrTaskFields('work');
+        toggleDetailFields('work');
 //        if(work.work_status == 2) enableDetailByStatus(false);
 //        else enableDetailByStatus(true);
 
@@ -766,45 +788,126 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function toggleWorkOrTaskFields(situation) {
-        // 필드 목록 정의
-        const essentialFields = ['workNameInput', 'workStatus']; // 상황에 따라 표시할 필드 목록
+    function showRoutineDetail(work) {
+        toggleDetailFields('routine');
+//        if(work.work_status == 2) enableDetailByStatus(false);
+//        else enableDetailByStatus(true);
+
+        if (work && typeof work === 'object') {
+            const routineContentInput = document.getElementById('routineContent');
+            const routineCycleSelect = document.getElementById('routineCycle');
+            const routineMonthSelect = document.getElementById('routineMonth');
+            const routineDaySelect = document.getElementById('routineDay');
+            const routineDateSelect = document.getElementById('routineDate');
+
+            routineContentInput.value = work.routine_content;
+            originalValues.routineContent = routineContentInput.value; // Store the original value
+
+            routineCycleSelect.value = work.repetition_cycle || '';
+            originalValues.routineCycle = routineCycleSelect.value; // Store the original value
+
+            routineDaySelect.style.display = 'none';
+            routineDateSelect.style.display = 'none';
+            routineMonthSelect.style.display = 'none';
+            routineDayGroup.style.display = 'flex';
+            switch(work.repetition_cycle){
+                case 'day':
+            routineDayGroup.style.display = 'none';
+//                    routineDaySelect.style.display = 'flex';
+//                    routineDaySelect.innerHTML = '<option value="everyday">Every day</option>';
+                    break;
+                case 'week':
+                    console.log('week-',work.routine_day);
+                    routineDaySelect.style.display = 'flex';
+                    routineDaySelect.value = work.routine_day || '';
+                    originalValues.routineDay = routineDaySelect.value;
+                    break;
+                case 'month':
+                    routineDateSelect.style.display = 'flex';
+                    routineDateSelect.value = work.routine_date || '';
+                    originalValues.routineDay = routineDateSelect.value;
+                    break;
+                case 'year':
+                    console.log('year-',work.routine_month,',',work.routine_date_of_month);
+                    routineMonthSelect.style.display = 'flex';
+                    routineDateSelect.style.display = 'flex';
+                    routineMonthSelect.value = work.routine_month || '';
+                    routineDateSelect.value = work.routine_date_of_month || '';
+                    originalValues.routineDay = work.routine_month + '-' + work.routine_date_of_month;
+                    break;
+            }
+
+            routineContentInput.removeEventListener('change', handleDetailChange);
+            routineCycleSelect.removeEventListener('change', handleDetailChange);
+            routineMonthSelect.removeEventListener('change', handleDetailChange);
+            routineDaySelect.removeEventListener('change', handleDetailChange);
+            routineDateSelect.removeEventListener('change', handleDetailChange);
+
+            routineContentInput.addEventListener('change', handleDetailChange);
+            routineCycleSelect.addEventListener('change', handleDetailChange);
+            routineMonthSelect.addEventListener('change', handleDetailChange);
+            routineDaySelect.addEventListener('change', handleDetailChange);
+            routineDateSelect.addEventListener('change', handleDetailChange);
+
+            // 현재 함수 내에서만 이벤트 리스너를 설정하고 싶을 때
+            const deleteButton = document.getElementById('deleteConfirmationButton');
+
+            // 기존 이벤트 리스너를 임시로 제거
+            const oldClickHandler = deleteButton.onclick;
+
+            // 새로운 클릭 이벤트 리스너 추가
+            deleteButton.onclick = (event) => {
+                event.preventDefault(); // Prevent default form submission
+                deleteConfirmationModalRoutine.style.display = 'block';
+                document.getElementById('confirmDeleteButtonRoutine').setAttribute('data-work-id', work.work_id);
+                console.log('Temporary delete button click handler for work detail');
+            };
+
+        } else {
+            console.error('Invalid work object:', work);
+        }
+    }
+
+    function toggleDetailFields(situation) {
+        // 필드 목록 정의 (상황에 따라 표시할 필드 목록)
+        const essentialFields = {
+            work: ['workNameInput', 'categoryName', 'workStatus'],
+            task: ['taskName', 'workName', 'dueDate', 'taskStatus', 'doDates', 'subTasks', 'taskMemo', 'taskMemoInput', 'taskDone', 'categoryName'],
+            routine: ['routineContent', 'routineCycle', 'routineDay', 'routineDateSelects']
+        };
+
+        // 모든 input-group 요소 선택
         const allInputGroups = document.querySelectorAll('.input-group');
         const titleElement = document.querySelector('.task-detail h3'); // 제목 요소 선택
 
         // 각 input-group 요소를 순회하면서 표시할 필드 조정
         allInputGroups.forEach(group => {
-            const fieldId = group.querySelector('input, select, textarea')?.id;
+            const fieldId = group.querySelector('input, select, textarea, div')?.id;
 
-            if (fieldId === 'categoryName') {
-                group.style.display = 'flex'; // categoryName은 항상 표시
-            } else if (essentialFields.includes(fieldId)) {
-                group.style.display = (situation === 'work') ? 'flex' : 'none'; // work 상황에서는 표시, task 상황에서는 숨기기
+            // 상황에 맞는 필드를 표시
+            if (situation === 'work' && essentialFields.work.includes(fieldId)) {
+                group.style.display = 'flex'; // work 상황에서 필드 표시
+            } else if (situation === 'task' && essentialFields.task.includes(fieldId)) {
+                group.style.display = 'flex'; // task 상황에서 필드 표시
+            } else if (situation === 'routine' && essentialFields.routine.includes(fieldId)) {
+                group.style.display = 'flex'; // routine 상황에서 필드 표시
             } else {
-                group.style.display = (situation === 'work') ? 'none' : 'flex'; // task 상황에서는 표시, work 상황에서는 숨기기
+//                console.log(",",fieldId);
+                group.style.display = 'none'; // 그 외의 필드는 숨김
             }
         });
 
-        // 숨길 필드나 그룹 개별적으로 처리
-        document.querySelector('.main-task').style.display = (situation === 'work') ? 'none' : 'flex';
-        document.querySelector('.sub-tasks-group').style.display = (situation === 'work') ? 'none' : 'flex';
-        document.querySelector('.do-dates-group').style.display = (situation === 'work') ? 'none' : 'flex';
-        document.querySelector('.done-group').style.display = (situation === 'work') ? 'none' : 'flex';
-        document.querySelector('.delegation').style.display = (situation === 'work') ? 'none' : 'flex';
-        document.getElementById("taskMemo").style.display = (situation === 'work') ? 'none' : 'flex'; // taskMemo 숨기기
-
-        // 제목 수정
-        if (titleElement) {
-            if (situation === 'work') {
-                titleElement.textContent = '[ Work Detail ]';  // work 상황일 때 제목 수정
-            } else {
-                titleElement.textContent = '[ Task Detail ]';  // task 상황일 때 제목 수정
-            }
+        if (situation === 'work') {
+            titleElement.textContent = '[ Work Detail ]';  // work 상황일 때 제목 수정
+        } else if (situation === 'task') {
+            titleElement.textContent = '[ Task Detail ]';  // task 상황일 때 제목 수정
+        } else if (situation === 'routine') {
+            titleElement.textContent = '[ Routine Detail ]';  // routine 상황일 때 제목 수정
         }
     }
 
     function handleDetailChange(event) {
-        const id = event.target.id;
+        let id = event.target.id;
         let currentValue;
 
         switch (id) {
@@ -882,6 +985,33 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'userDelegated':
 //                currentValue = event.target.value;
                 delegationChange();
+                break;
+            case 'routineContent':
+            case 'routineCycle':
+            case 'routineDay':
+                currentValue = event.target.value;
+                console.log(originalValues[id],'->',currentValue);
+                if (currentValue !== originalValues[id]) {
+                    updateRoutine(id);
+                }
+                break;
+            case 'routineMonth':
+            case 'routineDate':
+                    currentValue = event.target.value;
+                if(document.getElementById('routineCycle').value == 'year'){
+                    if(document.getElementById('routineMonth').value != '' && document.getElementById('routineDate').value != ''){
+                        console.log('1먼스,데이트 둘다 있음............');
+                        id = 'routineForYear';
+                        currentValue = document.getElementById('routineMonth').value + '-' + document.getElementById('routineDate').value;
+                    } else {
+                        console.log('2............');
+                        return;
+                    }
+                }
+                console.log(originalValues[id],'->',currentValue);
+                if (currentValue !== originalValues[id]) {
+                    updateRoutine(id);
+                }
                 break;
         }
     }
@@ -1041,19 +1171,39 @@ document.addEventListener('DOMContentLoaded', function() {
             const taskId = listItem.getAttribute('data-task-id');
             sessionStorage.setItem('detailID', taskId);
             sessionStorage.setItem('detailDoDate', listItem.getAttribute('data-task-dodate'));
-//            console.log('daysList detailID: '+sessionStorage.getItem('detailID'));
-            fetchTaskDetails(listItem.getAttribute('data-task-dodate'));
-            return;
+
+            const routineGroupId = listItem.getAttribute('data-routine-id');
+            console.log('1//taskId: ',taskId,', routineGroupId: ',routineGroupId);
+
+            if(taskId != null && taskId != 'null' && taskId != undefined) {
+                console.log('daysList detailID: '+sessionStorage.getItem('detailID'));
+                fetchTaskDetails(listItem.getAttribute('data-task-dodate'));
+                return;
+            } else if(routineGroupId != null && routineGroupId != 'null' && routineGroupId != undefined){
+                sessionStorage.setItem('detailRoutineID', routineGroupId);
+                fetchRoutineDetails();
+                return;
+            }
         }
         const workListItem = event.target.closest('li.work-item');
         if (workListItem) {
             const workId = workListItem.getAttribute('data-work-id');
-            if (workId.includes('-')) return;
-            else {
-                sessionStorage.setItem('detailWorkID', workId);
-                fetchWorkDetails();
+            const routineGroupId = workListItem.getAttribute('data-group-id');
+            console.log('1//workId: ',workId,', routineGroupId: ',routineGroupId);
+            if(workId != null && workId != 'null' && workId != undefined) {
+                if (workId.includes('-')) return;
+                else {
+                    sessionStorage.setItem('detailWorkID', workId);
+                    fetchWorkDetails();
+                    return;
+                }
+            }
+            if(routineGroupId != null && routineGroupId != 'null' && routineGroupId != undefined){
+//                sessionStorage.setItem('detailRoutineID', routineGroupId);
+//                fetchRoutineDetails();
                 return;
             }
+
         }
     });
 
@@ -1332,6 +1482,33 @@ document.addEventListener('DOMContentLoaded', function() {
         initSortable(taskListForWork, null);  // 업데이트된 작업 목록에 대해 Sortable.js 초기화
     }
 
+    function renderRoutinesList(group) {
+        const taskListForWork = document.getElementById(`${group}Tasks`);
+        if (!taskListForWork) {
+            console.error(`No element found with ID: ${group}Tasks`);
+            return;
+        }
+
+        taskListForWork.innerHTML = '';
+
+        // tasksByWork[group]에서 tasks 배열을 가져와 작업을 렌더링
+        const tasksForWork = tasksByWork[group]?.tasks || [];
+        if (tasksForWork.length > 0) {
+            // task_id가 null이 아닌 task들만 필터링
+            const filteredTasks = tasksForWork.filter(task => task.routine_group !== null);
+
+            if (filteredTasks.length > 0) {
+                filteredTasks.forEach((task, index) => {
+                    // 각 task를 렌더링
+                    const taskItem = createRoutineItem(task);
+                    taskListForWork.appendChild(taskItem);
+                });
+            } else taskListForWork.appendChild(addPlaceholderForEmptyList());
+        } else taskListForWork.appendChild(addPlaceholderForEmptyList());
+
+        initSortable(taskListForWork, null);  // 업데이트된 작업 목록에 대해 Sortable.js 초기화
+    }
+
     function fetchMainTaskList() {
         taskList.innerHTML = ''; // Clear existing tasks
         assignedToMeList.innerHTML = ''; // Clear existing tasks
@@ -1456,6 +1633,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchWorkDetails() {
+        enableTaskDetailContent();
 //        addSubTaskButton.disabled = false;
 //        addDateButton.disabled = false;
         const workId = sessionStorage.getItem('detailWorkID');
@@ -1477,6 +1655,32 @@ document.addEventListener('DOMContentLoaded', function() {
                         const data = JSON.parse(text); // Parse text as JSON'
 //                        console.log(data.work_name);
                         showWorkDetail(data);
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                    }
+                } else {
+                    console.error('Empty response body');
+                }
+            })
+            .catch(error => console.error('Error fetching work details:', error));
+    }
+
+    function fetchRoutineDetails() {
+        enableTaskDetailContent();
+        const routineId = sessionStorage.getItem('detailRoutineID');
+
+        fetch(`/api/findRoutineById/${routineId}`)
+            .then(response => {
+//                console.log('Response status:', response.status); // 상태 코드 출력
+                return response.text(); // 응답을 텍스트로 변환
+            })
+            .then(text => {
+//                console.log('Response text:', text); // 응답 내용 출력
+                if (text) {
+                    try {
+                        const data = JSON.parse(text); // Parse text as JSON'
+//                        console.log(data.work_name);
+                        showRoutineDetail(data);
                     } catch (error) {
                         console.error('Error parsing JSON:', error);
                     }
@@ -1657,8 +1861,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Only render the tasks for the specified day
 //                if (tasksByDay[day]) {
-                    renderDayTitlesList(day); // Render the day titles
-                    renderDayTasksList(day); // Render the tasks for the specific day
+                renderDayTitlesList(day); // Render the day titles
+                renderDayTasksList(day); // Render the tasks for the specific day
 //                } else {
 //                    console.error(`No tasks found for the day: ${day}`);
 //                }
@@ -1708,6 +1912,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
             renderWorkTitlesList();
             Object.keys(tasksByWork).forEach(workName => renderWorkTasksList(workName));
+//                renderWorkTasksList();
+            })
+            .catch(error => console.error('Error fetching tasks:', error));
+    }
+
+    function fetchRoutines() {
+        fetch(`/api/findRoutines`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!Array.isArray(data)) {
+                    throw new Error('Fetched data is not an array');
+                }
+
+            tasks = data;
+            // tasksByWork를 work_name을 키로 하고 work_id 및 tasks 배열을 포함하는 구조로 만듦
+            tasksByWork = tasks.reduce((acc, task) => {
+                const workName = task.group_content;
+                const workId = task.routine_group;
+
+                if (!acc[workName]) {
+                    acc[workName] = {
+                        work_id: null,
+                        routine_id: workId,
+                        tasks: []
+                    };
+                }
+                acc[workName].tasks.push(task);
+                return acc;
+            }, {});
+
+            renderWorkTitlesList();
+            Object.keys(tasksByWork).forEach(workName => renderRoutinesList(workName));
 //                renderWorkTasksList();
             })
             .catch(error => console.error('Error fetching tasks:', error));
@@ -1813,6 +2054,8 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.keys(tasksByWork).forEach(workName => {
 //            const tasksForWork = tasksByWork[workName];
             const workId = tasksByWork[workName].work_id; // work_id 가져오기
+            const routineGroupId = tasksByWork[workName].routine_id; // routine의 group id 가져오기
+            console.log('workId: ',workId,', routineGroupId: ',routineGroupId);
 
             const ul = document.createElement('ul');
 //            ul.id = `tasks_for_${workName.replace(/\s+/g, '_')}`; // Ensure ID is unique and valid
@@ -1821,6 +2064,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const li = document.createElement('li');
             li.className = 'work-item';
             li.setAttribute('data-work-id', workId);
+            li.setAttribute('data-group-id', routineGroupId);
 
             // Create the strong text element for workName
             const workTitle = document.createElement('p');
@@ -1830,9 +2074,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 workTitle.className = 'work-title';
                 workTitle.innerHTML = `<strong>[[</strong> <strong class="custom-day-font">${workName}</strong> <strong>]]</strong>`;
             }
+            if(routineGroupId != null) workTitle.className = 'work-title-group';
 
             // Create the edit button
-            if(!completed){
+            if(!completed && workId != null){
+                console.log("> ",workId,',',routineGroupId);
                 const editBtn = document.createElement('span');
                 editBtn.textContent = '✎';
                 editBtn.className = 'work-edit-btn';
@@ -1841,7 +2087,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     let promptMessage = 'Edit work:';
                     const newName = prompt(promptMessage, workName);
                     if (newName) {
-                        saveWork(workId, newName);
+                        if(workId != null) saveWork(workId, newName);
+                        if(routineGroupId != null) saveRoutineGroup(routineGroupId, newName);
                     }
                 });
                 const deleteBtn = document.createElement('span');
@@ -1851,6 +2098,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     event.stopPropagation();
     //                const confirmButton = document.getElementById('confirmDeleteButtonWork');
                     document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-id', workId);
+                    document.getElementById('confirmDeleteButtonWork').setAttribute('data-group-id', routineGroupId);
     //                document.getElementById('confirmDeleteButtonWork').setAttribute('data-work-name', workName);
                     document.getElementById('deleteMessage').innerHTML = `Delete this work?<br>Tasks' work will be set to null.`;
                     deleteConfirmationModalWork.style.display = 'block';
@@ -1871,12 +2119,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(taskForm);
         const action = event.submitter.value;
-        if (action === 'TASK+' && taskInput.value.trim() === '') {
+        if (action === 'TASK' && taskInput.value.trim() === '') {
             showNotification('Enter a task', 'error');
             return; // Prevent form submission
         }
-        if (action === 'WORK+' && workInput.value.trim() === '') {
+        if (action === 'WORK' && workInput.value.trim() === '') {
             showNotification('Enter a work', 'error');
+            return; // Prevent form submission
+        }
+        if (action === 'GROUP' && groupInput.value.trim() === '') {
+            showNotification('Enter a group', 'error');
+            return; // Prevent form submission
+        }
+        if (action === 'ROUTINE' && routineInput.value.trim() === '') {
+            showNotification('Enter a routine', 'error');
             return; // Prevent form submission
         }
 
@@ -1891,10 +2147,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 body: formData,
             });
+
+            // 서버 응답 체크
+            if (!response.ok) {
+                const errorData = await response.json(); // JSON 응답 파싱
+                showNotification(errorData.message || 'An error occurred', 'error'); // 에러 메시지만 표시
+                return;
+            }
+
             const data = await response.json();
 
             taskInput.value = '';
             workInput.value = '';
+            groupInput.value = '';
+            routineInput.value = '';
 
             if (selectedSide === 'work') {
                 clickSideBar('work', true);
@@ -1903,11 +2169,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // fetchNewId()를 기다리고 나서 fetchTaskDetails 실행
-            await fetchNewId();  // fetchNewId가 비동기 작업일 경우
-            fetchTaskDetails(selectedDate);
+            if(action === 'task'){
+                await fetchNewId();  // fetchNewId가 비동기 작업일 경우
+                fetchTaskDetails(selectedDate);
+            }
             clickSideBar(selectedSide, false);
         } catch (error) {
             console.error('Error:', error);
+            showNotification('Network error', 'error');
         }
     });
 
@@ -1933,6 +2202,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch((error) => {
             console.error('Error:', error);
+            showNotification('Network error', 'error');
         });
 
     }
@@ -2034,6 +2304,51 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log('Success:', data);
             showNotification('Successfully updated!', 'success');
             fetchTaskDetails(sessionStorage.getItem('detailDoDate'));
+            clickSideBar(selectedSide, false);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            // Handle error (e.g., show an error message)
+        });
+    }
+
+    function updateRoutine(dataToChange) {
+        var taskData = {};
+        switch (dataToChange) {
+            case 'routineContent':
+                taskData = {routine_content: document.getElementById(dataToChange).value}
+                break;
+            case 'routineCycle':
+                taskData = {repetition_cycle: document.getElementById(dataToChange).value}
+                break;
+//            case 'routineMonth':
+//                taskData = {routine_month: document.getElementById(dataToChange).value}
+//                break;
+            case 'routineDate':
+                taskData = {routine_date: document.getElementById(dataToChange).value}
+                break;
+            case 'routineDay':
+                taskData = {routine_day: document.getElementById(dataToChange).value}
+                break;
+            case 'routineForYear':
+                taskData = {routine_date: document.getElementById('routineMonth').value + '-' + document.getElementById('routineDate').value}
+                break;
+            default: break;
+        }
+
+        const idForDetail = sessionStorage.getItem('detailRoutineID');
+        fetch(`/api/updateRoutine/${idForDetail}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(taskData)
+        })
+        .then(response => response.json())
+        .then(data => {
+//            console.log('Success:', data);
+            showNotification('Successfully updated!', 'success');
+            fetchRoutineDetails();
             clickSideBar(selectedSide, false);
         })
         .catch((error) => {
@@ -2709,6 +3024,32 @@ document.addEventListener('DOMContentLoaded', function() {
         return li;
     }
 
+    function createRoutineItem(routine) {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.setAttribute('data-routine-id', routine.routine_id);
+
+        const taskContainer = document.createElement('a'); // Use <a> to wrap all content
+        taskContainer.className = 'task_content';
+
+        const taskContentSpan = document.createElement('span');
+        taskContentSpan.textContent = routine.routine_content;
+        taskContentSpan.className = 'task_content';
+
+        taskContainer.appendChild(taskContentSpan);
+
+        // Create checkbox
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'routine-checkbox';
+        checkbox.setAttribute('data-routine-id', routine.routine_id);
+
+        li.appendChild(checkbox);         // Add the checkbox first
+        li.appendChild(taskContainer);    // Finally add the task content
+
+        return li;
+    }
+
     function putWorksToSelect(categoryId, workId) {
 //        console.log('putWorksToSelect');
         fetch(`/api/works/${categoryId}`)
@@ -2807,4 +3148,59 @@ document.addEventListener('DOMContentLoaded', function() {
         // 모든 검증 통과 시 폼 제출
         document.getElementById('addUserForm').submit();
     }
+
+    document.getElementById('routineCycle').addEventListener('change', function() {
+        const selectedCycle = this.value;
+
+        // 기본적으로 숨기기
+        routineMonth.style.display = 'none';
+        routineDay.style.display = 'none';
+        routineDate.style.display = 'none';
+
+        if (selectedCycle === 'day') {
+            // "Every day"일 경우, 날짜 선택을 비활성화
+            routineDate.style.display = 'none';
+            routineDay.style.display = 'flex';
+            routineDay.innerHTML = '<option value="everyday">Every day</option>';
+        } else if (selectedCycle === 'week') {
+            // 주간 반복, 요일 선택 활성화
+            routineDay.style.display = 'flex';
+            routineDate.style.display = 'none'; // 날짜 선택은 숨기기
+        } else if (selectedCycle === 'month') {
+            // 월간 반복, 1일부터 31일까지 선택할 수 있도록 날짜 선택 활성화
+            routineDay.style.display = 'none';
+            routineDate.style.display = 'flex';
+        } else if (selectedCycle === 'year') {
+            // 연간 반복, 월과 날짜 모두 선택 가능
+            routineMonth.style.display = 'flex';
+            routineDate.style.display = 'flex';
+            routineDay.style.display = 'none'; // 요일은 숨기기
+        }
+    });
+
+    // routineMonth 선택에 따라 routineDay 옵션 변경 (월에 따른 일수 동적 변경)
+    document.getElementById('routineMonth').addEventListener('change', function() {
+        const routineDate = document.getElementById('routineDate');
+        const selectedMonth = parseInt(this.value); // 선택된 월
+        if(routineDate.value >= 28) {
+            routineDate.innerHTML = '<option value="" disabled selected class="select-placeholder">Select a day</option>';
+        }
+
+        let daysInMonth = 31; // 기본 31일
+        if ([4, 6, 9, 11].includes(selectedMonth)) {
+            daysInMonth = 30; // 4월, 6월, 9월, 11월은 30일
+        } else if (selectedMonth === 2) {
+            daysInMonth = 28; // 2월은 기본 28일 (윤년은 추가 로직 필요)
+        }
+
+        // 1일부터 선택된 월에 맞는 마지막 일수까지 추가
+        for (let i = 1; i <= daysInMonth; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            routineDate.appendChild(option);
+        }
+    });
+
+
 });
