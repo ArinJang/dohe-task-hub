@@ -51,6 +51,10 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findWorks", params);
     }
 
+    public List<TaskhubDTO> findGroups(Long user_id) {
+        return sql.selectList("Taskhub.findGroups", user_id);
+    }
+
     public List<TaskhubDTO> findUsers(Long user_id) {
         return sql.selectList("Taskhub.findUsers", user_id);
     }
@@ -113,6 +117,10 @@ public class TaskhubRepository {
 
     public void deleteWork(Map<String, Object> params) {
         sql.delete("Taskhub.deleteWork", params);
+    }
+
+    public void deleteRoutine(Map<String, Object> params) {
+        sql.delete("Taskhub.deleteRoutine", params);
     }
 
     public void deleteCategory(Map<String, Object> params) {
@@ -262,5 +270,13 @@ public class TaskhubRepository {
 
     public List<TaskhubDTO> findRoutines(Long user_id) {
         return sql.selectList("Taskhub.findRoutines", user_id);
+    }
+
+    public int isRoutineInGroup(Long routineId) {
+        return sql.selectOne("Taskhub.isRoutineInGroup", routineId);
+    }
+
+    public Map<String, Object> getRoutineCycleAndDay(Long routineId) {
+        return sql.selectOne("Taskhub.getRoutineCycleAndDay", routineId);
     }
 }

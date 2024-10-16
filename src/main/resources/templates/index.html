@@ -30,7 +30,7 @@
                 <li class="side-item" data-side="plan">PLAN</li>
                 <li class="side-item" data-side="completed">COMPLETED</li>
                 <li class="side-item" data-side="completedW">COMPLETED(work)</li>
-                <li class="side-item" data-side="routine">ROUTINE(in preparation)</li>
+                <li class="side-item" data-side="routine">ROUTINE</li>
             </ul>
 
             <!-- User name section -->
@@ -65,7 +65,7 @@
                             <input type="submit" id="addWorkButton" value="WORK" name="action">
                         </div>
                         <div class="group-input">
-                            <input type="text" id="groupInput" placeholder="Enter a group of routine" name="group_content">
+                            <input type="text" id="groupInput" placeholder="Enter a group of routines" name="group_content">
                             <input type="submit" id="addGroupButton" value="GROUP" name="action">
                         </div>
                         <div class="routine-input">
@@ -103,6 +103,11 @@
                             <div class="input-group hidden">
                                 <label for="routineContent">Routine:</label>
                                 <input type="text" id="routineContent">
+                            </div>
+                            <div class="input-group hidden">
+                                <label for="groupContent">Group:</label>
+                                <select id="groupContent">
+                                </select>
                             </div>
                             <div class="input-group">
                                 <label for="categoryName">Category:</label>
@@ -287,6 +292,22 @@
             <p id="deleteMessage">Delete this work?<br>Tasks will be set to null.</p>
             <button id="confirmDeleteButtonWork" class="confirmDel" data-work-id="">Delete</button>
             <button id="cancelDeleteButtonWork" class="cancelDel">Cancel</button>
+        </div>
+    </div>
+    <div id="deleteConfirmationModalR" class="modal">
+        <div class="modal-content">
+            <h2>Deletion</h2>
+            <p>Delete this routine?</p>
+            <button id="confirmDeleteButtonR" class="confirmDel" data-routine-id="">Delete</button>
+            <button id="cancelDeleteButtonR" class="cancelDel">Cancel</button>
+        </div>
+    </div>
+    <div id="deleteConfirmationModalG" class="modal">
+        <div class="modal-content">
+            <h2>Deletion</h2>
+            <p>Delete this group?</p>
+            <button id="confirmDeleteButtonG" class="confirmDel" data-group-id="">Delete</button>
+            <button id="cancelDeleteButtonG" class="cancelDel">Cancel</button>
         </div>
     </div>
     <div id="clearParentTaskModal" class="modal">

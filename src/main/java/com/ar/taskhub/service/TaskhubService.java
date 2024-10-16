@@ -40,7 +40,7 @@ public class TaskhubService {
         } else {
             taskDTO.setDo_dates(do_dates);
         }
-        if(taskDTO.getUser_id() == 1) taskDTO.setCategory_id(31); // terry 계정일 경우, category 기본값 "DOHE"로 설정
+        if(taskDTO.getUser_id() == 1) taskDTO.setCategory_id(String.valueOf(31)); // terry 계정일 경우, category 기본값 "DOHE"로 설정
         taskDTO.setParent_task_id(parent_task_id);
         taskhubRepository.callInsertTaskAndDoDates(taskDTO);
     }
@@ -48,7 +48,7 @@ public class TaskhubService {
     public void insertWork(String workName) {
         TaskhubDTO taskDTO = getLoginIdDTO();
         if(workName != null) taskDTO.setWork_name(workName);
-        if(taskDTO.getUser_id() == 1) taskDTO.setCategory_id(31); // terry 계정일 경우, category 기본값 "DOHE"로 설정
+        if(taskDTO.getUser_id() == 1) taskDTO.setCategory_id(String.valueOf(31)); // terry 계정일 경우, category 기본값 "DOHE"로 설정
         taskhubRepository.insertWork(taskDTO);
     }
 
@@ -62,7 +62,7 @@ public class TaskhubService {
         TaskhubDTO taskDTO = getLoginIdDTO();
         if (group != null) { // 입력하려는 데이터가 루틴인 경우(그룹x)
             String group_id = String.valueOf(taskhubRepository.findFirstGroup(taskDTO.getUser_id()));
-            if(group_id == null) {
+            if(group_id == null || group_id.equals("null")) {
                 throw new RuntimeException("No group found. Create a group first!"); // RuntimeException을 사용
             } else {
                 taskDTO.setRoutine_group(group_id);
@@ -135,6 +135,10 @@ public class TaskhubService {
         params.put("user_id", getLoginIdDTO().getUser_id());
         params.put("category_id", categoryId);
         return taskhubRepository.findWorks(params);
+    }
+
+    public List<TaskhubDTO> findGroups() {
+        return taskhubRepository.findGroups(getLoginIdDTO().getUser_id());
     }
 
     public List<TaskhubDTO> findUsers() {
@@ -290,6 +294,21 @@ public class TaskhubService {
         System.out.println("Starting deleteWork...");
         taskhubRepository.deleteWork(params);
         System.out.println("delete end...");
+    }
+
+    @Transactional
+    public void deleteRoutine(String routineId, String group) {
+        System.out.println("1service delete: "+routineId+","+group);
+        if(group != null) { // 삭제하려는 데이터가 그룹인 경우(루틴x)
+            System.out.println("2service delete: "+routineId+","+group);
+            if(taskhubRepository.isRoutineInGroup(Long.valueOf(routineId)) > 0) {
+                throw new RuntimeException("Routines remained in this group. Delete them first!"); // RuntimeException을 사용
+            }
+        }
+        Map<String, Object> params = new HashMap<>();
+        params.put("routine_id", routineId);
+        params.put("user_id", getLoginIdDTO().getUser_id());
+        taskhubRepository.deleteRoutine(params);
     }
 
     @Transactional
@@ -582,4 +601,46 @@ public class TaskhubService {
     public List<TaskhubDTO> findRoutines() {
         return taskhubRepository.findRoutines(getLoginIdDTO().getUser_id());
     }
+
+    // 현재 날짜를 기준으로 특정 요일의 날짜를 반환하는 메서드
+    private LocalDate getDateOfWeek(LocalDate currentDate, DayOfWeek targetDay) {
+        // 현재 날짜에서 해당 요일까지의 차이를 계산
+        int daysUntilTarget = targetDay.getValue() - currentDate.getDayOfWeek().getValue();
+
+        // 만약 음수라면 다음 주의 해당 요일로 이동
+        if (daysUntilTarget < 0) {
+            daysUntilTarget += 7;
+        }
+
+        // 현재 날짜에 해당 차이를 더하여 원하는 요일의 날짜를 반환
+        return currentDate.plusDays(daysUntilTarget);
+    }
+
+    @Transactional
+    public void saveRoutineToList(List<String> routineIds) {
+        for (String routineId : routineIds) {
+            Map<String, Object> cycleAndDay = taskhubRepository.getRoutineCycleAndDay(Long.valueOf(routineId));
+            String cycle = (String) cycleAndDay.get("REPETITION_CYCLE");
+            String day = (String) cycleAndDay.get("REPETITION_DAY");
+            System.out.print(routineId+","+cycle+","+day);
+            String dodate = "";
+            LocalDate now = LocalDate.now(); // 오늘 날짜 가져오기
+            if(Objects.equals(cycle, "day")){
+                dodate = formatDate(now);
+            } else if(Objects.equals(cycle, "week")) {
+                DayOfWeek dayOfWeek = DayOfWeek.valueOf(day.toUpperCase()); // 요일을 대문자로 변환하여 DayOfWeek로 변환
+                dodate = formatDate(getDateOfWeek(now, dayOfWeek)); // 해당 요일의 날짜를 구하여 formatDate로 포맷
+            } else if(Objects.equals(cycle, "month")) {
+                int dayOfMonth = Integer.parseInt(day); // "01", "26" 등에서 정수로 변환
+                dodate = formatDate(now.withDayOfMonth(dayOfMonth)); // 현재 연도와 월에 맞춰서 해당 일로 설정
+            } else if(Objects.equals(cycle, "year")) {
+                String[] parts = day.split("-"); // "03-01", "12-31" 등을 분리
+                int month = Integer.parseInt(parts[0]); // 월 부분
+                int dayOfYear = Integer.parseInt(parts[1]); // 일 부분
+                dodate = formatDate(LocalDate.of(now.getYear(), month, dayOfYear)); // 현재 연도에 맞춰 설정
+            }
+            insertTask((String) cycleAndDay.get("ROUTINE_CONTENT"), dodate, null);
+        }
+    }
+
 }

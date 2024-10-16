@@ -157,6 +157,11 @@ public class TaskhubController {
         return taskhubService.findWorks(categoryId);
     }
 
+    @GetMapping("/groups")
+    public List<TaskhubDTO> getGroups() {
+        return taskhubService.findGroups();
+    }
+
     @GetMapping("/users")
     public List<TaskhubDTO> getUsers() {
         return taskhubService.findUsers();
@@ -199,8 +204,8 @@ public class TaskhubController {
     public ResponseEntity<Map<String, Object>> updateTask(
             @PathVariable("taskId") String taskId,
             @RequestBody TaskhubDTO taskhubDTO) {
-        System.out.println(">> Controller.updateTask taskid: " + taskId);
-//        System.out.println(">> Controller.updateTask TaskhubDTO: " + taskhubDTO);
+//        System.out.println(">> Controller.updateTask taskid: " + taskId);
+        System.out.println(">> Controller.updateTask TaskhubDTO: " + taskhubDTO);
 
         // Set the task ID in the DTO and update the task
         taskhubDTO.setTask_id(taskId);
@@ -263,7 +268,7 @@ public class TaskhubController {
 //        System.out.println("TaskhubDTO: " + taskhubDTO);
 
         // Set the task ID in the DTO and update the task
-        taskhubDTO.setCategory_id(Integer.valueOf(categoryId));
+        taskhubDTO.setCategory_id(categoryId);
         taskhubService.updateCategory(taskhubDTO);
 
         // Return a JSON response
@@ -507,6 +512,18 @@ public class TaskhubController {
         }
     }
 
+    @DeleteMapping("/deleteRoutine/{routineId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> deleteRoutine(@PathVariable("routineId") String routineId, @RequestParam("isGroup") String isGroup) {
+        System.out.println(">>> TaskhubController.deleteRoutine Routine ID: " + routineId+"/ isGroup:"+isGroup);
+        try {
+            taskhubService.deleteRoutine(routineId, isGroup);
+            return createSuccessResponse("Routine saved successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); // 메시지만 포함
+        }
+    }
+
     @DeleteMapping("/deleteCategory/{categoryId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> deleteCategory(@PathVariable("categoryId") String categoryId) {
@@ -554,4 +571,26 @@ public class TaskhubController {
     public List<TaskhubDTO> findRoutines() {
         return taskhubService.findRoutines();
     }
+
+    @PostMapping("/saveRoutineToList")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> saveRoutineToList(@RequestBody Map<String, List<String>> requestBody) {
+        List<String> routineIds = requestBody.get("routineIds");
+        // null 체크 및 리스트가 비어있지 않은지 확인
+        if (routineIds == null || routineIds.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "No routine IDs provided."));
+        }
+        try {
+            taskhubService.saveRoutineToList(routineIds);
+
+            // 성공적으로 처리된 경우
+            return ResponseEntity.ok(Map.of("status", "success", "message", "Routines added successfully."));
+        } catch (Exception e) {
+            // 에러 발생 시 처리
+            logger.error("Error while adding routines to list", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "error", "message", "Failed to add routines."));
+        }
+    }
+
 }

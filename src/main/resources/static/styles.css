@@ -211,6 +211,7 @@ body {
     color: #f44336;
 }
 .work-title {
+    display: flex;
     cursor: pointer;
 }
 .work-title-group {
@@ -284,7 +285,7 @@ body {
     border-radius: 4px; /* Rounded corners */
 }
 
-#addTaskButton, #addWorkButton, #addGroupButton, #addRoutineButton {
+#addTaskButton, #addWorkButton, #addGroupButton, #addRoutineButton, .routineToListBtn {
     background-color: #87CEEB; /* Sky blue */
     color: white;
     width: 80px;
@@ -301,10 +302,28 @@ body {
 #addGroupButton, #addRoutineButton {
     font-size: 14px;
 }
+.routineToListBtn {
+    background-color: white;
+    color: #87CEEB;
+    border: solid 1px #87CEEB;
+    text-align: center; /* Center text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Inline block for alignment */
+    border-radius: 5px; /* Rounded corners */
+    font-size: 11px;
+    font-weight: bold;
+    width: 80px;
+    padding: 3px 3px 3px 3px;
+    margin-left: auto; /* 버튼을 오른쪽 끝으로 밀기 */
+}
 #addTaskButton:hover, #addWorkButton:hover, #addGroupButton:hover, #addRoutineButton:hover {
     background-color: #4bb1db;
+    color: white;
 }
-
+.routineToListBtn:hover {
+    background-color: #87CEEB;
+    color: white;
+}
 #taskList, #daysList, #assignedToMeList {
     list-style: none;
     padding: 0;

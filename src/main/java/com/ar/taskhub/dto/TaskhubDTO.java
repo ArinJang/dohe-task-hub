@@ -35,9 +35,9 @@ public class TaskhubDTO {
     private String is_overdue;
     private String is_assigned_to_me;
 
-    private Integer category_id;
+    private String category_id;
     private String category_name;
-    private Integer category_order;
+    private String category_order;
 
     private String day_of_week; // 요일 정보 추가
 

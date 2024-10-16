@@ -50,9 +50,9 @@
 
     <select id="findRoutines" parameterType="Long" resultType="taskhubdto">
         SELECT
-        R.ROUTINE_ID,
-        R.ROUTINE_CONTENT,
-        R.ROUTINE_GROUP,
+        R.ROUTINE_ID AS ROUTINE_ID,
+        R.ROUTINE_CONTENT AS ROUTINE_CONTENT,
+        R.ROUTINE_GROUP AS ROUTINE_GROUP,
         (SELECT ROUTINE_CONTENT FROM ROUTINE WHERE ROUTINE_ID = R.ROUTINE_GROUP) AS GROUP_CONTENT,
         R.REPETITION_CYCLE,
         R.REPETITION_DAY,
@@ -62,20 +62,20 @@
         AND R.USER_ID = #{user_id}
         AND R.ROUTINE_GROUP IS NOT NULL
 
-        <!--UNION
+        UNION
 
         SELECT
-        E.ROUTINE_ID,
-        E.ROUTINE_CONTENT,
-        999999 AS ROUTINE_GROUP,
-        '(group not assigned)' AS GROUP_CONTENT,
+        NULL AS ROUTINE_ID,
+        NULL AS ROUTINE_CONTENT,
+        E.ROUTINE_ID AS ROUTINE_GROUP,
+        E.ROUTINE_CONTENT AS GROUP_CONTENT,
         NULL AS REPETITION_CYCLE,
         NULL AS REPETITION_DAY,
         NULL AS CREATE_DATE
         FROM ROUTINE E
         WHERE 1=1
         AND E.USER_ID = #{user_id}
-        AND E.ROUTINE_GROUP IS NULL-->
+        AND (E.ROUTINE_GROUP IS NULL AND (SELECT COUNT(W.ROUTINE_ID) FROM ROUTINE W WHERE W.ROUTINE_GROUP = E.ROUTINE_ID) = 0)
 
         ORDER BY ROUTINE_ID, CREATE_DATE
     </select>
@@ -448,6 +448,15 @@
         ORDER BY W.WORK_ID;
     </select>
 
+    <select id="findGroups" parameterType="Long" resultType="taskhubdto">
+        SELECT ROUTINE_ID, ROUTINE_CONTENT
+          FROM ROUTINE
+         WHERE 1=1
+           AND USER_ID = #{user_id}
+           AND ROUTINE_GROUP IS NULL
+         ORDER BY ROUTINE_ID;
+    </select>
+
     <select id="findUsers" parameterType="Long" resultType="taskhubdto">
         SELECT userId AS ASSIGNEE_ID,
                userName AS ASSIGNEE_NAME
@@ -764,6 +773,9 @@
             <if test="repetition_day == ''">
                 REPETITION_DAY = NULL,
             </if>
+            <if test="routine_group != null">
+                ROUTINE_GROUP = #{routine_group},
+            </if>
         </set>
         WHERE ROUTINE_ID = #{routine_id}
     </update>
@@ -967,6 +979,10 @@
         DELETE FROM WORK WHERE WORK_ID = #{work_id} AND USER_ID = #{user_id}
     </delete>
 
+    <delete id="deleteRoutine" parameterType="map">
+        DELETE FROM ROUTINE WHERE ROUTINE_ID = #{routine_id} AND USER_ID = #{user_id}
+    </delete>
+
     <delete id="deleteCategory" parameterType="map">
         DELETE FROM CATEGORY WHERE CATEGORY_ID = #{category_id} AND USER_ID = #{user_id}
     </delete>
@@ -1090,6 +1106,7 @@
         AND TASK_STATUS != 2
     </select>
 
+
     <select id="findSubTasks" parameterType="String" resultType="Long">
         SELECT TASK_ID
           FROM TASK
@@ -1101,5 +1118,20 @@
         FROM TASK
         WHERE WORK_ID = #{work_id}
     </select>
+
+    <select id="isRoutineInGroup" parameterType="Long" resultType="int">
+        SELECT COUNT(*)
+        FROM ROUTINE
+        WHERE 1=1
+        AND ROUTINE_GROUP = #{routine_id}
+    </select>
+
+    <select id="getRoutineCycleAndDay" parameterType="Long" resultType="map">
+        SELECT REPETITION_CYCLE, REPETITION_DAY, ROUTINE_CONTENT
+        FROM ROUTINE
+        WHERE 1=1
+        AND ROUTINE_ID = #{routine_id}
+    </select>
+
 </mapper>
 
