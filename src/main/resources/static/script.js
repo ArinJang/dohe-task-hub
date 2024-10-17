@@ -2092,12 +2092,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if(routineGroupId != null) {
                 workTitle.classList.add('work-title');
                 workTitle.classList.add('work-title-group');
-                workTitle.innerHTML = `<strong>[[</strong> <strong class="custom-day-font">${routineGroupContent}</strong> <strong>]]</strong>`;
+                workTitle.innerHTML = `<strong>[[ </strong> <strong class="custom-day-font">${routineGroupContent}</strong> <strong> ]]</strong>`;
             } else if(workId == 999999 || completed) {
                 workTitle.innerHTML = `<strong></strong> <strong class="custom-day-font">${workName}</strong> <strong></strong>`;
             } else {
                 workTitle.className = 'work-title';
-                workTitle.innerHTML = `<strong>[[</strong> <strong class="custom-day-font">${workName}</strong> <strong>]]</strong>`;
+                workTitle.innerHTML = `<strong>[[ </strong> <strong class="custom-day-font">${workName}</strong> <strong> ]]</strong>`;
             }
 
             // Create the edit button
@@ -2136,8 +2136,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 workTitle.appendChild(deleteBtn);
             }
              if(routineGroupId != null) {
+                // 체크박스 생성
+                const groupCheckbox = document.createElement('input');
+                groupCheckbox.type = 'checkbox';
+                groupCheckbox.className = 'group-checkbox'; // 그룹 체크박스 클래스를 추가
+                groupCheckbox.addEventListener('change', function(event) {
+                    // 체크박스가 체크되었는지 확인
+                    const checked = event.target.checked;
+
+                    // 같은 그룹 ID를 가진 체크박스들을 찾아 체크 상태를 설정
+                    const checkboxes = document.querySelectorAll(`.routine-checkbox[data-group-id="${routineGroupId}"]`);
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = checked; // 그룹 체크박스 상태에 맞춰 체크박스 상태 설정
+                    });
+                });
                 const routineToListBtn = document.createElement('button');
-                routineToListBtn.textContent = 'ADD TO LIST';
+                routineToListBtn.textContent = 'ADD TO TASK';
                 routineToListBtn.className = 'routineToListBtn';
                 routineToListBtn.addEventListener('click', function(event) {
                     event.stopPropagation();
@@ -2154,8 +2168,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     saveRoutineToList(selectedRoutineIds);
                 });
 
-                // workTitle에 routineToListBtn 추가
-                workTitle.appendChild(routineToListBtn);
+    // workTitle에 체크박스와 버튼을 추가할 div 생성
+    const groupContainer = document.createElement('div');
+    groupContainer.className = 'group-checkbox-container'; // 컨테이너 클래스 추가
+
+
+    groupContainer.appendChild(groupCheckbox); // 체크박스 추가
+    groupContainer.appendChild(routineToListBtn); // 버튼 추가
+
+    workTitle.appendChild(groupContainer); // 컨테이너를 workTitle에 추가
             }
             li.appendChild(workTitle);
 //            li.appendChild(editBtn);
@@ -2242,9 +2263,11 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ routineIds: selectedRoutineIds }) // 선택된 routine_id 배열을 JSON으로 변환
         })
-        .then(response => {
+        .then(async (response) => {
             if (!response.ok) {
-                throw new Error('Network response was not ok'); // 에러 처리
+                const errorData = await response.json(); // JSON 응답 파싱
+                showNotification(errorData.message || 'An error occurred', 'error'); // 에러 메시지 표시
+                throw new Error(errorData.message || 'An error occurred'); // 에러를 throw 해서 다음 then을 실행하지 않도록 함
             }
             return response.json(); // JSON 응답으로 변환
         })
@@ -2439,6 +2462,7 @@ document.addEventListener('DOMContentLoaded', function() {
 //            console.log('Success:', data);
             showNotification('Successfully updated!', 'success');
             if(dataToChange != null) fetchRoutineDetails();
+            else putGroupsToSelect();
             clickSideBar(selectedSide, false);
         })
         .catch((error) => {
@@ -2614,6 +2638,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 clickSideBar(selectedSide, true);
                 deleteConfirmationModalR.style.display = 'none';
                 deleteConfirmationModalG.style.display = 'none';
+                if(isGroup != null) putGroupsToSelect();
             }
         })
         .catch((error) => {
@@ -3055,7 +3080,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
-        notification.textContent = message;
+        notification.innerHTML = message;
 
         // Add notification to container
         const container = document.getElementById('notificationContainer');
@@ -3064,7 +3089,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove notification after 3 seconds
         setTimeout(() => {
             notification.classList.add('hide');
-            setTimeout(() => notification.remove(), 400); // Remove element after fade-out
+            setTimeout(() => notification.remove(), 700); // Remove element after fade-out
         }, 2500);
     }
 

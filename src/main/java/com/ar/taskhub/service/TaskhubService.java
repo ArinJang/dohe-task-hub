@@ -622,22 +622,33 @@ public class TaskhubService {
             Map<String, Object> cycleAndDay = taskhubRepository.getRoutineCycleAndDay(Long.valueOf(routineId));
             String cycle = (String) cycleAndDay.get("REPETITION_CYCLE");
             String day = (String) cycleAndDay.get("REPETITION_DAY");
-            System.out.print(routineId+","+cycle+","+day);
+//            System.out.print(routineId+","+cycle+","+day);
             String dodate = "";
             LocalDate now = LocalDate.now(); // 오늘 날짜 가져오기
-            if(Objects.equals(cycle, "day")){
-                dodate = formatDate(now);
-            } else if(Objects.equals(cycle, "week")) {
-                DayOfWeek dayOfWeek = DayOfWeek.valueOf(day.toUpperCase()); // 요일을 대문자로 변환하여 DayOfWeek로 변환
-                dodate = formatDate(getDateOfWeek(now, dayOfWeek)); // 해당 요일의 날짜를 구하여 formatDate로 포맷
-            } else if(Objects.equals(cycle, "month")) {
-                int dayOfMonth = Integer.parseInt(day); // "01", "26" 등에서 정수로 변환
-                dodate = formatDate(now.withDayOfMonth(dayOfMonth)); // 현재 연도와 월에 맞춰서 해당 일로 설정
-            } else if(Objects.equals(cycle, "year")) {
-                String[] parts = day.split("-"); // "03-01", "12-31" 등을 분리
-                int month = Integer.parseInt(parts[0]); // 월 부분
-                int dayOfYear = Integer.parseInt(parts[1]); // 일 부분
-                dodate = formatDate(LocalDate.of(now.getYear(), month, dayOfYear)); // 현재 연도에 맞춰 설정
+
+            if(cycle == null ||
+                ((cycle.equals("week") || cycle.equals("month") || cycle.equals("year"))
+                        && day == null)
+                ){
+                throw new RuntimeException("Select a repeat schedule for this:<br>"
+                    + "'" + cycleAndDay.get("ROUTINE_CONTENT") + "'");
+            }
+            switch (cycle) {
+                case "day" -> dodate = formatDate(now);
+                case "week" -> {
+                    DayOfWeek dayOfWeek = DayOfWeek.valueOf(day.toUpperCase()); // 요일을 대문자로 변환하여 DayOfWeek로 변환
+                    dodate = formatDate(getDateOfWeek(now, dayOfWeek)); // 해당 요일의 날짜를 구하여 formatDate로 포맷
+                }
+                case "month" -> {
+                    int dayOfMonth = Integer.parseInt(day); // "01", "26" 등에서 정수로 변환
+                    dodate = formatDate(now.withDayOfMonth(dayOfMonth)); // 현재 연도와 월에 맞춰서 해당 일로 설정
+                }
+                case "year" -> {
+                    String[] parts = day.split("-"); // "03-01", "12-31" 등을 분리
+                    int month = Integer.parseInt(parts[0]); // 월 부분
+                    int dayOfYear = Integer.parseInt(parts[1]); // 일 부분
+                    dodate = formatDate(LocalDate.of(now.getYear(), month, dayOfYear)); // 현재 연도에 맞춰 설정
+                }
             }
             insertTask((String) cycleAndDay.get("ROUTINE_CONTENT"), dodate, null);
         }

@@ -213,9 +213,12 @@ body {
 .work-title {
     display: flex;
     cursor: pointer;
+    align-items: center; /* 세로 정렬을 가운데로 설정 */
 }
 .work-title-group {
+    display: flex;
     cursor: default;
+    align-items: center; /* 세로 정렬을 가운데로 설정 */
 }
 
 .work-title:hover .work-edit-btn,
@@ -285,7 +288,7 @@ body {
     border-radius: 4px; /* Rounded corners */
 }
 
-#addTaskButton, #addWorkButton, #addGroupButton, #addRoutineButton, .routineToListBtn {
+#addTaskButton, #addWorkButton, #addGroupButton, #addRoutineButton {
     background-color: #87CEEB; /* Sky blue */
     color: white;
     width: 80px;
@@ -302,6 +305,15 @@ body {
 #addGroupButton, #addRoutineButton {
     font-size: 14px;
 }
+.group-checkbox-container {
+    display: flex; /* 내부 요소들을 플렉스로 배치 */
+    align-items: center; /* 세로 중앙 정렬 */
+    margin-left: auto; /* 오른쪽 끝으로 밀기 */
+}
+
+.group-checkbox {
+    margin-right: 10px; /* 버튼과 체크박스 사이 간격 설정 */
+}
 .routineToListBtn {
     background-color: white;
     color: #87CEEB;
@@ -310,11 +322,12 @@ body {
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Inline block for alignment */
     border-radius: 5px; /* Rounded corners */
-    font-size: 11px;
+    font-size: 10px;
+    /*letter-spacing: -0.5px;*/
     font-weight: bold;
     width: 80px;
-    padding: 3px 3px 3px 3px;
-    margin-left: auto; /* 버튼을 오른쪽 끝으로 밀기 */
+    padding: 6px 3px 6px 3px; /* 패딩을 통일성 있게 설정 */
+    /*margin-left: auto; *//* 버튼을 오른쪽 끝으로 밀기 */
 }
 #addTaskButton:hover, #addWorkButton:hover, #addGroupButton:hover, #addRoutineButton:hover {
     background-color: #4bb1db;
@@ -337,8 +350,14 @@ body {
     /*cursor: pointer;*/
 }
 
-#taskList input[type="checkbox"] {
+.group-checkbox input[type="checkbox"] {
     margin-right: 10px;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #87CEEB;
 }
 
 ul, ol {
@@ -693,9 +712,6 @@ ul {
     border-bottom: 1px solid #ddd;
 }
 
-.task-checkbox {
-    margin-right: 10px;
-}
 .task-item input[type="checkbox"] {
     margin-right: 10px;
 }

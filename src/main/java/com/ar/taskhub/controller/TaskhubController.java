@@ -585,11 +585,8 @@ public class TaskhubController {
 
             // 성공적으로 처리된 경우
             return ResponseEntity.ok(Map.of("status", "success", "message", "Routines added successfully."));
-        } catch (Exception e) {
-            // 에러 발생 시 처리
-            logger.error("Error while adding routines to list", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", "Failed to add routines."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); // 메시지만 포함
         }
     }
 
