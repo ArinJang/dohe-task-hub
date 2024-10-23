@@ -96,6 +96,7 @@
         WHERE 1=1
         <include refid="sessionUserId" />
         AND D.DO_DATE = #{do_date}
+        AND T.TASK_STATUS NOT IN (2,3)
     </select>
 
     <!-- 2. INSERT 실행 -->
@@ -112,7 +113,7 @@
                 );
     </insert>
 
-    <select id="findAll" resultType="taskhubdto">
+    <select id="findAll" parameterType="map" resultType="taskhubdto">
         SELECT
             T.TASK_ID,
             T.TASK_CONTENT,
@@ -142,8 +143,12 @@
         <include refid="sessionUserId"/>
         AND D.do_date = '9999-12-31'
         AND T.TASK_STATUS NOT IN (4, 5, 6)
+        <if test="hide_completed != null and hide_completed != ''">
+        AND T.TASK_STATUS NOT IN (2, 3)
+        </if>
         ORDER BY
-        D.TASK_ORDER;
+        D.TASK_ORDER IS NULL, D.TASK_ORDER, T.LAST_MODIFIED;
+
     </select>
 
     <select id="findAssignedToMe" parameterType="Long" resultType="taskhubdto">
@@ -267,9 +272,11 @@
         WHERE 1 = 1
         <include refid = "sessionUserId" />
         AND D.do_date BETWEEN #{mon} AND #{sun}
-        ORDER BY D.TASK_ORDER,
-                 T.TASK_STATUS,
-                 D.TASK_ID DESC
+        <if test="hide_completed != null">
+        AND T.TASK_STATUS NOT IN (2, 3)
+        </if>
+        ORDER BY
+        D.TASK_ORDER IS NULL, D.TASK_ORDER, T.LAST_MODIFIED
     </select>
 
     <!--<select id="findByCategory" parameterType="String" resultType="taskhubdto">
@@ -585,6 +592,12 @@
         AND T.DUE_DATE IS NULL
     </select>
 
+    <select id="findNewRoutineId" parameterType="taskhubdto" resultType="int">
+        SELECT MAX(T.ROUTINE_ID) FROM ROUTINE T
+        WHERE 1=1
+        <include refid="sessionUserId"/>
+    </select>
+
     <select id="findByStatus" parameterType="taskhubdto" resultType="taskhubdto">
         <!--<select id="findByStatus" parameterType="taskhubdto" resultType="taskhubdto">
             SELECT
@@ -808,13 +821,20 @@
         LIMIT 1;
     </select>
 
+    <select id="getDodates" parameterType="String" resultType="String">
+        SELECT DO_DATE
+        FROM DODATES
+        WHERE TASK_ID = #{task_id}
+    </select>
+
     <select id="getMaxIdxOfNewDate" parameterType="map" resultType="String">
         SELECT COALESCE(MAX(D.TASK_ORDER) + 1, 0) AS new_idx
         FROM TASK T JOIN DODATES D
              ON T.TASK_ID = D.TASK_ID
         WHERE 1=1
         <include refid="sessionUserId"/>
-        AND D.DO_DATE = #{newDoDate};
+        AND D.DO_DATE = #{newDoDate}
+        AND T.TASK_STATUS NOT IN (2,3);
     </select>
 
     <update id="orderMinus1BeforeDeletion" parameterType="taskhubdto">
@@ -866,7 +886,9 @@
         <include refid="sessionUserId"/>
         AND D.DO_DATE = #{new_do_date}
         AND D.TASK_ORDER > #{old_order_idx}
-        AND D.TASK_ORDER <![CDATA[<=]]> #{new_order_idx};
+        <if test="new_order_idx != null">
+        AND D.TASK_ORDER <![CDATA[<=]]> #{new_order_idx}
+        </if>
     </update>
 
     <update id="updateOrderAndDoDateInSameDateUp" parameterType="taskhubdto">
@@ -914,6 +936,7 @@
                 <include refid="sessionUserId"/>
                 AND D.DO_DATE IN (SELECT DO_DATE FROM DODATES WHERE TASK_ID = #{task_id})
                 AND D.TASK_ID != #{task_id}
+                AND D.TASK_ORDER IS NOT NULL
               ORDER BY D.DO_DATE, D.TASK_ORDER
             ) D
         )
@@ -948,6 +971,7 @@
         <include refid="sessionUserId"/>
         AND D.DO_DATE = #{do_date}  -- Use the provided do_date parameter
         AND D.TASK_ID != #{task_id}  -- Exclude the specific task_id
+        AND D.TASK_ORDER IS NOT NULL
         ORDER BY D.DO_DATE, D.TASK_ORDER
         ) D
         )

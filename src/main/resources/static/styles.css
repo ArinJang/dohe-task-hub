@@ -324,10 +324,10 @@ body {
     border-radius: 5px; /* Rounded corners */
     font-size: 10px;
     /*letter-spacing: -0.5px;*/
-    font-weight: bold;
+    font-weight: 700;
     width: 80px;
     padding: 6px 3px 6px 3px; /* 패딩을 통일성 있게 설정 */
-    /*margin-left: auto; *//* 버튼을 오른쪽 끝으로 밀기 */
+    cursor: pointer;
 }
 #addTaskButton:hover, #addWorkButton:hover, #addGroupButton:hover, #addRoutineButton:hover {
     background-color: #4bb1db;
@@ -357,7 +357,11 @@ body {
 input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: #87CEEB;
+    accent-color: #b7e1f3   ;
+}
+
+#rememberMe {
+    accent-color: #b7dfb9;
 }
 
 ul, ol {
@@ -439,7 +443,7 @@ ul {
 }
 /* Save button styling */
 #saveChangesButton {
-    background-color: #4CAF50; /* Green background */
+    background-color: #87ceeb; /* Green background */
     color: white; /* White text */
     border: none; /* Remove border */
     padding: 10px 20px; /* Add padding */
@@ -1035,4 +1039,20 @@ button#addUser:hover, button#developerAccount:hover {
 
 #routineDateSelects select {
     width: auto; /* 선택 박스의 크기를 자동으로 조정 */
+}
+
+.hide-completed-tasks {
+    display: flex;
+    justify-content: flex-end; /* 오른쪽 정렬 */
+    align-items: center;
+}
+
+#hideCompletedTasks {
+    width: 12px;  /* 체크박스 크기 조절 */
+    height: 12px;
+    margin-right: 3px;
+}
+
+.hideCompletedLabel {
+    font-size: 12px; /* label의 글자 크기 조절 */
 }

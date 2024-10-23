@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const workInputArea = document.querySelector('.work-input');
     const groupInputArea = document.querySelector('.group-input');
     const routineInputArea = document.querySelector('.routine-input');
+    const hideChkArea = document.querySelector('.hide-completed-tasks');
     const addTaskButton = document.getElementById('addTaskButton');
     const taskList = document.getElementById('taskList');
     const dayList = document.getElementById('dayList');
@@ -39,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var detailElements = taskDetailContent.querySelectorAll('input, select, textarea');
     const taskMemoContent = document.getElementById('taskMemo');
     let orderInCertainStatus = null;
-    sessionStorage.setItem('ifLoggedIn', 'false');
     var subTaskMemoUpdateParentId = false;
     var subTaskMemoUpdateSubId = false;
     let doDatesArray;
@@ -321,11 +321,13 @@ document.addEventListener('DOMContentLoaded', function() {
         navigationBar.innerHTML = '';
         if (category === 'week') {
             updateWeekDates();
+            hideChkArea.style.display = 'flex';
             taskInputArea.style.display = 'flex';
             workInputArea.style.display = 'none';
             groupInputArea.style.display = 'none';
             routineInputArea.style.display = 'none';
         } else if (category === 'work') {
+            hideChkArea.style.display = 'none';
             taskInputArea.style.display = 'none';
             workInputArea.style.display = 'flex';
             groupInputArea.style.display = 'none';
@@ -388,6 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
             navigationBar.appendChild(addButton);
         } else if (category === 'routine') {
 //            console.log('routine');
+            hideChkArea.style.display = 'none';
             taskInputArea.style.display = 'none';
             workInputArea.style.display = 'none';
             groupInputArea.style.display = 'flex';
@@ -877,7 +880,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // 필드 목록 정의 (상황에 따라 표시할 필드 목록)
         const essentialFields = {
             work: ['workNameInput', 'categoryName', 'workStatus'],
-            task: ['taskName', 'workName', 'dueDate', 'taskStatus', 'doDates', 'doDatesContainer', 'subTasks', 'taskMemo', 'taskMemoInput', 'taskDone', 'categoryName'],
+            task: ['taskName', 'workName', 'dueDate', 'taskStatus', 'doDates', 'doDatesContainer',
+                    'subTasks', 'taskMemo', 'taskMemoInput', 'taskDone', 'categoryName'],
             routine: ['routineContent', 'routineCycle', 'routineDay', 'routineDateSelects', 'groupContent']
         };
 
@@ -958,18 +962,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentValue = event.target.value;
                 console.log('case taskStatus currentValue:',currentValue,'/originalValues[id]:',originalValues[id]);
                 if (currentValue !== originalValues[id]) {
-                    if((originalValues[id] == 4 || originalValues[id] == 5 || originalValues[id] == 6)
+                    if((originalValues[id] == 2 || originalValues[id] == 3)
+                        && (currentValue != 2 && currentValue != 3)){
+//                            updateDoDates(sessionStorage.getItem('detailID'), null, currentValue);
+                            updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+                    } else if((originalValues[id] == 4 || originalValues[id] == 5 || originalValues[id] == 6)
                         && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3)) {
                         document.querySelector('.do-dates-group').style.display = 'flex';
                         if(currentValue == 2){
-                            updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, null, sessionStorage.getItem('detailID'), currentValue, "2");
+                            updateDoDateTaskDone('Done', false);
+                            updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+                        } else if(currentValue == 3){
+                            updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
                         } else {
                             updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue, null);
                         }
-
                     } else if((originalValues[id] != 4 && originalValues[id] != 5 && originalValues[id] != 6)
-                        && currentValue == 2 && doDatesArray.length === 0){
-                        updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, null, sessionStorage.getItem('detailID'), currentValue, "2");
+                        && currentValue == 2 || currentValue == 3) {
+                        if(doDatesArray.length === 0) {
+                            if(currentValue == 2) {
+                                updateDoDateTaskDone('Done', false);
+                                updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+                            }
+                            if(currentValue == 3) updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+                        }
+                        else {
+                            if(currentValue == 2) {
+                                updateDoDateTaskDone('Done', false);
+                                updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+                            }
+                            if(currentValue == 3) updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+                        }
                     } else if(currentValue == 4) {
                         document.querySelector('.do-dates-group').style.display = 'none';
                         updateDoDates(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
@@ -982,6 +1005,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         updateTask(id);
                     }
+
                     if (originalValues[id] == 2){
                         updateDoDateTaskDone('Undone',false);
                     }
@@ -1324,7 +1348,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId, newStatus, newDone) {
+    function updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId,
+                newStatus, newDone) {
         const updateData = {
             task_id: movedTaskId,
             old_do_date: fromDay,
@@ -1334,7 +1359,6 @@ document.addEventListener('DOMContentLoaded', function() {
             task_status: newStatus,
             task_done: newDone
         };
-//        console.log('movedTaskId: ',movedTaskId);
         sessionStorage.setItem('detailID', movedTaskId);
 
         fetch('/api/updateOrderAndDoDate', {
@@ -1344,16 +1368,18 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(updateData)
         })
-        .then(response => response.json())
+        .then(async (response) => {
+            if (!response.ok) {
+                const errorData = await response.json(); // JSON 응답 파싱
+                showNotification(errorData.message || 'An error occurred', 'error'); // 에러 메시지 표시
+                fetchTaskDetails(toDay);
+                clickSideBar(selectedSide, false);
+                throw new Error(errorData.message || 'An error occurred'); // 에러를 발생시켜 catch 블록으로 이동
+            }
+            return response.json(); // 성공 시 데이터를 반환
+        })
         .then(data => {
-//            console.log('Task updated successfully:', data);
-            showNotification('Successfully updated!', 'success');
-//            if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
-//                fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
-//            }else{
-//                fetchTasksByDay();
-//            }
-//            fetchMainTaskList();
+            showNotification('Successfully updated!', 'success'); // 성공 메시지 표시
             fetchTaskDetails(toDay);
             clickSideBar(selectedSide, false);
         })
@@ -1455,7 +1481,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (tasksByDay[day] && tasksByDay[day].length > 0) {
             tasksByDay[day].forEach((task, index) => {
-                const taskItem = createTaskItem(task, true, true);
+                var hamburgerYN = true;
+                if(task.task_status == 2 || task.task_status == 3) hamburgerYN = false;
+                const taskItem = createTaskItem(task, hamburgerYN, true);
                     if(task.is_overdue == '1'){
                         taskItem.id = 'overdue';
                     }
@@ -1483,7 +1511,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (filteredTasks.length > 0) {
                 filteredTasks.forEach((task, index) => {
-                    // 각 task를 렌더링
                     const taskItem = createTaskItem(task, false, false);
                     if(task.is_overdue == '1'){
                         taskItem.id = 'overdue';
@@ -1517,27 +1544,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     const taskItem = createRoutineItem(task);
                     taskListForWork.appendChild(taskItem);
                 });
-            } else taskListForWork.appendChild(addPlaceholderForEmptyList());
-        } else taskListForWork.appendChild(addPlaceholderForEmptyList());
+            } else taskListForWork.appendChild(addPlaceholderForEmptyList('routine'));
+        } else taskListForWork.appendChild(addPlaceholderForEmptyList('routine'));
 
         initSortable(taskListForWork, null);  // 업데이트된 작업 목록에 대해 Sortable.js 초기화
     }
 
     function fetchMainTaskList() {
+        var hideCompleted;
+        if (sessionStorage.getItem('hideChk') === 'true') hideCompleted = true;
+        else hideCompleted = null;
+
         taskList.innerHTML = ''; // Clear existing tasks
         assignedToMeList.innerHTML = ''; // Clear existing tasks
-        createTaskItem.innerHTML = ''; // Clear existing tasks
         assignedToMeList.style.display = 'none';
 
         switch (selectedSide) {
             case 'week':
-                fetch('/api/tasksNotAssigned')
+                fetch(`/api/tasksNotAssigned/${hideCompleted}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.length === 0) taskList.appendChild(addPlaceholderForEmptyList());
                         else {
                             data.forEach(task => {
-                                const taskItem = createTaskItem(task, true, true);
+                                var hamburgerYN = true;
+                                if(task.task_status == 2 || task.task_status == 3) hamburgerYN = false;
+                                const taskItem = createTaskItem(task, hamburgerYN, true);
                                 if(task.is_overdue == '1'){
                                     taskItem.id = 'overdue';
                                 }
@@ -1626,6 +1658,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         const data = JSON.parse(text); // Parse text as JSON
                         putWorksToSelect(data.category_id, data.work_id);
                         showTaskDetail(data);
+
+                        if(data.task_status == 2 || data.task_status == 3) disableDoDates();
+                        else enableDoDates();
+
                         if(data.task_status == 4 ||data.task_status == 5 ||data.task_status == 6){
                             document.querySelector('.do-dates-group').style.display = 'none';
                         } else {
@@ -1645,6 +1681,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => console.error('Error fetching task details:', error));
+    }
+
+    // 비활성화 함수
+    function disableDoDates() {
+        const doDatesGroup = document.querySelector('.do-dates-group');
+        const inputDate = document.getElementById('doDates');
+        const addDateButton = document.getElementById('addDateButton');
+
+        // 비활성화 처리
+        doDatesGroup.style.opacity = '0.5'; // 시각적으로 비활성화
+        if(inputDate) inputDate.disabled = true; // input 요소 비활성화
+        addDateButton.disabled = true; // 버튼 비활성화
+    }
+
+    // 활성화 함수
+    function enableDoDates() {
+        const doDatesGroup = document.querySelector('.do-dates-group');
+        const inputDate = document.getElementById('doDates');
+        const addDateButton = document.getElementById('addDateButton');
+
+        // 활성화 처리
+        doDatesGroup.style.opacity = '1'; // 시각적으로 활성화
+        if(inputDate) inputDate.disabled = false; // input 요소 활성화
+        addDateButton.disabled = false; // 버튼 활성화
     }
 
     function fetchWorkDetails() {
@@ -1783,6 +1843,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     function fetchTasksByDateRange() {
+        var hideCompleted;
+        if (sessionStorage.getItem('hideChk') === 'true') hideCompleted = true;
+        else hideCompleted = null;
+
         const storedBaseDate = sessionStorage.getItem('baseDate');
         let isoDate = '';
         if (storedBaseDate) {
@@ -1798,7 +1862,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // fetch 요청을 보낼 때 isoDate가 빈 문자열이면, 서버로 baseDate 없이 요청을 보냄
-        fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
+//        fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
+        fetch(`/api/tasks/${hideCompleted}${isoDate ? `?baseDate=${isoDate}` : ''}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -1836,6 +1901,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchTasksByDay() {
+        var hideCompleted;
+        if (sessionStorage.getItem('hideChk') === 'true') hideCompleted = true;
+        else hideCompleted = null;
+
         // Retrieve baseDate from sessionStorage
         const storedBaseDate = sessionStorage.getItem('baseDate');
         const day = sessionStorage.getItem('nav'); // Get the specified day
@@ -1854,7 +1923,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Fetch tasks with baseDate parameter if it exists
-        fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
+//        fetch(`/api/tasks${isoDate ? `?baseDate=${isoDate}` : ''}`)
+        fetch(`/api/tasks/${hideCompleted}${isoDate ? `?baseDate=${isoDate}` : ''}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -2092,12 +2162,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if(routineGroupId != null) {
                 workTitle.classList.add('work-title');
                 workTitle.classList.add('work-title-group');
-                workTitle.innerHTML = `<strong>[[ </strong> <strong class="custom-day-font">${routineGroupContent}</strong> <strong> ]]</strong>`;
+                workTitle.innerHTML = `<strong>[[&nbsp;</strong><strong class="custom-day-font">${routineGroupContent}</strong><strong>&nbsp;]]</strong>`;
             } else if(workId == 999999 || completed) {
-                workTitle.innerHTML = `<strong></strong> <strong class="custom-day-font">${workName}</strong> <strong></strong>`;
+                workTitle.innerHTML = `<strong></strong> <strong class="custom-day-font">${workName}</strong><strong></strong>`;
             } else {
                 workTitle.className = 'work-title';
-                workTitle.innerHTML = `<strong>[[ </strong> <strong class="custom-day-font">${workName}</strong> <strong> ]]</strong>`;
+                workTitle.innerHTML = `<strong>[[&nbsp;</strong><strong class="custom-day-font">${workName}</strong><strong>&nbsp;]]</strong>`;
             }
 
             // Create the edit button
@@ -2161,22 +2231,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         .filter(checkbox => checkbox.getAttribute('data-group-id') === routineGroupId)
                         .map(checkbox => checkbox.getAttribute('data-routine-id'));
 
-                    // 체크된 항목들의 routine_id 출력
-                    console.log('Selected Routine IDs (Matching group ID):', selectedRoutineIds);
-
                     // 선택된 루틴을 서버로 전송
-                    saveRoutineToList(selectedRoutineIds);
+                    if(selectedRoutineIds.length > 0) saveRoutineToList(selectedRoutineIds);
+                    else showNotification('Check routines', 'error');
+
                 });
 
-    // workTitle에 체크박스와 버튼을 추가할 div 생성
-    const groupContainer = document.createElement('div');
-    groupContainer.className = 'group-checkbox-container'; // 컨테이너 클래스 추가
+                // workTitle에 체크박스와 버튼을 추가할 div 생성
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'group-checkbox-container'; // 컨테이너 클래스 추가
 
 
-    groupContainer.appendChild(groupCheckbox); // 체크박스 추가
-    groupContainer.appendChild(routineToListBtn); // 버튼 추가
+                groupContainer.appendChild(groupCheckbox); // 체크박스 추가
+                groupContainer.appendChild(routineToListBtn); // 버튼 추가
 
-    workTitle.appendChild(groupContainer); // 컨테이너를 workTitle에 추가
+                workTitle.appendChild(groupContainer); // 컨테이너를 workTitle에 추가
             }
             li.appendChild(workTitle);
 //            li.appendChild(editBtn);
@@ -2247,6 +2316,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if(action === 'TASK'){
                 await fetchNewId();  // fetchNewId가 비동기 작업일 경우
                 fetchTaskDetails(selectedDate);
+            } else if (action === 'ROUTINE'){
+                await fetchNewRoutineId();
+                fetchRoutineDetails();
             }
             clickSideBar(selectedSide, false);
         } catch (error) {
@@ -2315,6 +2387,19 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(id => {
                 sessionStorage.setItem('detailID', id);
                 console.log("fetchNewId: ", sessionStorage.getItem('detailID'));
+            })
+            .catch(error => {
+                console.error('Error fetching ID:', error);
+                throw error; // 에러가 발생하면 catch에서 다시 throw하여 외부에서 처리 가능하도록
+            });
+    }
+
+    function fetchNewRoutineId() {
+        return fetch(`/api/newRoutineId`)
+            .then(response => response.json()) // Convert the response to JSON
+            .then(id => {
+                sessionStorage.setItem('detailRoutineID', id);
+//                console.log("fetchNewId: ", sessionStorage.getItem('detailRoutineID'));
             })
             .catch(error => {
                 console.error('Error fetching ID:', error);
@@ -3210,6 +3295,11 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.setAttribute('data-routine-id', routine.routine_id);
         checkbox.setAttribute('data-group-id', routine.routine_group);
 
+        const hamburgerIcon = document.createElement('span');
+        hamburgerIcon.className = 'hamburger-icon';
+        hamburgerIcon.textContent = '☰';
+
+//        li.appendChild(hamburgerIcon);
         li.appendChild(checkbox);         // Add the checkbox first
         li.appendChild(taskContainer);    // Finally add the task content
 
@@ -3296,10 +3386,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching users:', error));
     }
 
-    function addPlaceholderForEmptyList() {
+    function addPlaceholderForEmptyList(isRoutine) {
         const emptyPlaceholder = document.createElement('li');
         emptyPlaceholder.className = 'empty-placeholder';
-        emptyPlaceholder.textContent = 'No tasks available';
+        emptyPlaceholder.textContent = isRoutine ? 'No routines available':'No tasks available';
         emptyPlaceholder.style.pointerEvents = 'none'; // Prevent any interaction with the placeholder
         emptyPlaceholder.style.cursor = 'default';
         return emptyPlaceholder;
@@ -3349,22 +3439,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (selectedCycle === 'day') {
             // "Every day"일 경우, 날짜 선택을 비활성화
-            routineDate.style.display = 'none';
-            routineDay.style.display = 'flex';
-            routineDay.innerHTML = '<option value="everyday">Every day</option>';
+//            routineDate.style.display = 'none';
+//            routineDay.style.display = 'flex';
+//            routineDay.innerHTML = '<option value="">Every day</option>';
         } else if (selectedCycle === 'week') {
-            // 주간 반복, 요일 선택 활성화
+            console.log('week choose');
+//            routineDate.style.display = 'none'; // 날짜 선택은 숨기기
             routineDay.style.display = 'flex';
-            routineDate.style.display = 'none'; // 날짜 선택은 숨기기
         } else if (selectedCycle === 'month') {
             // 월간 반복, 1일부터 31일까지 선택할 수 있도록 날짜 선택 활성화
-            routineDay.style.display = 'none';
+//            routineDay.style.display = 'none';
             routineDate.style.display = 'flex';
         } else if (selectedCycle === 'year') {
             // 연간 반복, 월과 날짜 모두 선택 가능
             routineMonth.style.display = 'flex';
             routineDate.style.display = 'flex';
-            routineDay.style.display = 'none'; // 요일은 숨기기
+//            routineDay.style.display = 'none'; // 요일은 숨기기
         }
     });
 
@@ -3389,6 +3479,18 @@ document.addEventListener('DOMContentLoaded', function() {
             option.value = i;
             option.textContent = i;
             routineDate.appendChild(option);
+        }
+    });
+
+    document.getElementById('hideCompletedTasks').addEventListener('change', function() {
+        if (this.checked) sessionStorage.setItem('hideChk', 'true');
+        else sessionStorage.setItem('hideChk', 'false');
+
+        fetchMainTaskList();
+        if(sessionStorage.getItem('nav') === null || sessionStorage.getItem('nav') === ''){
+            fetchTasksByDateRange(); // 성공적으로 저장한 후 태스크 리스트를 새로 고침
+        }else{
+            fetchTasksByDay();
         }
     });
 });

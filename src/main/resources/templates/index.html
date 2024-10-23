@@ -73,8 +73,32 @@
                             <input type="submit" id="addRoutineButton" value="ROUTINE" name="action">
                         </div>
                     </form>
+
+                    <script>
+                        document.getElementById('taskForm').addEventListener('keydown', function(event) {
+                            if (event.key === 'Enter') {
+                                event.preventDefault(); // 기본 엔터키 동작 방지
+                                const activeElement = document.activeElement; // 현재 포커스가 있는 요소
+
+                                // 포커스가 있는 input에 따라 해당 submit 버튼 클릭
+                                if (activeElement === document.getElementById('taskInput')) {
+                                    document.getElementById('addTaskButton').click();
+                                } else if (activeElement === document.getElementById('workInput')) {
+                                    document.getElementById('addWorkButton').click();
+                                } else if (activeElement === document.getElementById('groupInput')) {
+                                    document.getElementById('addGroupButton').click();
+                                } else if (activeElement === document.getElementById('routineInput')) {
+                                    document.getElementById('addRoutineButton').click();
+                                }
+                            }
+                        });
+                    </script>
                     <ul id="assignedToMeList">
                     </ul>
+                    <div class="hide-completed-tasks">
+                        <input type="checkbox" id="hideCompletedTasks">
+                        <label for="hideCompletedTasks" class="hideCompletedLabel">Hide completed/canceled tasks</label>
+                    </div>
                     <ul id="taskList">
     <!--                    <li th:each="taskhub : ${taskhubList}" class="task-item" th:data-task-id="${taskhub.task_id}">-->
     <!--                        <input type="checkbox">-->

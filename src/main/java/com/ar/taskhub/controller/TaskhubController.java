@@ -17,10 +17,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -36,9 +33,10 @@ public class TaskhubController {
         return "save";
     }
 
-    @GetMapping("/tasksNotAssigned")
-    public List<TaskhubDTO> getTasksNotAssigned() {
-        return taskhubService.findAll();
+    @GetMapping("/tasksNotAssigned/{hideCompleted}")
+    public List<TaskhubDTO> getTasksNotAssigned(@PathVariable("hideCompleted") String hideCompleted) {
+        System.out.println(">>> "+hideCompleted);
+        return taskhubService.findAll(hideCompleted);
     }
 
     @GetMapping("/findAssignedToMe")
@@ -123,9 +121,10 @@ public class TaskhubController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/tasks")
-    public List<TaskhubDTO> getTasksByDateRange(@RequestParam(value = "baseDate", required = false) String baseDate) {
-        return taskhubService.findByDoDates(baseDate);
+    @GetMapping("/tasks/{hideCompleted}")
+    public List<TaskhubDTO> getTasksByDateRange(@RequestParam(value = "baseDate", required = false) String baseDate,
+                                                @PathVariable("hideCompleted") String hideCompleted) {
+        return taskhubService.findByDoDates(baseDate, hideCompleted);
     }
 
     @GetMapping("/tasksByCategory")
@@ -153,7 +152,7 @@ public class TaskhubController {
 
     @GetMapping("/works/{categoryId}")
     public List<TaskhubDTO> getWorks(@PathVariable("categoryId") String categoryId) {
-        System.out.println("getWorks cat id: " + categoryId);
+//        System.out.println("getWorks cat id: " + categoryId);
         return taskhubService.findWorks(categoryId);
     }
 
@@ -174,12 +173,17 @@ public class TaskhubController {
 
     @GetMapping("/tasksAdded")
     public List<TaskhubDTO> getTasks() {
-        return taskhubService.findAll();
+        return taskhubService.findAll(null);
     }
 
     @GetMapping("/newId")
     public int findNewId() {
         return taskhubService.findNewId();
+    }
+
+    @GetMapping("/newRoutineId")
+    public int findNewRoutineId() {
+        return taskhubService.findNewRoutineId();
     }
 
     @GetMapping("/findById/{taskId}")
@@ -224,7 +228,7 @@ public class TaskhubController {
     public ResponseEntity<Map<String, Object>> updateDoDateTaskDone(
             @PathVariable("taskId") String taskId,
             @RequestBody TaskhubDTO taskhubDTO) {
-        System.out.println(">>> TaskhubController.updateDoDateTaskDone taskid: " + taskId);
+        System.out.println(">>> TaskhubController.updateDoDateTaskDone taskid: " + taskId+"/"+taskhubDTO.getTask_done());
 //        System.out.println("TaskhubDTO: " + taskhubDTO);
 
         // Set the task ID in the DTO and update the task
@@ -417,13 +421,13 @@ public class TaskhubController {
             String taskDone = (String) updateData.get("task_done");
 
 //            System.out.println("0 updateOrderAndDoDate task_id: " + taskId + " / taskStatus: " + taskStatus);
-//            System.out.println("0 do_date: " + oldDoDate + "->" + newDoDate + " // idx: " + oldIdx + "->" + newIdx);
+            System.out.println("0 do_date: " + oldDoDate + "->" + newDoDate + " // idx: " + oldIdx + "->" + newIdx);
 
             //if (oldDoDate == null || oldIdx == null || newIdx == null) {
             if (oldDoDate == null || oldDoDate.isEmpty() || oldIdx == null || oldIdx.isEmpty() || newIdx == null || newIdx.isEmpty()) {
 //                System.out.println("IF oldDoDate == null || oldIdx == null || newIdx == null ");
                 Map<String, Object> oldValues = taskhubService.getOldDoDateAndOrder(taskId);
-                newIdx = taskhubService.getMaxIdxOfNewDate(newDoDate);
+                newIdx = Objects.equals(newIdx, "99999") ? newIdx : taskhubService.getMaxIdxOfNewDate(newDoDate);
 
                 // Convert DO_DATE to String if it is a java.sql.Date
                 Object oldDoDateObj = oldValues.get("old_do_date");
@@ -437,6 +441,9 @@ public class TaskhubController {
                 Object oldOrderIdxObj = oldValues.get("old_order_idx");
                 oldIdx = getStringValue(oldOrderIdxObj);
             }
+            if (newDoDate == null || newDoDate.isEmpty()){
+                newDoDate = oldDoDate;
+            }
 
             TaskhubDTO taskhubDTO = new TaskhubDTO();
             taskhubDTO.setTask_id(taskId);
@@ -446,10 +453,16 @@ public class TaskhubController {
             taskhubDTO.setNew_order_idx(newIdx);
             taskhubDTO.setTask_status(taskStatus);
             taskhubDTO.setTask_done(taskDone);
-            System.out.println("updateOrderAndDoDate task_done: " + taskhubDTO.getTask_done());
-//            System.out.println("1 do_date: " + taskhubDTO.getOld_do_date() + "->" + taskhubDTO.getNew_do_date() + " // idx: " + taskhubDTO.getOld_order_idx() + "->" + taskhubDTO.getNew_order_idx());
-
-            taskhubService.updateOrderAndDoDate(taskhubDTO);
+//            System.out.println("updateOrderAndDoDate task_done: " + taskhubDTO.getTask_done());
+            System.out.println("1 do_date: " + taskhubDTO.getOld_do_date() +
+                    "->" + taskhubDTO.getNew_do_date() + " // idx: "
+                    + taskhubDTO.getOld_order_idx() + "->"
+                    + taskhubDTO.getNew_order_idx()+"("+newIdx+")");
+            try{
+                taskhubService.updateOrderAndDoDate(taskhubDTO);
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");

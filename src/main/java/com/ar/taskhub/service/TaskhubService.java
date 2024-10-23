@@ -72,10 +72,14 @@ public class TaskhubService {
         taskhubRepository.insertRoutine(taskDTO);
     }
 
-    public List<TaskhubDTO> findAll(){
-//        System.out.println("service findAll(Long defaultId)? "+getLoginIdDTO().getUser_id());
+    public List<TaskhubDTO> findAll(String hideCompleted){
+        System.out.println("findAll: "+hideCompleted);
         Long user_id = getLoginIdDTO().getUser_id() == null ? 2 : getLoginIdDTO().getUser_id();
-        return taskhubRepository.findAll(user_id);
+        Map<String, Object> params = new HashMap<>();
+        params.put("user_id", user_id);
+        if(Objects.equals(hideCompleted, "true")) params.put("hide_completed", hideCompleted);
+        else params.put("hide_completed", null);
+        return taskhubRepository.findAll(params);
     }
 
     public List<TaskhubDTO> findAssignedToMe(){
@@ -90,7 +94,7 @@ public class TaskhubService {
         return taskhubRepository.findTaskContent(Long.valueOf(task_id));
     }
 
-    public List<TaskhubDTO> findByDoDates(String baseDate) {
+    public List<TaskhubDTO> findByDoDates(String baseDate, String hideCompleted) {
         LocalDate today;
         if (baseDate != null && !baseDate.isEmpty()) {
             today = LocalDate.parse(baseDate); // 문자열을 LocalDate로 변환
@@ -111,6 +115,10 @@ public class TaskhubService {
         }
         taskDTO.setMon(mon);
         taskDTO.setSun(sun);
+
+        if(Objects.equals(hideCompleted, "true")) taskDTO.setHide_completed(hideCompleted);
+        else taskDTO.setHide_completed(null);
+
         return taskhubRepository.findByDoDates(taskDTO);
     }
 
@@ -192,6 +200,10 @@ public class TaskhubService {
 
     public int findNewId() {
         return taskhubRepository.findNewId(getLoginIdDTO().getUser_id());
+    }
+
+    public int findNewRoutineId() {
+        return taskhubRepository.findNewRoutineId(getLoginIdDTO().getUser_id());
     }
 
     public void updateTask(TaskhubDTO taskDTO) {
@@ -283,17 +295,12 @@ public class TaskhubService {
 
     @Transactional
     public void deleteWork(String workId) {
-        System.out.println("service delete: "+workId);
-        System.out.println("Starting updateTaskDeletingWorkId...");
         Long work_id = Long.valueOf(workId);
         taskhubRepository.updateTaskDeletingWorkId(work_id);
-        System.out.println("Starting updateTaskDeletingWorkId...");
         Map<String, Object> params = new HashMap<>();
         params.put("work_id", workId);
         params.put("user_id", getLoginIdDTO().getUser_id());
-        System.out.println("Starting deleteWork...");
         taskhubRepository.deleteWork(params);
-        System.out.println("delete end...");
     }
 
     @Transactional
@@ -332,7 +339,9 @@ public class TaskhubService {
 
     @Transactional
     public void updateOrderAndDoDate(TaskhubDTO taskDTO) {
-        System.out.println("! updateOrderAndDoDate");
+        System.out.println("!"+taskDTO.getOld_do_date()+" -> " + taskDTO.getNew_do_date()
+        +" // "+taskDTO.getOld_order_idx()+" -> "+taskDTO.getNew_order_idx()+".done:"+ taskDTO.getTask_done()
+        );
         try {
             String taskId = taskDTO.getTask_id();
             if(taskDTO.getTask_status() != null) {
@@ -344,8 +353,40 @@ public class TaskhubService {
             }
 
             taskDTO.setUser_id(getLoginIdDTO().getUser_id());
+
+            Map<String, Object> params2 = new HashMap<>();
+            params2.put("do_date", taskDTO.getNew_do_date());
+            params2.put("user_id", taskDTO.getUser_id());
+            int maxOrder = taskhubRepository.getMaxTaskOrder(params2);
+            if(taskDTO.getNew_order_idx().equals("99999")) {
+                String[] dateArray = taskhubRepository.getDodates(taskId).toArray(new String[0]);
+                for(String date : dateArray){
+                    if(!Objects.equals(taskDTO.getTask_status(), "2") && !Objects.equals(taskDTO.getTask_status(), "3")){
+                        Map<String, Object> params1 = new HashMap<>();
+                        params1.put("do_date", date);
+                        params1.put("user_id", taskDTO.getUser_id());
+//                        int taskOrder = taskhubRepository.getMaxTaskOrder(params1);
+                        taskDTO.setNew_order_idx(String.valueOf(taskhubRepository.getMaxTaskOrder(params1)));
+                    } else {
+                        taskDTO.setNew_order_idx(null);
+                    }
+                    if(!Objects.equals(taskDTO.getOld_do_date(), "9999-12-31")) taskDTO.setNew_do_date(date);
+                    taskDTO.setOld_do_date(date);
+                    System.out.println("!!"+taskDTO.getOld_do_date()+" -> " + taskDTO.getNew_do_date()
+                    +" // "+taskDTO.getOld_order_idx()+" -> "+taskDTO.getNew_order_idx()+".done:"+ taskDTO.getTask_done()
+                    );
+                    taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
+                    taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
+                }
+                return;
+            }
+
             // case1: 이동하는 날짜그룹 상이
             if(!Objects.equals(taskDTO.getNew_do_date(), taskDTO.getOld_do_date())) {
+                if(!taskDTO.getNew_order_idx().equals("0") && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder) {
+                    throw new RuntimeException("Cannot move to completed tasks!");
+    //                return;
+                }
                 if(Objects.equals(taskDTO.getNew_do_date(), "9999-12-31")){
                     taskhubRepository.assignTempOrderById(taskId);
 
@@ -378,11 +419,15 @@ public class TaskhubService {
                 taskhubRepository.orderMinus1BeforeDeletion(taskDTO);
 
                 // 2. Update new DO_DATE TASK_ORDER
-                taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
+                if(taskDTO.getNew_order_idx() != null) taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
 
                 // 3. Update TASK_ID with new DO_DATE and TASK_ORDER
                 taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
             } else { // case2: 이동하는 날짜그룹 동일
+                if(!taskDTO.getNew_order_idx().equals("0") && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder-1) {
+                    throw new RuntimeException("Cannot move to completed tasks!");
+    //                return;
+                }
                 // case2-1: Moving Downwards
                 if(Integer.parseInt(taskDTO.getOld_order_idx()) < Integer.parseInt(taskDTO.getNew_order_idx())){
                     taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
@@ -401,7 +446,6 @@ public class TaskhubService {
 
     @Transactional
     @Scheduled(cron = "0 0 0 * * *") // 매일 자정에 실행
-//    @Scheduled(cron = "0 8 3 * * ?")
     public void insertUncompletedTaskToToday() {
         System.out.println("----------------Scheduled task insertUncompletedTaskToToday");
         System.out.println("Scheduled task started at: " + LocalDateTime.now());
@@ -419,7 +463,7 @@ public class TaskhubService {
 //                    System.out.println("THIS IS USER 1. PASS!!");
 //                    continue;
 //                }
-                System.out.println("user_id: " + user_id);
+//                System.out.println("user_id: " + user_id);
 
                 // [case1] 태스크 이동 : complete/cancel이 아니고 Done도 아닌 태스크 -> 최신 두데잇 삭제 후 현재일 두데잇으로 인서트
                 List<TaskhubDTO> taskIdsAndDodate = taskhubRepository.findUncompletedUndone(user_id);
@@ -443,16 +487,17 @@ public class TaskhubService {
                     params2.put("do_date", today);
                     params2.put("user_id", user_id);
                     int taskOrder = taskhubRepository.getMaxTaskOrder(params2);
-                    System.out.println("             taskIds: " + idDate.getTask_id()+" /taskOrder: " + taskOrder);
+//                    System.out.println("             taskIds: " + idDate.getTask_id()+" /taskOrder: " + taskOrder);
 
                     Map<String, Object> params3 = new HashMap<>();
                     params3.put("task_id", idDate.getTask_id());
                     params3.put("do_date", today);
+//                    params3.put("task_order", taskOrder);
                     params3.put("task_order", taskOrder);
                     taskhubRepository.insertDoDate(params3);
-                    System.out.println("                          param3::: " + params3);
+//                    System.out.println("                          param3::: " + params3);
                 }
-                    System.out.println("case 1 end, case 2 start");
+//                    System.out.println("case 1 end, case 2 start");
 
                 // [case2] 태스크 복제 : complete/cancel이 아니고 Done인 태스크 -> only 현재일 두데잇으로 인서트
                 List<String> taskIds2 = taskhubRepository.findUncompletedDone(user_id);
@@ -462,20 +507,20 @@ public class TaskhubService {
                     params2.put("do_date", today);
                     params2.put("user_id", user_id);
                     int taskOrder = taskhubRepository.getMaxTaskOrder(params2);
-                    System.out.println("             taskIds: " + task_id+" /taskOrder: " + taskOrder);
+//                    System.out.println("             taskIds: " + task_id+" /taskOrder: " + taskOrder);
 
                     Map<String, Object> params3 = new HashMap<>();
                     params3.put("task_id", task_id);
                     params3.put("do_date", today);
                     params3.put("task_order", taskOrder);
                     taskhubRepository.insertDoDate(params3);
-                    System.out.println("                          param3::: " + params3);
+//                    System.out.println("                          param3::: " + params3);
                 }
             }
             // 실행 기록 저장
             taskhubRepository.saveExecutionLog(today);
         } else {
-            System.out.println("오늘 이미 실행됨");
+            System.out.println("Already executed!");
         }
     }
 
@@ -636,17 +681,25 @@ public class TaskhubService {
             switch (cycle) {
                 case "day" -> dodate = formatDate(now);
                 case "week" -> {
-                    DayOfWeek dayOfWeek = DayOfWeek.valueOf(day.toUpperCase()); // 요일을 대문자로 변환하여 DayOfWeek로 변환
-                    dodate = formatDate(getDateOfWeek(now, dayOfWeek)); // 해당 요일의 날짜를 구하여 formatDate로 포맷
+                    // 오늘이 일요일인지 체크
+                    if (now.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                        // 다음 주의 같은 요일을 가져오기 위해 7일 더함
+                        LocalDate nextWeekSameDay = now.plusWeeks(1).with(DayOfWeek.valueOf(day.toUpperCase()));
+                        dodate = formatDate(nextWeekSameDay);
+                        System.out.println("Dodate: " + dodate);
+                    } else {
+                        DayOfWeek dayOfWeek = DayOfWeek.valueOf(day.toUpperCase()); // 요일을 대문자로 변환하여 DayOfWeek로 변환
+                        dodate = formatDate(getDateOfWeek(now, dayOfWeek));
+                    }
                 }
                 case "month" -> {
-                    int dayOfMonth = Integer.parseInt(day); // "01", "26" 등에서 정수로 변환
+                    int dayOfMonth = Integer.parseInt(day);
                     dodate = formatDate(now.withDayOfMonth(dayOfMonth)); // 현재 연도와 월에 맞춰서 해당 일로 설정
                 }
                 case "year" -> {
                     String[] parts = day.split("-"); // "03-01", "12-31" 등을 분리
-                    int month = Integer.parseInt(parts[0]); // 월 부분
-                    int dayOfYear = Integer.parseInt(parts[1]); // 일 부분
+                    int month = Integer.parseInt(parts[0]);
+                    int dayOfYear = Integer.parseInt(parts[1]);
                     dodate = formatDate(LocalDate.of(now.getYear(), month, dayOfYear)); // 현재 연도에 맞춰 설정
                 }
             }

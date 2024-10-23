@@ -70,4 +70,7 @@ public class TaskhubDTO {
     private String routine_date;
     private String routine_date_of_month;
 
+    private String if_order_null;
+    private String hide_completed;
+
 }

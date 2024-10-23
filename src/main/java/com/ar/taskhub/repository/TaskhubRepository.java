@@ -19,8 +19,8 @@ public class TaskhubRepository {
 //    }
 //
 
-    public List<TaskhubDTO> findAll(Long user_id) {
-        return sql.selectList("Taskhub.findAll", user_id);
+    public List<TaskhubDTO> findAll(Map<String, Object> params) {
+        return sql.selectList("Taskhub.findAll", params);
     }
 
     public List<TaskhubDTO> findAssignedToMe(Long user_id) {
@@ -77,6 +77,10 @@ public class TaskhubRepository {
 
     public int findNewId(Long user_id) {
         return sql.selectOne("Taskhub.findNewId", user_id);
+    }
+
+    public int findNewRoutineId(Long user_id) {
+        return sql.selectOne("Taskhub.findNewRoutineId", user_id);
     }
 
     public void updateTask(TaskhubDTO taskhubDTO) {
@@ -209,6 +213,10 @@ public class TaskhubRepository {
 
     public Map<String, Object> getOldDoDateAndOrder(String taskId) {
         return sql.selectOne("Taskhub.getOldDoDateAndOrder", taskId);
+    }
+
+    public List<String> getDodates(String taskId) {
+        return sql.selectList("Taskhub.getDodates", taskId);
     }
 
     public String getMaxIdxOfNewDate(Map<String, Object> params) {
