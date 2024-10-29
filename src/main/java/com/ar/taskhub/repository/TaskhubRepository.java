@@ -59,6 +59,10 @@ public class TaskhubRepository {
         return sql.selectList("Taskhub.findUsers", user_id);
     }
 
+    public String findContentById(Long task_id) {
+        return sql.selectOne("Taskhub.findContentById", task_id);
+    }
+
     public TaskhubDTO findById(Map<String, Object> params) {
         return sql.selectOne("Taskhub.findById", params);
     }
@@ -286,5 +290,9 @@ public class TaskhubRepository {
 
     public Map<String, Object> getRoutineCycleAndDay(Long routineId) {
         return sql.selectOne("Taskhub.getRoutineCycleAndDay", routineId);
+    }
+
+    public String getCategoryOfWork(Long workId) {
+        return sql.selectOne("Taskhub.getCategoryOfWork", workId);
     }
 }

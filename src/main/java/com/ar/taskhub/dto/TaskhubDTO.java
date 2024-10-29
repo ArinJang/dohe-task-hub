@@ -12,6 +12,7 @@ public class TaskhubDTO {
 
     //task 테이블
     private String task_id;
+    private String original_id;
     private String task_content;
     private String task_status;
     private String task_order;
@@ -69,6 +70,7 @@ public class TaskhubDTO {
     private String routine_month;
     private String routine_date;
     private String routine_date_of_month;
+    private String routine_memo;
 
     private String if_order_null;
     private String hide_completed;

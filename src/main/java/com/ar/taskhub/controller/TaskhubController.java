@@ -56,21 +56,23 @@ public class TaskhubController {
                                                     @RequestParam(value = "do_dates", required = false) String do_dates,
                                                     @RequestParam(value = "group_content", required = false) String groupContent,
                                                     @RequestParam(value = "routine_content", required = false) String routineContent,
+                                                    @RequestParam(value = "work_select", required = false) String workSelect,
+                                                    @RequestParam(value = "group_select", required = false) String groupSelect,
                                                     @RequestParam("action") String action) {
-        System.out.println(">>> TaskhubController.save 2 Action: " + action);
+        System.out.println(">>> TaskhubController.save 2 Action: " + action+","+workSelect);
 
         if ("TASK".equals(action)) {
-            taskhubService.insertTask(taskContent, do_dates, null);
+            taskhubService.insertTask(taskContent, do_dates, null, workSelect, null);
             return createSuccessResponse("Task or Work saved successfully.");
         } else if ("WORK".equals(action)) {
             taskhubService.insertWork(workName);
             return createSuccessResponse("Task or Work saved successfully.");
         } else if ("GROUP".equals(action)) {
-            taskhubService.insertRoutine(groupContent, null);
+            taskhubService.insertRoutine(groupContent, "group");
             return createSuccessResponse("Group saved successfully.");
         } else if ("ROUTINE".equals(action)) {
             try {
-                taskhubService.insertRoutine(routineContent, "group");
+                taskhubService.insertRoutine(routineContent, groupSelect);
                 return createSuccessResponse("Routine saved successfully.");
             } catch (RuntimeException e) {
                 // 에러 발생 시 간단한 메시지로 응답

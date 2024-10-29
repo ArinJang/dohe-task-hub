@@ -56,19 +56,21 @@
             <div id="list-detail">
                 <div class="left-panel">
                     <form id="taskForm">
-                        <div class="task-input">
-                            <input type="text" id="taskInput" placeholder="Enter a task" name="task_content">
-                            <input type="submit" id="addTaskButton" value="TASK" name="action">
-                        </div>
                         <div class="work-input">
                             <input type="text" id="workInput" placeholder="Enter a work" name="work_name">
                             <input type="submit" id="addWorkButton" value="WORK" name="action">
+                        </div>
+                        <div class="task-input">
+                            <select id="workNameForInput" name="work_select"></select>
+                            <input type="text" id="taskInput" placeholder="Enter a task" name="task_content">
+                            <input type="submit" id="addTaskButton" value="TASK" name="action">
                         </div>
                         <div class="group-input">
                             <input type="text" id="groupInput" placeholder="Enter a group of routines" name="group_content">
                             <input type="submit" id="addGroupButton" value="GROUP" name="action">
                         </div>
                         <div class="routine-input">
+                            <select id="groupContentForInput" name="group_select"></select>
                             <input type="text" id="routineInput" placeholder="Enter a routine" name="routine_content">
                             <input type="submit" id="addRoutineButton" value="ROUTINE" name="action">
                         </div>
@@ -165,6 +167,7 @@
                                     <option value="4">On Hold</option>
                                     <option value="5">Delegation</option>
                                     <option value="6">Plan</option>
+                                    <option value="7">Waiting</option>
                                 </select>
                             </div>
                             <div class="input-group hidden">
@@ -185,6 +188,16 @@
                                     <option value="month">month</option>
                                     <option value="year">year</option>
                                 </select>
+                                <div id="routineThisNext" class="radio-group">
+                                    <label>
+                                        <input type="radio" name="selection" value="this" id="thisOption" checked>
+                                        this
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="selection" value="next" id="nextOption">
+                                        next
+                                    </label>
+                                </div>
                             </div>
                             <div class="input-group hidden" id="routineDayGroup">
                                 <label for="routineDay">Repeat on:</label>
@@ -262,7 +275,7 @@
                                     <option value="" disabled selected class="select-placeholder">Check if it's done</option>
                                     <option value="1">Default</option>
                                     <option value="2">Done</option>
-                                    <option value="3">Waiting(default??)</option>
+                                    <!--<option value="3">Waiting(default??)</option>-->
                                 </select>
                             </div>
                             <div class="input-group sub-tasks-group" >
@@ -289,6 +302,15 @@
                             <div class="input-group">
                                 <textarea id="taskMemo" rows="4" cols="50" placeholder="Enter a memo"></textarea>
                             </div>
+
+                            <div class="input-group hidden">
+                                <label for="routineMemo">Memo:</label>
+                                <input type="text" id="routineMemoInput" style="display: none;">
+                            </div>
+                            <div class="input-group hidden">
+                                <textarea id="routineMemo" rows="4" cols="50" placeholder="Enter a routine memo"></textarea>
+                            </div>
+
                             <div class="button-container">
                                 <button id="saveChangesButton">Save</button>
                                 <button id="deleteConfirmationButton">Delete</button>

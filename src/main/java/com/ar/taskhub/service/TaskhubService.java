@@ -32,15 +32,18 @@ public class TaskhubService {
     }
 
     @Transactional
-    public void insertTask(String taskContent, String do_dates, String parent_task_id) {
+    public void insertTask(String taskContent, String do_dates, String parent_task_id, String workSelect, String original_id) {
         TaskhubDTO taskDTO = getLoginIdDTO();  // DTO는 요청마다 새로 생성
         if(taskContent != null) taskDTO.setTask_content(taskContent);
-        if(do_dates == null || do_dates.isEmpty()) {
-            taskDTO.setDo_dates("9999-12-31");
+        if(do_dates == null || do_dates.isEmpty()) taskDTO.setDo_dates("9999-12-31");
+        else taskDTO.setDo_dates(do_dates);
+        if(workSelect != null) {
+            taskDTO.setWork_id(workSelect);
+            taskDTO.setCategory_id(taskhubRepository.getCategoryOfWork(Long.valueOf(workSelect)));
         } else {
-            taskDTO.setDo_dates(do_dates);
+            if(taskDTO.getUser_id() == 1) taskDTO.setCategory_id(String.valueOf(31)); // terry 계정일 경우, category 기본값 "DOHE"로 설정
         }
-        if(taskDTO.getUser_id() == 1) taskDTO.setCategory_id(String.valueOf(31)); // terry 계정일 경우, category 기본값 "DOHE"로 설정
+        if(original_id != null) taskDTO.setOriginal_id(original_id);
         taskDTO.setParent_task_id(parent_task_id);
         taskhubRepository.callInsertTaskAndDoDates(taskDTO);
     }
@@ -60,14 +63,15 @@ public class TaskhubService {
 
     public void insertRoutine(String routineContent, String group) {
         TaskhubDTO taskDTO = getLoginIdDTO();
-        if (group != null) { // 입력하려는 데이터가 루틴인 경우(그룹x)
-            String group_id = String.valueOf(taskhubRepository.findFirstGroup(taskDTO.getUser_id()));
-            if(group_id == null || group_id.equals("null")) {
+
+        if(!Objects.equals(group, "group")){ // 입력하려는 데이터가 루틴인 경우(그룹x)
+            if(group == null || group.isEmpty()) {
                 throw new RuntimeException("No group found. Create a group first!"); // RuntimeException을 사용
-            } else {
-                taskDTO.setRoutine_group(group_id);
             }
-        }
+            taskDTO.setRoutine_group(group);
+        } else taskDTO.setRoutine_group(null);
+//            String group_id = String.valueOf(taskhubRepository.findFirstGroup(taskDTO.getUser_id()));
+
         if(routineContent != null) taskDTO.setRoutine_content(routineContent);
         taskhubRepository.insertRoutine(taskDTO);
     }
@@ -206,6 +210,7 @@ public class TaskhubService {
         return taskhubRepository.findNewRoutineId(getLoginIdDTO().getUser_id());
     }
 
+    @Transactional
     public void updateTask(TaskhubDTO taskDTO) {
         if(taskDTO.getWork_id() != null) {
             List<Long> subTasks = taskhubRepository.findSubTasks(taskDTO.getTask_id());
@@ -225,13 +230,19 @@ public class TaskhubService {
                 subTaskDTO.setTask_id(String.valueOf(subTaskId));
                 taskhubRepository.updateTask(subTaskDTO);
             }
+        } else if(Objects.equals(taskDTO.getTask_status(), "5")) { // delegation
+    //        System.out.println("0 taskId:"+taskId+",doDate:"+doDate+"???"+"null".equals(doDate)+"///"+(doDate==null));
+            String content = taskhubRepository.findContentById(Long.valueOf(taskDTO.getTask_id()));
+//            System.out.println("0 content:"+content);
+            insertTask(content, "9999-01-05",null,null, taskDTO.getTask_id());
+            taskDTO.setTask_status("1"); // default로 변경
         }
         taskhubRepository.updateTask(taskDTO);
     }
 
     public void saveSubTask(TaskhubDTO taskDTO) {
         System.out.println("sub task!! task_content:"+taskDTO.getTask_content()+"/parent_task_id:"+taskDTO.getParent_task_id());
-        insertTask(taskDTO.getTask_content(), taskDTO.getDo_date(), taskDTO.getParent_task_id());
+        insertTask(taskDTO.getTask_content(), taskDTO.getDo_date(), taskDTO.getParent_task_id(), null, null);
     }
 
     public void updateDoDateTaskDone(TaskhubDTO taskDTO) {
@@ -370,23 +381,25 @@ public class TaskhubService {
                     } else {
                         taskDTO.setNew_order_idx(null);
                     }
-                    if(!Objects.equals(taskDTO.getOld_do_date(), "9999-12-31")) taskDTO.setNew_do_date(date);
+                    if(!taskDTO.getOld_do_date().startsWith("9999")) taskDTO.setNew_do_date(date);
                     taskDTO.setOld_do_date(date);
                     System.out.println("!!"+taskDTO.getOld_do_date()+" -> " + taskDTO.getNew_do_date()
                     +" // "+taskDTO.getOld_order_idx()+" -> "+taskDTO.getNew_order_idx()+".done:"+ taskDTO.getTask_done()
                     );
-                    taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
-                    taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
+//                    taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
+//                    taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
                 }
-                return;
+//                return;
             }
 
             // case1: 이동하는 날짜그룹 상이
             if(!Objects.equals(taskDTO.getNew_do_date(), taskDTO.getOld_do_date())) {
-                if(!taskDTO.getNew_order_idx().equals("0") && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder) {
+                if(taskDTO.getNew_order_idx() != null &&
+                   !taskDTO.getNew_order_idx().equals("0") && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder) {
                     throw new RuntimeException("Cannot move to completed tasks!");
     //                return;
                 }
+                System.out.println("case1: 이동하는 날짜그룹 상이!!!");
                 if(Objects.equals(taskDTO.getNew_do_date(), "9999-12-31")){
                     taskhubRepository.assignTempOrderById(taskId);
 
@@ -410,7 +423,7 @@ public class TaskhubService {
                     params3.put("do_date", taskDTO.getNew_do_date());
                     params3.put("task_order", taskOrder);
                     params3.put("task_done", taskDone);
-//                    System.out.println("!!!"+params3);
+                    System.out.println("case1:"+params3);
                     taskhubRepository.insertDoDate(params3);
                     return;
                 }
@@ -424,18 +437,23 @@ public class TaskhubService {
                 // 3. Update TASK_ID with new DO_DATE and TASK_ORDER
                 taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
             } else { // case2: 이동하는 날짜그룹 동일
-                if(!taskDTO.getNew_order_idx().equals("0") && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder-1) {
+                System.out.println(" case2: 이동하는 날짜그룹 동일!!!");
+                if(taskDTO.getNew_order_idx() != null &&
+                !taskDTO.getNew_order_idx().equals("0") && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder) {
                     throw new RuntimeException("Cannot move to completed tasks!");
     //                return;
                 }
-                // case2-1: Moving Downwards
-                if(Integer.parseInt(taskDTO.getOld_order_idx()) < Integer.parseInt(taskDTO.getNew_order_idx())){
-                    taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
-                } else { // case2-2: Moving Upwards
-                    taskhubRepository.updateOrderAndDoDateInSameDateUp(taskDTO);
-                }
-                // Update TASK_ID with new DO_DATE and TASK_ORDER
-                taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
+                    // case2-1: Moving Downwards
+                    if(taskDTO.getOld_order_idx() == null) {
+                        taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
+                        return;
+                    } else if(taskDTO.getNew_order_idx() == null || Integer.parseInt(taskDTO.getOld_order_idx()) < Integer.parseInt(taskDTO.getNew_order_idx())){
+                        taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
+                    } else { // case2-2: Moving Upwards
+                        taskhubRepository.updateOrderAndDoDateInSameDateUp(taskDTO);
+                    }
+                    // Update TASK_ID with new DO_DATE and TASK_ORDER
+                    taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
             }
 
         } catch (DataAccessException e) {
@@ -703,7 +721,7 @@ public class TaskhubService {
                     dodate = formatDate(LocalDate.of(now.getYear(), month, dayOfYear)); // 현재 연도에 맞춰 설정
                 }
             }
-            insertTask((String) cycleAndDay.get("ROUTINE_CONTENT"), dodate, null);
+            insertTask((String) cycleAndDay.get("ROUTINE_CONTENT"), dodate, null, null, null);
         }
     }
 

@@ -15,9 +15,16 @@
         <!--#{task_order},-->
         #{user_id},
         #{parent_task_id},
-        #{category_id}
+        #{category_id},
+        #{work_id},
+        #{original_id}
         )
     </select>
+
+    <insert id="insertTask">
+        INSERT INTO TASK (TASK_CONTENT, DO_DATES, USER_ID)
+        VALUES (#{routine_content}, #{routine_group}, #{user_id});
+    </insert>
 
     <insert id="insertWork">
         INSERT INTO WORK (WORK_NAME, USER_ID, CATEGORY_ID)
@@ -473,6 +480,12 @@
          ORDER BY userId;
     </select>
 
+    <select id="findContentById" parameterType="Long" resultType="String">
+        SELECT TASK_CONTENT
+          FROM TASK
+         WHERE TASK_ID = #{task_id}
+    </select>
+
     <select id="findById" parameterType="map" resultType="taskhubdto">
         SELECT
         T.TASK_ID,
@@ -555,6 +568,7 @@
         ROUTINE_ID,
         ROUTINE_CONTENT,
         ROUTINE_GROUP,
+        ROUTINE_MEMO,
         REPETITION_CYCLE,
             CASE
             WHEN REPETITION_CYCLE IN ('week', 'day') THEN REPETITION_DAY
@@ -788,6 +802,9 @@
             </if>
             <if test="routine_group != null">
                 ROUTINE_GROUP = #{routine_group},
+            </if>
+            <if test="routine_memo != null">
+                ROUTINE_MEMO = #{routine_memo},
             </if>
         </set>
         WHERE ROUTINE_ID = #{routine_id}
@@ -1025,19 +1042,6 @@
     </select>
 
     <select id="findUncompletedUndone" parameterType="Long" resultType="taskhubdto">
-        <!--SELECT DISTINCT D.task_id
-        FROM
-        DODATES D
-        WHERE   D.do_date <![CDATA[<]]> CURDATE()
-        &#45;&#45;	AND D.do_date NOT LIKE '9999%'
-        AND D.TASK_ID IN (SELECT T.TASK_ID
-        FROM
-        TASK T
-        WHERE 1=1
-        <include refid="sessionUserId"/>
-        AND T.TASK_STATUS NOT IN (2, 3) &lt;!&ndash; Complete, Canceled&ndash;&gt;
-        )-->
-
         SELECT TASK_ID, DDATE AS DO_DATE
         FROM (
                 SELECT
@@ -1059,7 +1063,6 @@
                 WHERE DD.TASK_ID = LatestTask.TASK_ID
                   AND DD.DO_DATE = LatestTask.DDATE) != 2 -- 2: Done
         ORDER BY LatestTask.DDATE, LatestTask.TASK_ORDER
-        ;
     </select>
 
     <select id="findUncompletedDone" parameterType="Long" resultType="String">
@@ -1155,6 +1158,13 @@
         FROM ROUTINE
         WHERE 1=1
         AND ROUTINE_ID = #{routine_id}
+    </select>
+
+    <select id="getCategoryOfWork" parameterType="Long" resultType="String">
+        SELECT CATEGORY_ID
+        FROM WORK
+        WHERE 1=1
+        AND WORK_ID = #{work_id}
     </select>
 
 </mapper>
