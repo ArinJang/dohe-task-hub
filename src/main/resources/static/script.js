@@ -93,11 +93,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loginModal.style.display = 'block'; // 로그아웃 상태: 모달 표시
         logoutButton.style.display = 'none';  // 로그아웃 상태: 로그아웃 버튼 숨김
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
-            document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
-            document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//            document.getElementById("username").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+//            document.getElementById("password").value = 'admin';//////////////////////////////////////////////////////////////////////////////////
+//            document.getElementById('loginSubmit').click();///////////////////////////////////////////////////////////////////////////////////////
+//    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     document.getElementById('addUser').addEventListener('click', function() {
@@ -803,12 +803,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function showRoutineDetail(work) {
+    function showRoutineDetail(data) {
         toggleDetailFields('routine');
-//        if(work.work_status == 2) enableDetailByStatus(false);
+//        if(data.work_status == 2) enableDetailByStatus(false);
 //        else enableDetailByStatus(true);
 
-        if (work && typeof work === 'object') {
+        if (data && typeof data === 'object') {
             const routineContentInput = document.getElementById('routineContent');
             const groupContentInput = document.getElementById('groupContent');
             const routineCycleSelect = document.getElementById('routineCycle');
@@ -818,16 +818,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const routineThisNextRadio = document.getElementById('routineThisNext');
             const routineMemoInput = document.getElementById('routineMemo');
 
-            routineContentInput.value = work.routine_content;
+            routineContentInput.value = data.routine_content;
             originalValues.routineContent = routineContentInput.value; // Store the original value
 
-            groupContentInput.value = work.routine_group;
+            groupContentInput.value = data.routine_group;
             originalValues.groupContent = groupContentInput.value; // Store the original value
 
-            routineCycleSelect.value = work.repetition_cycle || '';
+            routineCycleSelect.value = data.repetition_cycle || '';
             originalValues.routineCycle = routineCycleSelect.value; // Store the original value
 
-            routineMemoInput.value = work.routine_memo || '';
+            routineMemoInput.value = data.routine_memo || '';
             originalValues.routineMemo = routineMemoInput.value; // Store the original value
             routineMemoInput.style.height = "auto"; // Reset height to auto to recalculate
             routineMemoInput.style.height = routineMemoContent.scrollHeight + "px"; // Set height based on the scrollHeight
@@ -837,32 +837,40 @@ document.addEventListener('DOMContentLoaded', function() {
             routineMonthSelect.style.display = 'none';
             routineThisNextRadio.style.display = 'none';
             routineDayGroup.style.display = 'flex';
-            switch(work.repetition_cycle){
+            switch(data.repetition_cycle){
                 case 'day':
                     routineDayGroup.style.display = 'none';
 //                    routineDaySelect.style.display = 'flex';
 //                    routineDaySelect.innerHTML = '<option value="everyday">Every day</option>';
                     break;
                 case 'week':
-//                    console.log('week-',work.routine_day);
+//                    console.log('week-',data.routine_day);
                     routineDaySelect.style.display = 'flex';
-                    routineThisNextRadio.style.display = 'flex';
-                    routineDaySelect.value = work.routine_day || '';
+                    routineDaySelect.value = data.routine_day || '';
                     originalValues.routineDay = routineDaySelect.value;
+
+                    routineThisNextRadio.style.display = 'flex';
+                    if (data.this_next === 'this') document.getElementById('thisOption').checked = true;  // 'this' 옵션 체크
+                    else if (data.this_next === 'next') document.getElementById('nextOption').checked = true;  // 'next' 옵션 체크
+                    originalValues.routineThisNext = data.this_next || '';
                     break;
                 case 'month':
                     routineDateSelect.style.display = 'flex';
-                    routineThisNextRadio.style.display = 'flex';
-                    routineDateSelect.value = work.routine_date || '';
+                    routineDateSelect.value = data.routine_date || '';
                     originalValues.routineDay = routineDateSelect.value;
+
+                    routineThisNextRadio.style.display = 'flex';
+                    if (data.this_next === 'this') document.getElementById('thisOption').checked = true;  // 'this' 옵션 체크
+                    else if (data.this_next === 'next') document.getElementById('nextOption').checked = true;  // 'next' 옵션 체크
+                    originalValues.routineThisNext = data.this_next || '';
                     break;
                 case 'year':
-                    console.log('year-',work.routine_month,',',work.routine_date_of_month);
+                    console.log('year-',data.routine_month,',',data.routine_date_of_month);
                     routineMonthSelect.style.display = 'flex';
                     routineDateSelect.style.display = 'flex';
-                    routineMonthSelect.value = work.routine_month || '';
-                    routineDateSelect.value = work.routine_date_of_month || '';
-                    originalValues.routineDay = work.routine_month + '-' + work.routine_date_of_month;
+                    routineMonthSelect.value = data.routine_month || '';
+                    routineDateSelect.value = data.routine_date_of_month || '';
+                    originalValues.routineDay = data.routine_month + '-' + data.routine_date_of_month;
                     break;
             }
 
@@ -882,6 +890,18 @@ document.addEventListener('DOMContentLoaded', function() {
             routineDateSelect.addEventListener('change', handleDetailChange);
             routineMemoInput.addEventListener('change', handleDetailChange);
 
+            // 라디오 버튼 요소 가져오기
+            const thisOption = document.getElementById('thisOption');
+            const nextOption = document.getElementById('nextOption');
+
+            // 기존 이벤트 제거 (이벤트 리스너가 필요할 경우)
+            thisOption.removeEventListener('change', handleDetailChange);
+            nextOption.removeEventListener('change', handleDetailChange);
+
+            // 이벤트 리스너 추가
+            thisOption.addEventListener('change', handleDetailChange);
+            nextOption.addEventListener('change', handleDetailChange);
+
             // 현재 함수 내에서만 이벤트 리스너를 설정하고 싶을 때
             const deleteButton = document.getElementById('deleteConfirmationButton');
 
@@ -892,11 +912,11 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteButton.onclick = (event) => {
                 event.preventDefault(); // Prevent default form submission
                 deleteConfirmationModalR.style.display = 'block';
-                document.getElementById('confirmDeleteButtonR').setAttribute('data-routine-id', work.routine_id);
+                document.getElementById('confirmDeleteButtonR').setAttribute('data-routine-id', data.routine_id);
 //                console.log('Temporary delete button click handler for work detail');
             };
         } else {
-            console.error('Invalid work object:', work);
+            console.error('Invalid data object:', data);
         }
     }
 
@@ -942,6 +962,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleDetailChange(event) {
         let id = event.target.id;
         let currentValue;
+    console.log(event,',',id,',',currentValue);
 
         switch (id) {
             case 'taskName':
@@ -985,58 +1006,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'taskStatus':
                 currentValue = event.target.value;
                 console.log('case taskStatus currentValue:',currentValue,'/originalValues[id]:',originalValues[id]);
-                if (currentValue !== originalValues[id]) {
-                    if((originalValues[id] == 2 || originalValues[id] == 3)
-                        && (currentValue != 2 && currentValue != 3)){
-//                            updateDoDates(sessionStorage.getItem('detailID'), null, currentValue);
-                            updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
-                    } else if((originalValues[id] == 4 || originalValues[id] == 5 || originalValues[id] == 6)
-                        && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3 || currentValue == 7)) {
-                        document.querySelector('.do-dates-group').style.display = 'flex';
-                        if(currentValue == 2){
-                            updateDoDateTaskDone('Done', false);
-                            updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
-                        } else if(currentValue == 3){
-                            updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
-                        } else {
-                            updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue, null);
-                        }
-                    } else if((originalValues[id] != 4 && originalValues[id] != 5 && originalValues[id] != 6)
-                        && currentValue == 2 || currentValue == 3) {
-                        if(doDatesArray.length === 0) {
-                            if(currentValue == 2) {
-                                updateDoDateTaskDone('Done', false);
-                                updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
-                            }
-                            if(currentValue == 3) updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
-                        }
-                        else {
-                            if(currentValue == 2) {
-                                updateDoDateTaskDone('Done', false);
-                                updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
-                            }
-                            if(currentValue == 3) updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
-                        }
-                    } else if(currentValue == 4) {
-                        document.querySelector('.do-dates-group').style.display = 'none';
-                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
-                    }
-//                    else if(currentValue == 5) {
-//                        document.querySelector('.do-dates-group').style.display = 'none';
-//                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
-//
-//                    }
-                    else if(currentValue == 6) {
-                        document.querySelector('.do-dates-group').style.display = 'none';
-                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
-                    } else {
-                        updateTask(id);
-                    }
-
-                    if (originalValues[id] == 2){
-                        updateDoDateTaskDone('Undone',false);
-                    }
-                }
+                if (currentValue !== originalValues[id]) handleTaskStatusChange(currentValue);
                 break;
             case 'userDelegated':
 //                currentValue = event.target.value;
@@ -1046,10 +1016,23 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'routineCycle':
             case 'routineDay':
             case 'routineMemo':
+//            case 'routineThisNext':
                 currentValue = event.target.value;
 //                console.log(originalValues[id],'->',currentValue);
                 if (currentValue !== originalValues[id]) {
                     updateRoutine(id);
+                }
+                break;
+
+//            case 'routineThisNext':
+            case 'thisOption':
+            case 'nextOption':
+                // 라디오 버튼 값 처리
+                const thisNextValue = document.querySelector('input[name="selection"]:checked').value; // 선택된 라디오 버튼의 값
+//                console.log(originalValues[id],'->',thisNextValue);
+//                console.log('Selected value for thisOrNext:', thisNextValue);
+                if (thisNextValue !== originalValues[id]) {
+                    updateRoutine('routineThisNext'); // 'routineThisNext'와 연결된 로직 추가
                 }
                 break;
             case 'groupContent':
@@ -1081,6 +1064,59 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateRoutine(id);
                 }
                 break;
+        }
+    }
+
+    function handleTaskStatusChange(currentValue) {
+        if((originalValues[id] == 2 || originalValues[id] == 3)
+            && (currentValue != 2 && currentValue != 3)){
+//                            updateDoDates(sessionStorage.getItem('detailID'), null, currentValue);
+                updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+        } else if((originalValues[id] == 4 || originalValues[id] == 5 || originalValues[id] == 6)
+            && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3 || currentValue == 7)) {
+            document.querySelector('.do-dates-group').style.display = 'flex';
+            if(currentValue == 2){
+                updateDoDateTaskDone('Done', false);
+                updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+            } else if(currentValue == 3){
+                updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+            } else {
+                updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue, null);
+            }
+        } else if((originalValues[id] != 4 && originalValues[id] != 5 && originalValues[id] != 6)
+            && currentValue == 2 || currentValue == 3) {
+            if(doDatesArray.length === 0) {
+                if(currentValue == 2) {
+                    updateDoDateTaskDone('Done', false);
+                    updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+                }
+                if(currentValue == 3) updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+            }
+            else {
+                if(currentValue == 2) {
+                    updateDoDateTaskDone('Done', false);
+                    updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+                }
+                if(currentValue == 3) updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
+            }
+        } else if(currentValue == 4) {
+            document.querySelector('.do-dates-group').style.display = 'none';
+            updateDoDates(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
+        }
+//                    else if(currentValue == 5) {
+//                        document.querySelector('.do-dates-group').style.display = 'none';
+//                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
+//
+//                    }
+        else if(currentValue == 6) {
+            document.querySelector('.do-dates-group').style.display = 'none';
+            updateDoDates(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
+        } else {
+            updateTask(id);
+        }
+
+        if (originalValues[id] == 2){
+            updateDoDateTaskDone('Undone',false);
         }
     }
 
@@ -2559,6 +2595,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'routineMemo':
                     taskData = {routine_memo: document.getElementById(dataToChange).value}
+                    break;
+                case 'routineThisNext':
+                    taskData = {this_next: document.querySelector('input[name="selection"]:checked').value}
                     break;
                 default: break;
             }

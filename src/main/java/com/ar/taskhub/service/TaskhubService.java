@@ -667,11 +667,18 @@ public class TaskhubService {
 
     // 현재 날짜를 기준으로 특정 요일의 날짜를 반환하는 메서드
     private LocalDate getDateOfWeek(LocalDate currentDate, DayOfWeek targetDay) {
-        // 현재 날짜에서 해당 요일까지의 차이를 계산
+        // 목표 요일과 현재 요일의 차이를 계산
         int daysUntilTarget = targetDay.getValue() - currentDate.getDayOfWeek().getValue();
+        System.out.println(currentDate+"/"+targetDay+"/"+daysUntilTarget);
 
-        // 만약 음수라면 다음 주의 해당 요일로 이동
+        // 목표 요일이 오늘과 같으면 현재 날짜를 반환
+        if (daysUntilTarget == 0) {
+            return currentDate;
+        }
+
+        // 현재 날짜가 목표 요일보다 뒤에 있다면
         if (daysUntilTarget < 0) {
+            // 이번 주의 목표 요일로 이동
             daysUntilTarget += 7;
         }
 
@@ -685,6 +692,7 @@ public class TaskhubService {
             Map<String, Object> cycleAndDay = taskhubRepository.getRoutineCycleAndDay(Long.valueOf(routineId));
             String cycle = (String) cycleAndDay.get("REPETITION_CYCLE");
             String day = (String) cycleAndDay.get("REPETITION_DAY");
+            String thisOrNext = (String) cycleAndDay.get("THIS_NEXT");
 //            System.out.print(routineId+","+cycle+","+day);
             String dodate = "";
             LocalDate now = LocalDate.now(); // 오늘 날짜 가져오기
@@ -698,21 +706,25 @@ public class TaskhubService {
             }
             switch (cycle) {
                 case "day" -> dodate = formatDate(now);
-                case "week" -> {
-                    // 오늘이 일요일인지 체크
-                    if (now.getDayOfWeek() == DayOfWeek.SUNDAY) {
-                        // 다음 주의 같은 요일을 가져오기 위해 7일 더함
+                case "week" -> { // 이번주/다음주 체크
+                    if (Objects.equals(thisOrNext, "next")) {
                         LocalDate nextWeekSameDay = now.plusWeeks(1).with(DayOfWeek.valueOf(day.toUpperCase()));
                         dodate = formatDate(nextWeekSameDay);
-                        System.out.println("Dodate: " + dodate);
+                        System.out.println("Dodate (next week): " + dodate);
                     } else {
-                        DayOfWeek dayOfWeek = DayOfWeek.valueOf(day.toUpperCase()); // 요일을 대문자로 변환하여 DayOfWeek로 변환
-                        dodate = formatDate(getDateOfWeek(now, dayOfWeek));
+                        // "this"일 때는 이번 주의 해당 요일
+                        LocalDate nextWeekSameDay = now.with(DayOfWeek.valueOf(day.toUpperCase()));
+//                        DayOfWeek dayOfWeek = DayOfWeek.valueOf(day.toUpperCase());
+                        dodate = formatDate(nextWeekSameDay);
+                        System.out.println("Dodate (this week): " + dodate);
                     }
                 }
                 case "month" -> {
-                    int dayOfMonth = Integer.parseInt(day);
-                    dodate = formatDate(now.withDayOfMonth(dayOfMonth)); // 현재 연도와 월에 맞춰서 해당 일로 설정
+                    if (Objects.equals(thisOrNext, "next")) {
+                        LocalDate nextMonthSameDay = now.plusMonths(1).withDayOfMonth(Integer.parseInt(day));
+                        dodate = formatDate(nextMonthSameDay);
+                        System.out.println("Dodate: " + dodate);
+                    } else dodate = formatDate(now.withDayOfMonth(Integer.parseInt(day))); // 현재 연도와 월에 맞춰서 해당 일로 설정
                 }
                 case "year" -> {
                     String[] parts = day.split("-"); // "03-01", "12-31" 등을 분리

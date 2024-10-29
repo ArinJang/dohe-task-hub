@@ -66,6 +66,7 @@ public class TaskhubDTO {
     private String group_content;
     private String repetition_cycle;
     private String repetition_day;
+    private String this_next;
     private String routine_day;
     private String routine_month;
     private String routine_date;
