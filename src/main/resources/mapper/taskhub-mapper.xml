@@ -39,9 +39,15 @@
         , #{user_id});
     </insert>
 
+    <select id="getMaxRoutineOrder" parameterType="String" resultType="int">
+        SELECT COALESCE(MAX(ROUTINE_ORDER) + 1, 0)
+        FROM ROUTINE
+        WHERE ROUTINE_GROUP = #{routine_group}
+    </select>
+
     <insert id="insertRoutine">
-        INSERT INTO ROUTINE (ROUTINE_CONTENT, ROUTINE_GROUP, USER_ID)
-        VALUES (#{routine_content}, #{routine_group}, #{user_id});
+        INSERT INTO ROUTINE (ROUTINE_CONTENT, ROUTINE_GROUP, USER_ID, ROUTINE_ORDER)
+        VALUES (#{routine_content}, #{routine_group}, #{user_id}, #{routine_order} );
     </insert>
 
     <select id="findFirstGroup" parameterType="Long" resultType="Long">
@@ -64,7 +70,8 @@
         R.REPETITION_CYCLE,
         R.REPETITION_DAY,
 <!--        R.THIS_NEXT,-->
-        R.CREATE_DATE
+        R.CREATE_DATE,
+        R.ROUTINE_ORDER
         FROM ROUTINE R
         WHERE 1=1
         AND R.USER_ID = #{user_id}
@@ -80,13 +87,14 @@
         NULL AS REPETITION_CYCLE,
         NULL AS REPETITION_DAY,
 <!--        NULL AS THIS_NEXT,-->
-        NULL AS CREATE_DATE
+        NULL AS CREATE_DATE,
+        E.ROUTINE_ORDER
         FROM ROUTINE E
         WHERE 1=1
         AND E.USER_ID = #{user_id}
         AND (E.ROUTINE_GROUP IS NULL AND (SELECT COUNT(W.ROUTINE_ID) FROM ROUTINE W WHERE W.ROUTINE_GROUP = E.ROUTINE_ID) = 0)
 
-        ORDER BY ROUTINE_ID, CREATE_DATE
+        ORDER BY ROUTINE_ORDER <!--, ROUTINE_ID, CREATE_DATE-->
     </select>
 
     <delete id="deleteDoDatesByTaskId" parameterType="string">
@@ -871,6 +879,16 @@
         AND D.TASK_ORDER <![CDATA[>]]> #{old_order_idx};
     </update>
 
+    <update id="r_orderMinus1BeforeDeletion" parameterType="taskhubdto">
+        <!-- [case1: 이동하는 그룹 상이] -->
+        UPDATE ROUTINE
+        SET ROUTINE_ORDER = ROUTINE_ORDER - 1
+        WHERE 1=1
+        AND USER_ID = #{user_id}
+        AND ROUTINE_GROUP = #{old_do_date}
+        AND ROUTINE_ORDER <![CDATA[>]]> #{old_order_idx};
+    </update>
+
     <update id="orderPlus1BeforeInsertion" parameterType="taskhubdto">
         <!-- [case1: 이동하는 날짜그룹 상이] 2. taskid가 이동하는 do_date에서 현 task_id가 이동하려는 인덱스 이하의 데이터들의 task_order 1 증가 -->
         UPDATE DODATES D JOIN TASK T
@@ -880,6 +898,16 @@
         <include refid="sessionUserId"/>
         AND D.DO_DATE = #{new_do_date}
         AND D.TASK_ORDER >= #{new_order_idx};
+    </update>
+
+    <update id="r_orderPlus1BeforeInsertion" parameterType="taskhubdto">
+        <!-- [case1: 이동하는 그룹 상이] -->
+        UPDATE ROUTINE
+        SET ROUTINE_ORDER = ROUTINE_ORDER + 1
+        WHERE 1=1
+        AND USER_ID = #{user_id}
+        AND ROUTINE_GROUP = #{new_do_date}
+        AND ROUTINE_ORDER >= #{new_order_idx};
     </update>
 
     <update id="updateOrderAndDoDateOfTask" parameterType="taskhubdto">
@@ -900,6 +928,20 @@
         (#{new_do_date},#{task_id},#{task_order_idx})-->
     </update>
 
+    <update id="r_updateOrderAndDoDateOfTask" parameterType="taskhubdto">
+        <!-- [case1 & case2] 현재 routineid의 do_date와 task_order 변경-->
+        UPDATE ROUTINE
+        SET
+        ROUTINE_GROUP = #{new_do_date},
+        ROUTINE_ORDER = #{new_order_idx}
+        WHERE 1=1
+        AND USER_ID = #{user_id}
+        AND ROUTINE_ID = #{routine_id}
+        AND ROUTINE_GROUP = #{old_do_date};
+        <!--INSERT INTO DODATES (DO_DATE, TASK_ID, TASK_ORDER) VALUES
+        (#{new_do_date},#{task_id},#{task_order_idx})-->
+    </update>
+
     <update id="updateOrderAndDoDateInSameDateDown" parameterType="taskhubdto">
         <!-- [case2: 이동하는 날짜그룹 동일] 1. Moving Downwards -->
         UPDATE DODATES D JOIN TASK T
@@ -914,6 +956,19 @@
         </if>
     </update>
 
+    <update id="r_updateOrderAndDoDateInSameDateDown" parameterType="taskhubdto">
+        <!-- [case2: 이동하는 날짜그룹 동일] 1. Moving Downwards -->
+        UPDATE ROUTINE
+        SET ROUTINE_ORDER = ROUTINE_ORDER - 1
+        WHERE 1=1
+        AND USER_ID = #{user_id}
+        AND ROUTINE_GROUP = #{new_do_date}
+        AND ROUTINE_ORDER > #{old_order_idx}
+        <if test="new_order_idx != null">
+        AND ROUTINE_ORDER <![CDATA[<=]]> #{new_order_idx}
+        </if>
+    </update>
+
     <update id="updateOrderAndDoDateInSameDateUp" parameterType="taskhubdto">
         <!-- [case2: 이동하는 날짜그룹 동일] 2. Moving Upwards -->
         UPDATE DODATES D JOIN TASK T
@@ -924,6 +979,17 @@
         AND D.DO_DATE = #{new_do_date}
         AND D.TASK_ORDER >= #{new_order_idx}
         AND D.TASK_ORDER <![CDATA[<]]> #{old_order_idx};
+    </update>
+
+    <update id="r_updateOrderAndDoDateInSameDateUp" parameterType="taskhubdto">
+        <!-- [case2: 이동하는 날짜그룹 동일] 2. Moving Upwards -->
+        UPDATE ROUTINE
+        SET ROUTINE_ORDER = ROUTINE_ORDER + 1
+        WHERE 1=1
+        AND USER_ID = #{user_id}
+        AND ROUTINE_GROUP = #{new_do_date}
+        AND ROUTINE_ORDER >= #{new_order_idx}
+        AND ROUTINE_ORDER <![CDATA[<]]> #{old_order_idx};
     </update>
 
     <update id="assignTempOrderById" parameterType="String">
@@ -1029,6 +1095,17 @@
     <delete id="deleteRoutine" parameterType="map">
         DELETE FROM ROUTINE WHERE ROUTINE_ID = #{routine_id} AND USER_ID = #{user_id}
     </delete>
+
+    <update id="initializeRoutineOrderVariable">
+        SET @newOrder := -1;
+    </update>
+
+    <update id="reorderRoutineOrderAfterDelete" parameterType="String">
+        UPDATE ROUTINE
+        SET ROUTINE_ORDER = (@newOrder := @newOrder + 1)
+        WHERE ROUTINE_GROUP = #{routine_group}
+        ORDER BY ROUTINE_ORDER ASC;
+    </update>
 
     <delete id="deleteCategory" parameterType="map">
         DELETE FROM CATEGORY WHERE CATEGORY_ID = #{category_id} AND USER_ID = #{user_id}
@@ -1139,6 +1216,12 @@
         AND TASK_STATUS != 2
     </select>
 
+    <select id="isDuplicateUser" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM USER
+        WHERE 1=1
+        AND userName = #{userName}
+    </select>
 
     <select id="findSubTasks" parameterType="String" resultType="Long">
         SELECT TASK_ID

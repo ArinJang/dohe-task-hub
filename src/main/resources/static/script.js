@@ -913,6 +913,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.preventDefault(); // Prevent default form submission
                 deleteConfirmationModalR.style.display = 'block';
                 document.getElementById('confirmDeleteButtonR').setAttribute('data-routine-id', data.routine_id);
+                document.getElementById('confirmDeleteButtonR').setAttribute('data-group-id', data.routine_group);
 //                console.log('Temporary delete button click handler for work detail');
             };
         } else {
@@ -1006,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'taskStatus':
                 currentValue = event.target.value;
                 console.log('case taskStatus currentValue:',currentValue,'/originalValues[id]:',originalValues[id]);
-                if (currentValue !== originalValues[id]) handleTaskStatusChange(currentValue);
+                if (currentValue !== originalValues[id]) handleTaskStatusChange(currentValue, originalValues[id]);
                 break;
             case 'userDelegated':
 //                currentValue = event.target.value;
@@ -1067,12 +1068,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function handleTaskStatusChange(currentValue) {
-        if((originalValues[id] == 2 || originalValues[id] == 3)
+    function handleTaskStatusChange(currentValue, originalValue) {
+        if((originalValue == 2 || originalValue == 3)
             && (currentValue != 2 && currentValue != 3)){
 //                            updateDoDates(sessionStorage.getItem('detailID'), null, currentValue);
                 updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
-        } else if((originalValues[id] == 4 || originalValues[id] == 5 || originalValues[id] == 6)
+        } else if((originalValue == 4 || originalValue == 5 || originalValue == 6)
             && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3 || currentValue == 7)) {
             document.querySelector('.do-dates-group').style.display = 'flex';
             if(currentValue == 2){
@@ -1083,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 updateOrderAndDoDate(null, '9999-12-31', null, null, sessionStorage.getItem('detailID'), currentValue, null);
             }
-        } else if((originalValues[id] != 4 && originalValues[id] != 5 && originalValues[id] != 6)
+        } else if((originalValue != 4 && originalValue != 5 && originalValue != 6)
             && currentValue == 2 || currentValue == 3) {
             if(doDatesArray.length === 0) {
                 if(currentValue == 2) {
@@ -1115,7 +1116,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateTask(id);
         }
 
-        if (originalValues[id] == 2){
+        if (originalValue == 2){
             updateDoDateTaskDone('Undone',false);
         }
     }
@@ -1450,6 +1451,44 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => console.error('Error updating task:', error));
     }
 
+    function updateOrderOfRoutine(fromId, toId, oldIndex, newIndex, movedRoutineId) {
+        const updateRoutine = {
+            routine_id: movedRoutineId,
+            old_group: fromId,
+            new_group: toId,
+            old_idx: oldIndex,
+            new_idx: newIndex
+        };
+//        console.log(fromId,">",toId);
+        sessionStorage.setItem('detailID', movedRoutineId);
+
+        fetch('/api/updateOrderOfRoutine', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateRoutine)
+        })
+        .then(async (response) => {
+            if (!response.ok) {
+                const errorData = await response.json(); // JSON 응답 파싱
+                showNotification(errorData.message || 'An error occurred', 'error'); // 에러 메시지 표시
+//                fetchTaskDetails(toDay);
+                fetchRoutineDetails();
+                clickSideBar(selectedSide, false);
+                throw new Error(errorData.message || 'An error occurred'); // 에러를 발생시켜 catch 블록으로 이동
+            }
+            return response.json(); // 성공 시 데이터를 반환
+        })
+        .then(data => {
+            showNotification('Successfully updated!', 'success'); // 성공 메시지 표시
+//            fetchTaskDetails(toDay);
+            fetchRoutineDetails();
+            clickSideBar(selectedSide, false);
+        })
+        .catch(error => console.error('Error updating task:', error));
+    }
+
     // Initialize Sortable.js for a given task list element
     async function initSortable(taskListElement) {
         new Sortable(taskListElement, {
@@ -1468,11 +1507,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 let fromDay;
                 let toDay;
 
-                if(selectedSide == 'work') {
-//                    showNotification('Tasks in Work Menu cannot be moved!', 'error');
-//                    clickSideBar('work');
-//                    return;
-                }
                 if(orderInCertainStatus !== undefined && orderInCertainStatus !== null){
                     if(orderInCertainStatus == 2) {
                         showNotification('A completed task cannot be moved!', 'error');
@@ -1501,10 +1535,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newIndex = evt.newIndex;
                 const oldIndex = evt.oldIndex;
 
+                if(selectedSide == 'routine') {
+                    const from = fromId.replace('Tasks', '');
+                    const to = toId.replace('Tasks', '');
+                    const movedRoutineId = evt.item.getAttribute('data-routine-id');
+                    sessionStorage.setItem('detailRoutineID',movedRoutineId);
+//                    console.log('Id:', from, '>', to,'/Idx:',oldIndex, '>',newIndex,'/movedRoutineId:',movedRoutineId);
+//                    showNotification('Tasks in Work Menu cannot be moved!', 'error');
+//                    clickSideBar('work');
+                    await updateOrderOfRoutine(from, to, oldIndex, newIndex, movedRoutineId);
+                    return;
+                }
                 if(fromDay == toDay && oldIndex == newIndex) return;
+
                 const isDuplicate = await isDuplicateOnSameDate(toDay, movedTaskId);
                 if(fromDay != toDay && isDuplicate) {
-
                     // 드래그한 아이템을 원래 위치로 되돌리기
                     const oldParent = document.getElementById(evt.item.dataset.oldParent);
                     const oldIndex = evt.item.dataset.oldIndex;
@@ -1513,6 +1558,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 console.log('fromDay:', fromDay, '/toDay:', toDay,'/oldIndex:',oldIndex, '/newIndex:',newIndex,'/movedTaskId:',movedTaskId);
+
                 await updateOrderAndDoDate(fromDay, toDay, oldIndex, newIndex, movedTaskId, null);
             }
         });
@@ -2768,8 +2814,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function deleteRoutine(routineId, isGroup) {
-        fetch(`/api/deleteRoutine/${routineId}?isGroup=${isGroup}`, {
+    function deleteRoutine(routineId, routineGroupId) {
+        fetch(`/api/deleteRoutine/${routineId}?routineGroupId=${routineGroupId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -2792,7 +2838,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 clickSideBar(selectedSide, true);
                 deleteConfirmationModalR.style.display = 'none';
                 deleteConfirmationModalG.style.display = 'none';
-                if(isGroup != null) putGroupsToSelect();
+                if(routineGroupId == null) putGroupsToSelect();
             }
         })
         .catch((error) => {
@@ -2856,14 +2902,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('confirmDeleteButtonR').addEventListener('click', () => {
         const routineId = document.getElementById('confirmDeleteButtonR').getAttribute('data-routine-id');
-        console.log("루틴삭제, 아이디: ",routineId);
-        deleteRoutine(routineId); // 실제 삭제 함수 호출
+        const routineGroupId = document.getElementById('confirmDeleteButtonR').getAttribute('data-group-id');
+        console.log("루틴삭제, 아이디/그룹: ",routineId,"/",routineGroupId);
+        deleteRoutine(routineId, routineGroupId); // 실제 삭제 함수 호출
     });
 
     document.getElementById('confirmDeleteButtonG').addEventListener('click', () => {
         const routineId = document.getElementById('confirmDeleteButtonG').getAttribute('data-group-id');
         console.log("그룹삭제, 아이디: ",routineId);
-        deleteRoutine(routineId, "group"); // 실제 삭제 함수 호출
+        deleteRoutine(routineId, null); // 실제 삭제 함수 호출
     });
 
     document.getElementById('cancelDeleteButton').addEventListener('click', () => {
@@ -3381,7 +3428,7 @@ document.addEventListener('DOMContentLoaded', function() {
         hamburgerIcon.className = 'hamburger-icon';
         hamburgerIcon.textContent = '☰';
 
-//        li.appendChild(hamburgerIcon);
+        li.appendChild(hamburgerIcon);
         li.appendChild(checkbox);         // Add the checkbox first
         li.appendChild(taskContainer);    // Finally add the task content
 
@@ -3499,7 +3546,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.getElementById('addUserForm').addEventListener('submit', validateForm);
-    function validateForm(event) {
+    async function validateForm(event) {
         event.preventDefault(); // 기본 폼 제출 방지
         const newPassword = document.getElementById('newpassword').value;
         const confirmPassword = document.getElementById('confirmpassword').value;
@@ -3508,8 +3555,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         errorMessageDiv.textContent = '';
         errorMessageDiv.style.display = "none";
-
-        console.log('validateForm: ',newPassword !== confirmPassword,adminPassword !== "terry");
+//        console.log('validateForm: ',newPassword !== confirmPassword,adminPassword !== "terry");
 
         if (newPassword !== confirmPassword) { // 비밀번호 일치 여부 확인
             errorMessageDiv.textContent = "Passwords do not match.";
@@ -3523,9 +3569,31 @@ document.addEventListener('DOMContentLoaded', function() {
             return false; // 폼 제출 방지
         }
 
+        const isDuplicate = await isDuplicateUser(document.getElementById('newusername').value);
+        if(!isDuplicate) {
+            errorMessageDiv.textContent = "This username already exists.";
+            errorMessageDiv.style.display = "block";
+            return;
+        }
+
         showNotification('User added', 'success');
-        // 모든 검증 통과 시 폼 제출
-        document.getElementById('addUserForm').submit();
+        document.getElementById('addUserForm').submit(); // 모든 검증 통과 시 폼 제출
+    }
+
+    async function isDuplicateUser(username) {
+        const userName = username;
+        try {
+            const response = await fetch(`/api/isDuplicateUser/${userName}`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            // API 결과 처리 (true or false)
+            return data; // 서버에서 받은 데이터가 true/false로 반환된다고 가정
+        } catch (error) {
+            console.error('There was a problem with the fetch operation:', error);
+            return false; // 오류 발생 시 기본적으로 false 반환
+        }
     }
 
     document.getElementById('routineCycle').addEventListener('change', function() {

@@ -69,8 +69,10 @@ public class TaskhubService {
                 throw new RuntimeException("No group found. Create a group first!"); // RuntimeException을 사용
             }
             taskDTO.setRoutine_group(group);
+            int order = taskhubRepository.getMaxRoutineOrder(group);
+            taskDTO.setRoutine_order(String.valueOf(order));
+            System.out.println("inserRoutine maxorder:"+order);
         } else taskDTO.setRoutine_group(null);
-//            String group_id = String.valueOf(taskhubRepository.findFirstGroup(taskDTO.getUser_id()));
 
         if(routineContent != null) taskDTO.setRoutine_content(routineContent);
         taskhubRepository.insertRoutine(taskDTO);
@@ -315,10 +317,11 @@ public class TaskhubService {
     }
 
     @Transactional
-    public void deleteRoutine(String routineId, String group) {
-        System.out.println("1service delete: "+routineId+","+group);
-        if(group != null) { // 삭제하려는 데이터가 그룹인 경우(루틴x)
-            System.out.println("2service delete: "+routineId+","+group);
+    public void deleteRoutine(String routineId, String routineGroupId) {
+//        System.out.println("1service delete: "+routineId+","+
+//                routineGroupId+"/"+(routineGroupId == null)+"/"+(routineGroupId.equals("null")));
+        if(routineGroupId.equals("null")) { // 삭제하려는 데이터가 그룹인 경우(루틴x)
+//            System.out.println("2service delete: "+routineId+","+routineGroupId);
             if(taskhubRepository.isRoutineInGroup(Long.valueOf(routineId)) > 0) {
                 throw new RuntimeException("Routines remained in this group. Delete them first!"); // RuntimeException을 사용
             }
@@ -327,6 +330,11 @@ public class TaskhubService {
         params.put("routine_id", routineId);
         params.put("user_id", getLoginIdDTO().getUser_id());
         taskhubRepository.deleteRoutine(params);
+        if(!routineGroupId.equals("null")){
+//            System.out.println("3service delete: "+routineId+","+routineGroupId);
+            taskhubRepository.initializeRoutineOrderVariable();
+            taskhubRepository.reorderRoutineOrderAfterDelete(routineGroupId);
+        }
     }
 
     @Transactional
@@ -454,6 +462,47 @@ public class TaskhubService {
                     }
                     // Update TASK_ID with new DO_DATE and TASK_ORDER
                     taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
+            }
+
+        } catch (DataAccessException e) {
+            System.err.println("Failed to update task order and due date: " + e.getMessage());
+            throw new RuntimeException("Failed to update task order and due date", e);
+        }
+    }
+
+    @Transactional
+    public void updateOrderOfRoutine(TaskhubDTO taskDTO) {
+//        System.out.println("!"+taskDTO.getOld_do_date()+" -> " + taskDTO.getNew_do_date()
+//        +" // "+taskDTO.getOld_order_idx()+" -> "+taskDTO.getNew_order_idx()
+//        );
+        try {
+            taskDTO.setUser_id(getLoginIdDTO().getUser_id());
+            String routineId = taskDTO.getRoutine_id();
+            System.out.println("!"+taskDTO);
+            // case1: 이동하는 그룹 상이
+            if(!Objects.equals(taskDTO.getNew_do_date(), taskDTO.getOld_do_date())) {
+                System.out.println("R case1");
+
+                // 1. Update old DO_DATE TASK_ORDER
+                taskhubRepository.r_orderMinus1BeforeDeletion(taskDTO);
+
+                // 2. Update new DO_DATE TASK_ORDER
+                taskhubRepository.r_orderPlus1BeforeInsertion(taskDTO);
+
+                // 3. Update TASK_ID with new DO_DATE and TASK_ORDER
+                taskhubRepository.r_updateOrderAndDoDateOfTask(taskDTO);
+            } else { // case2: 이동하는 그룹 동일
+                System.out.println("R case2");
+                    // case2-1: Moving Downwards
+                if(Integer.parseInt(taskDTO.getOld_order_idx()) < Integer.parseInt(taskDTO.getNew_order_idx())){
+                    System.out.println(" case2-1");
+                    taskhubRepository.r_updateOrderAndDoDateInSameDateDown(taskDTO);
+                } else { // case2-2: Moving Upwards
+                    System.out.println(" case2-2");
+                    taskhubRepository.r_updateOrderAndDoDateInSameDateUp(taskDTO);
+                    }
+                    // Update TASK_ID with new DO_DATE and TASK_ORDER
+                    taskhubRepository.r_updateOrderAndDoDateOfTask(taskDTO);
             }
 
         } catch (DataAccessException e) {
@@ -661,29 +710,13 @@ public class TaskhubService {
         return count == 0;
     }
 
-    public List<TaskhubDTO> findRoutines() {
-        return taskhubRepository.findRoutines(getLoginIdDTO().getUser_id());
+    public boolean isDuplicateUser(String userName) {
+        int count = taskhubRepository.isDuplicateUser(userName);
+        return count == 0;
     }
 
-    // 현재 날짜를 기준으로 특정 요일의 날짜를 반환하는 메서드
-    private LocalDate getDateOfWeek(LocalDate currentDate, DayOfWeek targetDay) {
-        // 목표 요일과 현재 요일의 차이를 계산
-        int daysUntilTarget = targetDay.getValue() - currentDate.getDayOfWeek().getValue();
-        System.out.println(currentDate+"/"+targetDay+"/"+daysUntilTarget);
-
-        // 목표 요일이 오늘과 같으면 현재 날짜를 반환
-        if (daysUntilTarget == 0) {
-            return currentDate;
-        }
-
-        // 현재 날짜가 목표 요일보다 뒤에 있다면
-        if (daysUntilTarget < 0) {
-            // 이번 주의 목표 요일로 이동
-            daysUntilTarget += 7;
-        }
-
-        // 현재 날짜에 해당 차이를 더하여 원하는 요일의 날짜를 반환
-        return currentDate.plusDays(daysUntilTarget);
+    public List<TaskhubDTO> findRoutines() {
+        return taskhubRepository.findRoutines(getLoginIdDTO().getUser_id());
     }
 
     @Transactional

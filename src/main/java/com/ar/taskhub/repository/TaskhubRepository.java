@@ -131,6 +131,14 @@ public class TaskhubRepository {
         sql.delete("Taskhub.deleteRoutine", params);
     }
 
+    public void initializeRoutineOrderVariable() {
+        sql.update("Taskhub.initializeRoutineOrderVariable");
+    }
+
+    public void reorderRoutineOrderAfterDelete(String routine_group) {
+        sql.update("Taskhub.reorderRoutineOrderAfterDelete", routine_group);
+    }
+
     public void deleteCategory(Map<String, Object> params) {
         sql.delete("Taskhub.deleteCategory", params);
     }
@@ -175,6 +183,29 @@ public class TaskhubRepository {
     public void updateOrderAndDoDateInSameDateUp(TaskhubDTO taskhubDTO) {
         sql.update("Taskhub.updateOrderAndDoDateInSameDateUp", taskhubDTO);
     }
+    //
+
+    public void r_orderMinus1BeforeDeletion(TaskhubDTO taskhubDTO) {
+        sql.update("Taskhub.r_orderMinus1BeforeDeletion", taskhubDTO);
+    }
+
+    public void r_orderPlus1BeforeInsertion(TaskhubDTO taskhubDTO) {
+        System.out.println("orderPlus1BeforeInsertion "+taskhubDTO);
+        sql.update("Taskhub.r_orderPlus1BeforeInsertion", taskhubDTO);
+    }
+
+    public void r_updateOrderAndDoDateOfTask(TaskhubDTO taskhubDTO) {
+        System.out.println("r_updateOrderAndDoDateOfTask!!");
+        sql.update("Taskhub.r_updateOrderAndDoDateOfTask", taskhubDTO);
+    }
+
+    public void r_updateOrderAndDoDateInSameDateDown(TaskhubDTO taskhubDTO) {
+        sql.update("Taskhub.r_updateOrderAndDoDateInSameDateDown", taskhubDTO);
+    }
+
+    public void r_updateOrderAndDoDateInSameDateUp(TaskhubDTO taskhubDTO) {
+        sql.update("Taskhub.r_updateOrderAndDoDateInSameDateUp", taskhubDTO);
+    }
 
     public void callInsertTaskAndDoDates(TaskhubDTO taskhubDTO) {
         sql.selectOne("Taskhub.callInsertTaskAndDoDates", taskhubDTO);
@@ -194,6 +225,9 @@ public class TaskhubRepository {
     }
     public int getMaxTaskOrder(Map<String, Object> params) {
         return sql.selectOne("Taskhub.getMaxTaskOrder", params);
+    }
+    public int getMaxRoutineOrder(String routine_group) {
+        return sql.selectOne("Taskhub.getMaxRoutineOrder", routine_group);
     }
 
     public void insertDoDate(Map<String, Object> params) {
@@ -267,6 +301,9 @@ public class TaskhubRepository {
 
     public int isEveryTaskCompleted(Long workId) {
         return sql.selectOne("Taskhub.isEveryTaskCompleted", workId);
+    }
+    public int isDuplicateUser(String userName) {
+        return sql.selectOne("Taskhub.isDuplicateUser", userName);
     }
 
     public List<Long> findSubTasks(String taskId) {

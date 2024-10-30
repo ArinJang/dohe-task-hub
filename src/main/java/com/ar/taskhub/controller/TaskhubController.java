@@ -87,7 +87,6 @@ public class TaskhubController {
         return ResponseEntity.ok(Map.of("message", message)); // 성공 메시지만 포함
     }
 
-
     @PostMapping("/insertCategory")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> insertCategory(@RequestBody Map<String, String> categoryData) {
@@ -483,6 +482,53 @@ public class TaskhubController {
         }
     }
 
+
+    @PostMapping("/updateOrderOfRoutine")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateOrderOfRoutine(@RequestBody Map<String, Object> updateRoutine) {
+        try {
+            //updateOrderAndDoDate(fromDay, toDay,   oldIndex, newIndex, movedTaskId) {
+            //updateOrderAndDoDate(null, '9999-01-04', null, null, sessionStorage.getItem('DetailID'));
+            String routineId = (String) updateRoutine.get("routine_id");
+            String oldGroup = (String) updateRoutine.get("old_group");
+            String newGroup = (String) updateRoutine.get("new_group");
+            String oldIdx = getStringValue(updateRoutine.get("old_idx"));
+            String newIdx = getStringValue(updateRoutine.get("new_idx"));
+//            System.out.println("0 group: " + oldGroup + "->" + newGroup + " // idx: " + oldIdx + "->" + newIdx);
+
+            TaskhubDTO taskhubDTO = new TaskhubDTO();
+            taskhubDTO.setRoutine_id(routineId);
+            taskhubDTO.setOld_do_date(oldGroup);
+            taskhubDTO.setNew_do_date(newGroup);
+            taskhubDTO.setOld_order_idx(oldIdx);
+            taskhubDTO.setNew_order_idx(newIdx);
+//            System.out.println("1 group: " + taskhubDTO.getOld_do_date() +
+//                    "->" + taskhubDTO.getNew_do_date() + " // idx: "
+//                    + taskhubDTO.getOld_order_idx() + "->"
+//                    + taskhubDTO.getNew_order_idx()+"("+newIdx+")");
+            try{
+                taskhubService.updateOrderOfRoutine(taskhubDTO);
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Task order and due date updated successfully.");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Prepare and return error response
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "Failed to update task: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
     @DeleteMapping("/deleteTask/{taskId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable("taskId") String taskId) {
@@ -529,10 +575,10 @@ public class TaskhubController {
 
     @DeleteMapping("/deleteRoutine/{routineId}")
     @ResponseBody
-    public ResponseEntity<Map<String, String>> deleteRoutine(@PathVariable("routineId") String routineId, @RequestParam("isGroup") String isGroup) {
-        System.out.println(">>> TaskhubController.deleteRoutine Routine ID: " + routineId+"/ isGroup:"+isGroup);
+    public ResponseEntity<Map<String, String>> deleteRoutine(@PathVariable("routineId") String routineId, @RequestParam("routineGroupId") String routineGroupId) {
+        System.out.println(">>> TaskhubController.deleteRoutine Routine ID: " + routineId+"/ routineGroupId:"+routineGroupId);
         try {
-            taskhubService.deleteRoutine(routineId, isGroup);
+            taskhubService.deleteRoutine(routineId, routineGroupId);
             return createSuccessResponse("Routine saved successfully.");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); // 메시지만 포함
@@ -579,6 +625,13 @@ public class TaskhubController {
     public ResponseEntity<Boolean> isEveryTaskCompleted(
             @PathVariable("workId") String workId) {
         boolean isCompleted = taskhubService.isEveryTaskCompleted(Long.valueOf(workId));
+        return ResponseEntity.ok(isCompleted);
+    }
+
+    @GetMapping("/isDuplicateUser/{userName}")
+    public ResponseEntity<Boolean> isDuplicateUser(
+            @PathVariable("userName") String userName) {
+        boolean isCompleted = taskhubService.isDuplicateUser(userName);
         return ResponseEntity.ok(isCompleted);
     }
 
