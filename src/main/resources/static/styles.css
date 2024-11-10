@@ -1093,3 +1093,7 @@ button#addUser:hover, button#developerAccount:hover {
 /*    min-width: 80px; *//* 최소 너비 설정 *//*
     max-width: 300px; *//* 최대 너비 설정 */
 }
+.disabled-style {
+    pointer-events: none; /* 마우스 이벤트 차단 (클릭 및 hover 불가) */
+    cursor: not-allowed; /* 마우스 커서를 '금지' 모양으로 */
+}

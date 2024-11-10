@@ -963,7 +963,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleDetailChange(event) {
         let id = event.target.id;
         let currentValue;
-    console.log(event,',',id,',',currentValue);
+//    console.log(event,',',id,',',currentValue);
 
         switch (id) {
             case 'taskName':
@@ -1007,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'taskStatus':
                 currentValue = event.target.value;
                 console.log('case taskStatus currentValue:',currentValue,'/originalValues[id]:',originalValues[id]);
-                if (currentValue !== originalValues[id]) handleTaskStatusChange(currentValue, originalValues[id]);
+                if (currentValue !== originalValues[id]) handleTaskStatusChange(currentValue, originalValues[id], id);
                 break;
             case 'userDelegated':
 //                currentValue = event.target.value;
@@ -1029,12 +1029,12 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'thisOption':
             case 'nextOption':
                 // 라디오 버튼 값 처리
-                const thisNextValue = document.querySelector('input[name="selection"]:checked').value; // 선택된 라디오 버튼의 값
+//                const thisNextValue = document.querySelector('input[name="selection"]:checked').value; // 선택된 라디오 버튼의 값
 //                console.log(originalValues[id],'->',thisNextValue);
 //                console.log('Selected value for thisOrNext:', thisNextValue);
-                if (thisNextValue !== originalValues[id]) {
+//                if (thisNextValue !== originalValues[id]) {
                     updateRoutine('routineThisNext'); // 'routineThisNext'와 연결된 로직 추가
-                }
+//                }
                 break;
             case 'groupContent':
                 currentValue = event.target.value;
@@ -1068,13 +1068,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function handleTaskStatusChange(currentValue, originalValue) {
-        if((originalValue == 2 || originalValue == 3)
+    function handleTaskStatusChange(currentValue, originalValue, id) {
+        if(currentValue == 4) {
+            console.log('1');
+            document.querySelector('.do-dates-group').style.display = 'none';
+            updateDoDates(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
+        }
+//                    else if(currentValue == 5) {
+//                        document.querySelector('.do-dates-group').style.display = 'none';
+//                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
+//
+//                    }
+        else if(currentValue == 6) {
+            console.log('2');
+            document.querySelector('.do-dates-group').style.display = 'none';
+            updateDoDates(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
+        } else if((originalValue == 2 || originalValue == 3)
             && (currentValue != 2 && currentValue != 3)){
+            console.log('3');
 //                            updateDoDates(sessionStorage.getItem('detailID'), null, currentValue);
                 updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
         } else if((originalValue == 4 || originalValue == 5 || originalValue == 6)
             && (currentValue == 0 || currentValue == 1 || currentValue == 2 || currentValue == 3 || currentValue == 7)) {
+            console.log('4');
             document.querySelector('.do-dates-group').style.display = 'flex';
             if(currentValue == 2){
                 updateDoDateTaskDone('Done', false);
@@ -1086,7 +1102,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else if((originalValue != 4 && originalValue != 5 && originalValue != 6)
             && currentValue == 2 || currentValue == 3) {
+            console.log('5');
             if(doDatesArray.length === 0) {
+            console.log('5 1');
                 if(currentValue == 2) {
                     updateDoDateTaskDone('Done', false);
                     updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
@@ -1094,25 +1112,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(currentValue == 3) updateOrderAndDoDate(null, new Date().toISOString().split('T')[0], null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
             }
             else {
+            console.log('5 2');
                 if(currentValue == 2) {
                     updateDoDateTaskDone('Done', false);
                     updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
                 }
                 if(currentValue == 3) updateOrderAndDoDate(null, null, null, 99999, sessionStorage.getItem('detailID'), currentValue, null);
             }
-        } else if(currentValue == 4) {
-            document.querySelector('.do-dates-group').style.display = 'none';
-            updateDoDates(sessionStorage.getItem('detailID'), '9999-01-04', currentValue);
-        }
-//                    else if(currentValue == 5) {
-//                        document.querySelector('.do-dates-group').style.display = 'none';
-//                        updateDoDates(sessionStorage.getItem('detailID'), '9999-01-05', currentValue);
-//
-//                    }
-        else if(currentValue == 6) {
-            document.querySelector('.do-dates-group').style.display = 'none';
-            updateDoDates(sessionStorage.getItem('detailID'), '9999-01-06', currentValue);
         } else {
+            console.log('6');
             updateTask(id);
         }
 
@@ -1131,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'workNameInput': // work detail에서 input으로 수정하는 경우
                 currentValue = event.target.value;
                 if (currentValue !== originalValues[id]) {
-//                    console.log('handleWorkDetailChange! currentValue: ',currentValue,' originalValues[id]: ', originalValues[id]);
+                    console.log('handleWorkDetailChange! currentValue: ',currentValue,' originalValues[id]: ', originalValues[id]);
                     saveWork(sessionStorage.getItem('detailWorkID'), null);
                 }
                 break;
@@ -1797,25 +1805,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // 비활성화 함수
     function disableDoDates() {
         const doDatesGroup = document.querySelector('.do-dates-group');
-        const inputDate = document.getElementById('doDates');
+        const dateInputs = document.querySelectorAll('.date-group input[type="date"]');
         const addDateButton = document.getElementById('addDateButton');
+        const removeButtons = document.querySelectorAll('.date-group .date-button.remove');
 
-        // 비활성화 처리
-        doDatesGroup.style.opacity = '0.5'; // 시각적으로 비활성화
-        if(inputDate) inputDate.disabled = true; // input 요소 비활성화
-        addDateButton.disabled = true; // 버튼 비활성화
+//        doDatesGroup.style.opacity = '0.8';
+
+        dateInputs.forEach(input => {
+            input.disabled = true;
+            input.classList.add('disabled-style'); // 비활성화 스타일 추가
+        });
+        addDateButton.disabled = true;
+        addDateButton.classList.add('disabled-style'); // 비활성화 스타일 추가
+
+        removeButtons.forEach(button => {
+            button.disabled = true;
+            button.classList.add('disabled-style'); // 비활성화 스타일 추가
+        });
     }
 
     // 활성화 함수
     function enableDoDates() {
         const doDatesGroup = document.querySelector('.do-dates-group');
-        const inputDate = document.getElementById('doDates');
+        const dateInputs = document.querySelectorAll('.date-group input[type="date"]');
         const addDateButton = document.getElementById('addDateButton');
+        const removeButtons = document.querySelectorAll('.date-group .date-button.remove');
 
-        // 활성화 처리
-        doDatesGroup.style.opacity = '1'; // 시각적으로 활성화
-        if(inputDate) inputDate.disabled = false; // input 요소 활성화
-        addDateButton.disabled = false; // 버튼 활성화
+        doDatesGroup.style.opacity = '1';
+
+        dateInputs.forEach(input => {
+            input.disabled = false;
+            input.classList.remove('disabled-style'); // 활성화 시 스타일 제거
+        });
+        addDateButton.disabled = false;
+        addDateButton.classList.remove('disabled-style'); // 활성화 시 스타일 제거
+
+        removeButtons.forEach(button => {
+            button.disabled = false;
+            button.classList.remove('disabled-style'); // 활성화 시 스타일 제거
+        });
     }
 
     function fetchWorkDetails() {
@@ -1879,10 +1907,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function clearTaskDetailContent() {
+//    console.log('clearTaskDetailContent');
         const taskDetailContent = document.getElementById('taskDetailContent');
 
         // input 요소 초기화 및 비활성화
-        const inputs = taskDetailContent.querySelectorAll('input[type="text"], input[type="date"], textarea');
+        const inputs = taskDetailContent.querySelectorAll('input[type="text"], input[type="date"], textarea, input[type="radio"]');
         inputs.forEach(input => {
             input.value = ''; // 입력 필드 값 초기화
             input.disabled = true; // 입력 필드 비활성화
@@ -1919,10 +1948,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     function enableTaskDetailContent() {
+//    console.log('enableTaskDetailContent');
         const taskDetailContent = document.getElementById('taskDetailContent');
 
         // input 요소 활성화
-        const inputs = taskDetailContent.querySelectorAll('input[type="text"], input[type="date"], textarea');
+        const inputs = taskDetailContent.querySelectorAll('input[type="text"], input[type="date"], textarea, input[type="radio"]');
         inputs.forEach(input => {
             input.disabled = false; // 입력 필드 활성화
             input.classList.remove('disabled-style'); // 비활성화 CSS 클래스 제거
@@ -2613,7 +2643,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var taskData = {};
         var idForDetail = sessionStorage.getItem('detailRoutineID');
         if(dataToChange == null) {
-        console.log('1',groupId,',',newgroupContent);
+//        console.log('1',groupId,',',newgroupContent);
             idForDetail = groupId;
             taskData = {routine_content: newgroupContent}
         } else {
@@ -2643,7 +2673,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     taskData = {routine_memo: document.getElementById(dataToChange).value}
                     break;
                 case 'routineThisNext':
-                    taskData = {this_next: document.querySelector('input[name="selection"]:checked').value}
+                    const option = document.querySelector('input[name="selection"]:checked').id.replace("Option", "");
+//                    console.log('routineThisNext,',option);
+                    taskData = {this_next: option}
                     break;
                 default: break;
             }

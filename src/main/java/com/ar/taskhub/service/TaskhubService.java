@@ -360,11 +360,11 @@ public class TaskhubService {
     public void updateOrderAndDoDate(TaskhubDTO taskDTO) {
         System.out.println("!"+taskDTO.getOld_do_date()+" -> " + taskDTO.getNew_do_date()
         +" // "+taskDTO.getOld_order_idx()+" -> "+taskDTO.getNew_order_idx()+".done:"+ taskDTO.getTask_done()
-        );
+        +"/status:"+taskDTO.getTask_status());
         try {
             String taskId = taskDTO.getTask_id();
             if(taskDTO.getTask_status() != null) {
-//                System.out.println("taskDTO.getTask_status() != null");
+//                System.out.println("dto status exists");
                 Map<String, Object> params = new HashMap<>();
                 params.put("task_status", taskDTO.getTask_status());
                 params.put("task_id", taskId);
@@ -376,97 +376,122 @@ public class TaskhubService {
             Map<String, Object> params2 = new HashMap<>();
             params2.put("do_date", taskDTO.getNew_do_date());
             params2.put("user_id", taskDTO.getUser_id());
+//            System.out.println(":::"+taskDTO.getNew_do_date()+"/"+taskDTO.getUser_id());
             int maxOrder = taskhubRepository.getMaxTaskOrder(params2);
             if(taskDTO.getNew_order_idx().equals("99999")) {
+                System.out.println(":::99999");
                 String[] dateArray = taskhubRepository.getDodates(taskId).toArray(new String[0]);
-                for(String date : dateArray){
-                    if(!Objects.equals(taskDTO.getTask_status(), "2") && !Objects.equals(taskDTO.getTask_status(), "3")){
-                        Map<String, Object> params1 = new HashMap<>();
-                        params1.put("do_date", date);
-                        params1.put("user_id", taskDTO.getUser_id());
-//                        int taskOrder = taskhubRepository.getMaxTaskOrder(params1);
-                        taskDTO.setNew_order_idx(String.valueOf(taskhubRepository.getMaxTaskOrder(params1)));
-                    } else {
-                        taskDTO.setNew_order_idx(null);
+                if(dateArray.length != 0){
+                    for(String date : dateArray){
+                        if(!Objects.equals(taskDTO.getTask_status(), "2") && !Objects.equals(taskDTO.getTask_status(), "3")){
+                            Map<String, Object> params1 = new HashMap<>();
+                            params1.put("do_date", date);
+                            params1.put("user_id", taskDTO.getUser_id());
+    //                        int taskOrder = taskhubRepository.getMaxTaskOrder(params1);
+                            taskDTO.setNew_order_idx(String.valueOf(taskhubRepository.getMaxTaskOrder(params1)));
+                        } else {
+                            taskDTO.setNew_order_idx(null);
+                        }
+                        if(!taskDTO.getOld_do_date().startsWith("9999")) taskDTO.setNew_do_date(date);
+                        taskDTO.setOld_do_date(date);
+
+                        System.out.println("!!!"+date);
+                        updateOrderAndDoDate2(taskDTO, maxOrder, taskId);
+
+    //                    System.out.println("!!"+taskDTO.getOld_do_date()+" -> " + taskDTO.getNew_do_date()
+    //                    +" // "+taskDTO.getOld_order_idx()+" -> "+taskDTO.getNew_order_idx()+".done:"+ taskDTO.getTask_done()
+    //                    );
+    //                    taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
+    //                    taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
                     }
-                    if(!taskDTO.getOld_do_date().startsWith("9999")) taskDTO.setNew_do_date(date);
-                    taskDTO.setOld_do_date(date);
-                    System.out.println("!!"+taskDTO.getOld_do_date()+" -> " + taskDTO.getNew_do_date()
-                    +" // "+taskDTO.getOld_order_idx()+" -> "+taskDTO.getNew_order_idx()+".done:"+ taskDTO.getTask_done()
-                    );
-//                    taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
-//                    taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
+                } else {
+                    System.out.println("$$$");
+                    updateOrderAndDoDate2(taskDTO, maxOrder, taskId);
                 }
 //                return;
-            }
+            } else {
+                System.out.println("### ");
+                updateOrderAndDoDate2(taskDTO, maxOrder, taskId);
 
-            // case1: 이동하는 날짜그룹 상이
-            if(!Objects.equals(taskDTO.getNew_do_date(), taskDTO.getOld_do_date())) {
-                if(taskDTO.getNew_order_idx() != null &&
-                   !taskDTO.getNew_order_idx().equals("0") && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder) {
-                    throw new RuntimeException("Cannot move to completed tasks!");
-    //                return;
-                }
-                System.out.println("case1: 이동하는 날짜그룹 상이!!!");
-                if(Objects.equals(taskDTO.getNew_do_date(), "9999-12-31")){
-                    taskhubRepository.assignTempOrderById(taskId);
-
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("task_id", taskId);
-                    params.put("user_id", getLoginIdDTO().getUser_id());
-                    taskhubRepository.rearrangeOrderById(params); // 해당 taskId가 들어간 모든 dodate들의 항목을 해당 태스크를 제외한 채 재정렬
-                    params.put("do_date", taskDTO.getOld_do_date());
-                    String taskDone = taskhubRepository.isDone(params);
-
-                    taskhubRepository.deleteDoDatesByTaskId(taskId); // 기존 DODATES 삭제
-
-                    // Update new DO_DATE TASK_ORDER
-//                    System.out.println(taskDTO.getNew_do_date()+"/"+taskDTO.getNew_order_idx());
-                    taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
-
-                    String taskOrder = taskDTO.getNew_order_idx();
-
-                    Map<String, Object> params3 = new HashMap<>();
-                    params3.put("task_id", taskId);
-                    params3.put("do_date", taskDTO.getNew_do_date());
-                    params3.put("task_order", taskOrder);
-                    params3.put("task_done", taskDone);
-                    System.out.println("case1:"+params3);
-                    taskhubRepository.insertDoDate(params3);
-                    return;
-                }
-
-                // 1. Update old DO_DATE TASK_ORDER
-                taskhubRepository.orderMinus1BeforeDeletion(taskDTO);
-
-                // 2. Update new DO_DATE TASK_ORDER
-                if(taskDTO.getNew_order_idx() != null) taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
-
-                // 3. Update TASK_ID with new DO_DATE and TASK_ORDER
-                taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
-            } else { // case2: 이동하는 날짜그룹 동일
-                System.out.println(" case2: 이동하는 날짜그룹 동일!!!");
-                if(taskDTO.getNew_order_idx() != null &&
-                !taskDTO.getNew_order_idx().equals("0") && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder) {
-                    throw new RuntimeException("Cannot move to completed tasks!");
-    //                return;
-                }
-                    // case2-1: Moving Downwards
-                    if(taskDTO.getOld_order_idx() == null) {
-                        taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
-                        return;
-                    } else if(taskDTO.getNew_order_idx() == null || Integer.parseInt(taskDTO.getOld_order_idx()) < Integer.parseInt(taskDTO.getNew_order_idx())){
-                        taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
-                    } else { // case2-2: Moving Upwards
-                        taskhubRepository.updateOrderAndDoDateInSameDateUp(taskDTO);
-                    }
-                    // Update TASK_ID with new DO_DATE and TASK_ORDER
-                    taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
             }
 
         } catch (DataAccessException e) {
             System.err.println("Failed to update task order and due date: " + e.getMessage());
             throw new RuntimeException("Failed to update task order and due date", e);
+        }
+    }
+
+    public void updateOrderAndDoDate2(TaskhubDTO taskDTO, int maxOrder, String taskId) {
+        System.out.println("0:::"+taskDTO.getNew_order_idx()+" ^ " +maxOrder);
+        // case1: 이동하는 날짜그룹 상이
+        if(!Objects.equals(taskDTO.getNew_do_date(), taskDTO.getOld_do_date())) {
+//                System.out.println("1:::"+Integer.parseInt(taskDTO.getNew_order_idx())+" ^ " +maxOrder);
+            if(taskDTO.getNew_order_idx() != null
+               && !taskDTO.getNew_order_idx().equals("0")
+               && Integer.parseInt(taskDTO.getNew_order_idx()) > maxOrder) {
+                System.out.println("1:::"+Integer.parseInt(taskDTO.getNew_order_idx())+" ^ " +maxOrder);
+                throw new RuntimeException("Cannot move to completed tasks!");
+//                return;
+            }
+//                System.out.println("case1: 이동하는 날짜그룹 상이!!!");
+            if(Objects.equals(taskDTO.getNew_do_date(), "9999-12-31")){
+                taskhubRepository.assignTempOrderById(taskId);
+
+                Map<String, Object> params = new HashMap<>();
+                params.put("task_id", taskId);
+                params.put("user_id", getLoginIdDTO().getUser_id());
+                taskhubRepository.rearrangeOrderById(params); // 해당 taskId가 들어간 모든 dodate들의 항목을 해당 태스크를 제외한 채 재정렬
+                params.put("do_date", taskDTO.getOld_do_date());
+                String taskDone = taskhubRepository.isDone(params);
+
+                taskhubRepository.deleteDoDatesByTaskId(taskId); // 기존 DODATES 삭제
+
+                // Update new DO_DATE TASK_ORDER
+//                    System.out.println(taskDTO.getNew_do_date()+"/"+taskDTO.getNew_order_idx());
+                taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
+
+                String taskOrder = taskDTO.getNew_order_idx();
+
+                Map<String, Object> params3 = new HashMap<>();
+                params3.put("task_id", taskId);
+                params3.put("do_date", taskDTO.getNew_do_date());
+                params3.put("task_order", taskOrder);
+                params3.put("task_done", taskDone);
+//                    System.out.println("case1:"+params3);
+                taskhubRepository.insertDoDate(params3);
+                return;
+            }
+
+            // 1. Update old DO_DATE TASK_ORDER
+            taskhubRepository.orderMinus1BeforeDeletion(taskDTO);
+
+            // 2. Update new DO_DATE TASK_ORDER
+            if(taskDTO.getNew_order_idx() != null) taskhubRepository.orderPlus1BeforeInsertion(taskDTO);
+
+            // 3. Update TASK_ID with new DO_DATE and TASK_ORDER
+            taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
+        } else { // case2: 이동하는 날짜그룹 동일
+//                System.out.println(" case2: 이동하는 날짜그룹 동일!!! "); //+Integer.parseInt(taskDTO.getNew_order_idx()) +"/"+ maxOrder);
+            System.out.println("2:::"+taskDTO.getNew_order_idx()+" ^ " +maxOrder);
+            if(taskDTO.getTask_status() == null
+               && taskDTO.getNew_order_idx() != null
+               && !taskDTO.getNew_order_idx().equals("0")
+               && Integer.parseInt(taskDTO.getNew_order_idx()) >= maxOrder) {
+                System.out.println("2:::"+Integer.parseInt(taskDTO.getNew_order_idx())+" ^ " +maxOrder);
+                throw new RuntimeException("Cannot move to completed tasks!");
+//                return;
+            }
+                // case2-1: Moving Downwards
+                if(taskDTO.getOld_order_idx() == null) {
+                    taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
+                    return;
+                } else if(taskDTO.getNew_order_idx() == null || Integer.parseInt(taskDTO.getOld_order_idx()) < Integer.parseInt(taskDTO.getNew_order_idx())){
+                    taskhubRepository.updateOrderAndDoDateInSameDateDown(taskDTO);
+                } else { // case2-2: Moving Upwards
+                    taskhubRepository.updateOrderAndDoDateInSameDateUp(taskDTO);
+                }
+                // Update TASK_ID with new DO_DATE and TASK_ORDER
+                taskhubRepository.updateOrderAndDoDateOfTask(taskDTO);
         }
     }
 
