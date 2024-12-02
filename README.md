@@ -4,6 +4,17 @@ TaskHub is a robust **task management system** designed to help individuals and 
 
 ---
 
+## **Access the Live Application**
+
+You can access the live application at: **[TaskHub Live](http://www.sangsik.com/)**  
+
+### How to Use:
+1. Visit the provided link: **[http://www.sangsik.com/](http://www.sangsik.com/)**.  
+2. Click the **"Use Developer Account"** button on the main page to explore the application's features.  
+3. Start managing tasks, routines, and categories seamlessly.  
+
+---
+
 ## **Key Features**
 
 ### Task Management
@@ -111,5 +122,3 @@ Database (AWS RDS via MySQL)
 ![image](https://github.com/user-attachments/assets/e17d76bf-5ee9-4810-b042-915a8a524b97)
 ### Routine Management
 ![image](https://github.com/user-attachments/assets/2ec2d911-54b4-4331-8174-10781cce8ea1)
-
----
